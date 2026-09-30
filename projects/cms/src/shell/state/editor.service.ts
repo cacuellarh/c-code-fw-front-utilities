@@ -5,9 +5,10 @@ import { SiteSummary } from '../../domain/ports';
 import { Entry, ScopeDef } from '../../domain/schema';
 import { needsPublish, openSite, publishSite, renameSite, saveSite } from '../../domain/site';
 import { EMPTY_THEME, SiteTheme } from '../../domain/theme';
+import { checkBeforePublish } from '../../domain/media';
 import { loadFonts } from '../adapters/fonts';
 import { AuthService } from './auth.service';
-import { CONTENT_REPOSITORY, PUBLISHER } from './ports.tokens';
+import { CONTENT_REPOSITORY, PUBLIC_SITE, PUBLISHER } from './ports.tokens';
 
 /**
  * The site being edited, as signals for the UI. Every rule lives in the domain; this service
@@ -17,6 +18,7 @@ import { CONTENT_REPOSITORY, PUBLISHER } from './ports.tokens';
 export class EditorService {
   private repo = inject(CONTENT_REPOSITORY);
   private publisher = inject(PUBLISHER);
+  private publicSite = inject(PUBLIC_SITE);
   private auth = inject(AuthService);
 
   readonly site = signal<SiteSummary | null>(null);
@@ -104,6 +106,11 @@ export class EditorService {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  /** Warning to show before publishing (for example, images the site cannot show yet), or null. */
+  publishWarning(): Promise<string | null> {
+    return checkBeforePublish(this.requireContent(), this.publicSite);
   }
 
   /** Starts the build of the public site with the saved content. */

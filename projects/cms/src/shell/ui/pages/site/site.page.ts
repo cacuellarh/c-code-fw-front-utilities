@@ -73,6 +73,8 @@ export class SitePage implements OnInit {
       return;
     }
     try {
+      const warning = await this.editor.publishWarning();
+      if (warning && !confirm(`${warning}\n\n¿Publicar de todas formas?`)) return;
       await this.editor.publish();
       this.published.set(true);
     } catch (e) {

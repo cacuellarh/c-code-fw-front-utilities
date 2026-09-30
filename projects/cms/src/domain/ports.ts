@@ -140,3 +140,9 @@ export interface MediaUpload {
   item: MediaItem;
   files: Partial<Record<MediaVariant, Uint8Array>>;
 }
+
+/** Questions about the published site. */
+export interface PublicSite {
+  /** True when the site's build already downloads the image library (it serves the marker file). */
+  downloadsMedia(siteUrl: string): Promise<boolean>;
+}

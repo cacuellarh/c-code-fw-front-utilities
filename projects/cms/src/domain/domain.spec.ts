@@ -1,5 +1,5 @@
 import * as content from './content';
-import { applyImage, deleteMedia, MAX_VARIANT_BYTES, MediaError, mediaId, mediaIdOf, mediaPath, MediaSource, prepareMedia, uploadMedia } from './media';
+import { applyImage, checkBeforePublish, deleteMedia, MAX_VARIANT_BYTES, MediaError, mediaId, mediaIdOf, mediaPath, MediaSource, prepareMedia, uploadMedia, writeMediaFolder } from './media';
 import { detectJsonStyle, formatJson } from './json-format';
 import { suggestManifest } from './manifest';
 import { diskPath } from './paths';
@@ -286,6 +286,36 @@ describe('image library', () => {
     await deleteMedia(store, 'spa', site, item);
     expect(await store.list('spa')).toEqual([]);
     expect(await store.read('spa', item.id, 'full')).toBeNull();
+  });
+});
+
+describe('image library in the build and before publishing', () => {
+  const upload = async (store: MemoryMediaStore, name: string, kind: 'photo' | 'icon') =>
+    uploadMedia(store, new FakeImageEncoder(), 'spa', { name, type: 'image/jpeg', data: new Blob(['x']) }, kind, await store.list('spa'));
+
+  it('writes every variant into src/assets/cms plus the marker the CMS probes', async () => {
+    const store = new MemoryMediaStore();
+    await upload(store, 'sala.jpg', 'photo');
+    await upload(store, 'perfil.png', 'icon');
+    const folder = new MemorySiteFiles('spa');
+    expect(await writeMediaFolder(folder, store, 'spa')).toEqual({ images: 2, files: 4 });
+    expect([...folder.files.keys()].sort()).toEqual([
+      'src/assets/cms/c-code-content.webp',
+      'src/assets/cms/perfil.webp',
+      'src/assets/cms/sala-thumb.webp',
+      'src/assets/cms/sala.jpg',
+      'src/assets/cms/sala.webp',
+    ]);
+  });
+
+  it('warns before publishing library images when the site cannot download them yet', async () => {
+    const { content: site } = await openSite(await importedRepo(), 'spa');
+    const probe = (answer: boolean) => ({ downloadsMedia: async () => answer });
+    expect(await checkBeforePublish(site, probe(false))).toBeNull(); // no library images yet
+
+    const withIcon = content.updateItem(site, 'additionals', 0, { id: 101, iconPath: mediaPath('perfil'), name: 'User' });
+    expect(await checkBeforePublish(withIcon, probe(false))).toMatch(/User \(Servicios\).*@c-code\/content/);
+    expect(await checkBeforePublish(withIcon, probe(true))).toBeNull();
   });
 });
 

@@ -1,6 +1,6 @@
 import { slugify } from '@cc/ui-domain';
 import { CollectionData, SiteContent, titleOf } from './content';
-import { EncodedImage, ImageEncoder, MediaItem, MediaKind, MediaStore, MediaUpload, MediaVariant } from './ports';
+import { EncodedImage, ImageEncoder, MediaItem, MediaKind, MediaStore, MediaUpload, MediaVariant, PublicSite, SiteFiles } from './ports';
 import { Entry, ImageField } from './schema';
 
 /*
@@ -185,4 +185,83 @@ export async function deleteMedia(store: MediaStore, siteId: string, content: Si
 
 export function kb(bytes: number): string {
   return bytes >= 1_000_000 ? `${(bytes / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1000))} KB`;
+}
+
+/**
+ * File the build writes next to the images. The CMS loads it from the public site, as an
+ * image, to know whether the site's build already downloads the library.
+ */
+export const MEDIA_MARKER = 'c-code-content.webp';
+
+/** A valid 1×1 transparent WebP. */
+const MARKER_BYTES = Uint8Array.from(
+  atob('UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=='),
+  (c) => c.charCodeAt(0)
+);
+
+/**
+ * Writes the whole library into the site's folder (`src/assets/cms/`), with every variant, and
+ * the marker file. Used by the build. Returns how many images and files it wrote.
+ */
+export async function writeMediaFolder(
+  files: SiteFiles,
+  store: MediaStore,
+  siteId: string,
+  concurrency = 8
+): Promise<{ images: number; files: number }> {
+  const items = await store.list(siteId);
+  const jobs = items.flatMap((item) => item.variants.map((variant) => ({ item, variant })));
+  let written = 0;
+  let next = 0;
+  const worker = async () => {
+    while (next < jobs.length) {
+      const { item, variant } = jobs[next++];
+      const data = await store.read(siteId, item.id, variant);
+      if (!data) throw new MediaError(`Falta el archivo ${variant} de la imagen «${item.name}».`);
+      await files.write(`${MEDIA_DIR}/${mediaFileName(item.id, variant)}`, new Blob([data as BlobPart]));
+      written++;
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, jobs.length) }, worker));
+  await files.write(`${MEDIA_DIR}/${MEDIA_MARKER}`, new Blob([MARKER_BYTES as BlobPart]));
+  return { images: items.length, files: written };
+}
+
+/** Entries that use library images, which the public site can only show if its build downloads them. */
+export function libraryUsages(content: SiteContent): { collection: string; title: string }[] {
+  const uses = new Map<string, { collection: string; title: string }>();
+  for (const collection of content.collections) {
+    const keys = imageKeys(collection);
+    for (const item of collection.items) {
+      if (keys.some((key) => mediaIdOf(String(item[key] ?? '')))) {
+        const use = { collection: collection.def.label, title: titleOf(collection, item) };
+        uses.set(`${use.collection}\n${use.title}`, use);
+      }
+    }
+  }
+  return [...uses.values()];
+}
+
+/**
+ * Checks done before publishing. Returns a warning when the saved content uses library images
+ * but the public site's build does not download them yet (an older `@c-code/content`), so the
+ * images would show broken.
+ */
+export function publishWarning(content: SiteContent, siteDownloadsMedia: boolean): string | null {
+  if (siteDownloadsMedia) return null;
+  const uses = libraryUsages(content);
+  if (!uses.length) return null;
+  const list = uses.slice(0, 5).map((u) => `${u.title} (${u.collection})`).join(', ');
+  return (
+    `El sitio publicado todavía no descarga las imágenes de la biblioteca, así que se verían rotas en: ` +
+    `${list}${uses.length > 5 ? '…' : ''}. Actualiza @c-code/content a la versión 1.1 en el sitio antes de publicar.`
+  );
+}
+
+/** Asks the public site and returns the warning to show before publishing, if any. */
+export async function checkBeforePublish(content: SiteContent, site: PublicSite): Promise<string | null> {
+  if (!libraryUsages(content).length) return null;
+  const siteUrl = content.manifest.siteUrl;
+  const supported = siteUrl ? await site.downloadsMedia(siteUrl) : false;
+  return publishWarning(content, supported);
 }

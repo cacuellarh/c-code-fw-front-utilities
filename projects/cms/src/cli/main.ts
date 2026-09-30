@@ -3,12 +3,13 @@
  *
  *   c-code-content pull --site xora-spa --project c-code-bf1fd [--dir .]
  *
- * Writes the JSON files of each collection and the files the site's scope generates
- * (prerender routes, sitemap). If Firestore cannot be read, it exits with an error so the
- * build fails and the last published version stays online.
+ * Writes the JSON files of each collection, the files the site's scope generates
+ * (prerender routes, sitemap) and the image library (src/assets/cms). If Firestore cannot be
+ * read, it exits with an error so the build fails and the last published version stays online.
  */
+import { writeMediaFolder } from '../domain/media';
 import { writeSiteFolder } from '../domain/site';
-import { fetchSite } from './firestore-rest-reader';
+import { fetchSite, FirestoreRestMediaStore } from './firestore-rest-reader';
 import { NodeSiteFiles } from './node-site-files';
 
 const HELP = `Uso: c-code-content pull --site <id> --project <firebase-project> [--dir <carpeta>]
@@ -28,9 +29,11 @@ async function main(argv: string[]): Promise<number> {
   const site = await fetchSite(flags['project'], flags['site']);
   const files = new NodeSiteFiles(flags['dir'] ?? process.cwd());
   const written = await writeSiteFolder(files, site);
+  const media = await writeMediaFolder(files, new FirestoreRestMediaStore(flags['project']), site.id);
   const counts = site.collections.map((c) => `${c.id} ${c.items.length}`).join(', ');
   console.log(`c-code-content: ${site.name} (${counts}) en ${Date.now() - started} ms`);
   console.log(written.length ? written.map((path) => `  actualizado ${path}`).join('\n') : '  sin cambios');
+  console.log(`  imágenes: ${media.images} (${media.files} archivos en src/assets/cms)`);
   return 0;
 }
 
