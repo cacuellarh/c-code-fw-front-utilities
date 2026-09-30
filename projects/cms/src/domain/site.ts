@@ -208,3 +208,9 @@ export async function importMissingCollections(
   if (found.length) await repo.addCollections(stored.id, found, author);
   return found.map((c) => missing.get(c.id)!.label);
 }
+
+/** Stops offering an optional section the site does not use (for example price ranges). */
+export async function hideCollection(repo: ContentRepository, siteId: string, def: CollectionDef): Promise<void> {
+  if (!def.optional) throw new Error(`«${def.label}» no se puede ocultar: el sitio la necesita.`);
+  await repo.hideCollection(siteId, def.id);
+}

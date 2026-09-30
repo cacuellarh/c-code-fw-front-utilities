@@ -19,6 +19,8 @@ export interface ContentRepository {
   createSite(site: NewSite, author: string): Promise<void>;
   /** Records that the site was published. */
   markPublished(siteId: string, at: string): Promise<void>;
+  /** Marks an optional collection as not used by the site, so the CMS stops offering it. */
+  hideCollection(siteId: string, collectionId: string): Promise<void>;
   /** Adds collections to an existing site. Fails if one of them already exists. */
   addCollections(siteId: string, collections: { id: string; items: Entry[] }[], author: string): Promise<void>;
   /** Changes the name shown in the CMS (and the manifest's name). The id stays the same. */

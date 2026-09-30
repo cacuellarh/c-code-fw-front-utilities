@@ -114,6 +114,10 @@ export class FirestoreContentRepository implements ContentRepository {
     await updateDoc(doc(this.db, 'sites', siteId), { publishedAt: at });
   }
 
+  async hideCollection(siteId: string, collectionId: string): Promise<void> {
+    await updateDoc(doc(this.db, 'sites', siteId), { [`manifest.collections.${collectionId}`]: false });
+  }
+
   async addCollections(siteId: string, collections: { id: string; items: Entry[] }[], author: string): Promise<void> {
     const updatedAt = new Date().toISOString();
     await runTransaction(this.db, async (tx) => {

@@ -29,6 +29,8 @@ export class SitePage implements OnInit {
   protected readonly nameSaved = signal(false);
   protected readonly missing = signal<CollectionDef[]>([]);
   protected readonly sectionBusy = signal(false);
+  /** Missing section whose options (import / create) are open in the menu. */
+  protected readonly offer = signal<string | null>(null);
   protected readonly isDirty = isDirty;
   protected readonly ready = computed(() => this.editor.site()?.id === this.siteId());
   protected readonly issueCount = computed(() => this.editor.issues().length);
@@ -47,6 +49,7 @@ export class SitePage implements OnInit {
         return;
       }
     }
+    this.editor.missingSections().then((defs) => this.missing.set(defs), () => undefined);
     const first = this.editor.collections()[0];
     if (first && !this.router.url.split('?')[0].split('/')[3]) {
       await this.router.navigate(['/sitio', this.siteId(), first.def.id], { replaceUrl: true });
@@ -91,10 +94,7 @@ export class SitePage implements OnInit {
     this.hookSaved.set(false);
     this.nameSaved.set(false);
     this.name.set(this.editor.site()?.name ?? '');
-    if (open) {
-      this.hook.set(await this.editor.getDeployHook().catch(() => ''));
-      this.missing.set(await this.editor.missingSections().catch(() => []));
-    }
+    if (open) this.hook.set(await this.editor.getDeployHook().catch(() => ''));
   }
 
   protected async saveHook(): Promise<void> {
@@ -122,6 +122,10 @@ export class SitePage implements OnInit {
     });
   }
 
+  protected async hideSection(def: CollectionDef): Promise<void> {
+    await this.sectionTask(() => this.editor.hideSection(def));
+  }
+
   protected async importSections(): Promise<void> {
     let handle: FileSystemDirectoryHandle;
     try {
@@ -141,6 +145,7 @@ export class SitePage implements OnInit {
     this.error.set('');
     try {
       await run();
+      this.offer.set(null);
       this.missing.set(await this.editor.missingSections());
     } catch (e) {
       this.error.set(`No se pudo agregar la sección: ${messageOf(e)}`);

@@ -228,20 +228,40 @@ nav .extra {
   padding-top: 8px;
   border-top: 1px solid var(--cms-border);
 }
-.settings .label {
-  margin: 0;
-  font-weight: 600;
+.add-list {
+  margin-top: 8px !important;
 }
-.sections {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.sections li {
+.add {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px dashed var(--cms-border-strong);
+  border-radius: var(--cms-radius);
+  background: none;
+  color: var(--cms-muted);
+  font: inherit;
+  font-size: var(--cms-text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.add:hover,
+.add[aria-expanded='true'] {
+  border-color: var(--cms-accent);
+  color: var(--cms-accent-strong);
+}
+.offer {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0 8px;
+  padding: 10px;
+  border-radius: var(--cms-radius);
+  background: var(--cms-subtle);
+}
+.offer p {
+  margin: 0 0 4px;
+  color: var(--cms-muted);
+  font-size: var(--cms-text-xs);
 }

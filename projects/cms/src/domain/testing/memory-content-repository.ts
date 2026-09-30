@@ -55,6 +55,11 @@ export class MemoryContentRepository implements ContentRepository {
     if (site) site.publishedAt = at;
   }
 
+  async hideCollection(siteId: string, collectionId: string): Promise<void> {
+    const site = this.sites.get(siteId);
+    if (site) site.manifest = { ...site.manifest, collections: { ...site.manifest.collections, [collectionId]: false } };
+  }
+
   async addCollections(siteId: string, collections: { id: string; items: Entry[] }[], _author: string): Promise<void> {
     const site = this.sites.get(siteId);
     if (!site) throw new Error(`El sitio "${siteId}" no existe.`);

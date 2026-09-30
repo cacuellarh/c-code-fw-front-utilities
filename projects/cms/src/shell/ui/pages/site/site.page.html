@@ -23,6 +23,32 @@
           </li>
         }
       </ul>
+      @if (missing().length) {
+        <ul class="add-list" aria-label="Secciones que se pueden agregar">
+          @for (def of missing(); track def.id) {
+            <li>
+              <button
+                type="button"
+                class="add"
+                (click)="offer.set(offer() === def.id ? null : def.id)"
+                [attr.aria-expanded]="offer() === def.id"
+              >
+                <span aria-hidden="true">＋</span> {{ def.label }}
+              </button>
+              @if (offer() === def.id) {
+                <div class="offer">
+                  <p>{{ def.description }}</p>
+                  <button type="button" class="btn primary" (click)="importSections()" [disabled]="sectionBusy()">
+                    Importar desde la carpeta…
+                  </button>
+                  <button type="button" class="btn ghost" (click)="addSection(def)" [disabled]="sectionBusy()">Crear vacía</button>
+                  <button type="button" class="link" (click)="hideSection(def)" [disabled]="sectionBusy()">No usar en este sitio</button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
       <ul class="extra">
         <li>
           <a [routerLink]="['/sitio', siteId(), 'imagenes']" routerLinkActive="on" ariaCurrentWhenActive="page">
@@ -72,21 +98,6 @@
           <button type="button" class="btn" (click)="saveHook()" [disabled]="!hook().trim()">
             {{ hookSaved() ? 'Guardado' : 'Guardar' }}
           </button>
-          @if (missing().length) {
-            <hr />
-            <p class="label">Secciones disponibles</p>
-            <p class="hint">Este sitio todavía no tiene:</p>
-            <ul class="sections">
-              @for (def of missing(); track def.id) {
-                <li>
-                  <span>{{ def.label }}</span>
-                  <button type="button" class="link" (click)="addSection(def)" [disabled]="sectionBusy()">Crear vacía</button>
-                </li>
-              }
-            </ul>
-            <button type="button" class="btn" (click)="importSections()" [disabled]="sectionBusy()">Importar desde la carpeta…</button>
-            <p class="hint">Lee los archivos de la carpeta del proyecto (por ejemplo gallery.json) y trae las secciones que encuentre.</p>
-          }
         </div>
       }
     </section>

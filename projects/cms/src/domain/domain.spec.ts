@@ -5,7 +5,7 @@ import { suggestManifest } from './manifest';
 import { diskPath } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
-import { addEmptyCollection, ConflictError, importMissingCollections, missingCollections, needsPublish, openSite, readSiteFolder, renameSite, saveSite, siteIdFor, writeSiteFolder } from './site';
+import { addEmptyCollection, ConflictError, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, readSiteFolder, renameSite, saveSite, siteIdFor, writeSiteFolder } from './site';
 import { galleryCollection } from './scopes/shared/gallery.collection';
 import { DEFAULT_PROMO, promoCollection } from './scopes/shared/promo.collection';
 import { MemoryContentRepository } from './testing/memory-content-repository';
@@ -330,6 +330,10 @@ describe('gallery and popup (shared blocks)', () => {
     const repo = await importedRepo();
     const stored = (await repo.loadSite('spa'))!;
     expect(missingCollections(SPA_SCOPE, stored).map((d) => d.id)).toEqual(['priceRanges', 'services', 'gallery', 'promo']);
+
+    await hideCollection(repo, 'spa', SPA_SCOPE.collections.find((c) => c.id === 'priceRanges')!);
+    expect(missingCollections(SPA_SCOPE, (await repo.loadSite('spa'))!).map((d) => d.id)).toEqual(['services', 'gallery', 'promo']);
+    await expectAsync(hideCollection(repo, 'spa', SPA_SCOPE.collections[0])).toBeRejected();
 
     await addEmptyCollection(repo, 'spa', promoCollection(), 'yo');
     const { content: site } = await openSite(repo, 'spa');

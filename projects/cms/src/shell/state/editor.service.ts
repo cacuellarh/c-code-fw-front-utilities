@@ -3,7 +3,7 @@ import * as content from '../../domain/content';
 import { SiteContent } from '../../domain/content';
 import { SiteSummary } from '../../domain/ports';
 import { Entry, ScopeDef } from '../../domain/schema';
-import { addEmptyCollection, importMissingCollections, missingCollections, needsPublish, openSite, publishSite, readSiteFolder, renameSite, saveSite } from '../../domain/site';
+import { addEmptyCollection, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, publishSite, readSiteFolder, renameSite, saveSite } from '../../domain/site';
 import { CollectionDef } from '../../domain/schema';
 import { FsSiteFiles } from '../adapters/fs-site-files';
 import { EMPTY_THEME, SiteTheme } from '../../domain/theme';
@@ -145,6 +145,13 @@ export class EditorService {
   async addSection(def: CollectionDef): Promise<void> {
     const site = this.requireSite();
     await addEmptyCollection(this.repo, site.id, def, this.auth.email());
+    await this.open(site.id);
+  }
+
+  /** Stops offering a section the site does not use. */
+  async hideSection(def: CollectionDef): Promise<void> {
+    const site = this.requireSite();
+    await hideCollection(this.repo, site.id, def);
     await this.open(site.id);
   }
 
