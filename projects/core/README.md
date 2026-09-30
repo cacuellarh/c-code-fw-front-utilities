@@ -192,7 +192,12 @@ The `ScreenWidthEventService` uses Tailwind CSS breakpoints for responsive behav
 
 ## UI components: `@c-code/c-code-fw/ui`
 
-Presentational components for spa and catalog sites. They are standalone Angular 19 components (signal inputs, OnPush) and work with SSR and prerendering. Styling is plain CSS driven by CSS variables, so a site needs no Tailwind configuration to use them.
+Presentational components for spa and catalog sites: standalone Angular 19 components with signal inputs and OnPush, safe for SSR and prerendering. Styling is plain CSS driven by CSS variables, so a site needs no Tailwind configuration to use them.
+
+### Who owns what
+
+- **The library owns structure:** type scale, spacing, radii, shadows, control heights, motion and layers. Each component also exposes props to choose how it looks (`variant`, `tone`, `size`, `layout`, `appearance`, `italic`…).
+- **The site owns identity:** colors and fonts. The library ships **no palette**. Components read a contract of semantic roles that each site maps from its own variables. Without a site theme, components render in neutral grays.
 
 ### Setup
 
@@ -210,87 +215,96 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-Set the site palette in `styles.css`. Every variable is optional:
+Theme the site in `styles.css`, using any names for your brand variables:
 
 ```css
 :root {
-  --cc-primary: #4C6B4A;
-  --cc-primary-light: #A0BA9E;
-  --cc-primary-dark: #022B04;
-  --cc-secondary: #CEAB5D;
-  --cc-secondary-light: #f8f4ee;
-  --cc-secondary-dark: #9A7521;
-  --cc-bg: #F0FFEF;
+  /* Brand, owned by the site */
+  --laurel-green: #4c6b4a;
+  --laurel-gold: #ceab5d;
+
+  /* Roles read by the components */
+  --cc-heading: var(--laurel-green);
+  --cc-text: var(--laurel-green);
+  --cc-accent: var(--laurel-gold);
+  --cc-on-accent: #022b04;
+  --cc-font-heading: 'El Messiri', serif;
 }
 ```
 
-A list of every token is in `node_modules/@c-code/c-code-fw/ui/theme/tokens.css`. You can add that file to `angular.json` → `styles`, or copy the variables you need.
+Optionally add `node_modules/@c-code/c-code-fw/ui/theme/tokens.css` to `angular.json` → `styles` to use the same scales in the site's own markup, for example by mapping Tailwind's `fontSize` to `var(--cc-text-*)`.
 
-Roles: by default each role follows a palette color. Set a role only when the site needs it to differ:
+### Color and font roles (set by the site)
 
-| Role | Used for | Default |
+| Role | Used for | Neutral default |
 |---|---|---|
-| `--cc-surface` | cards, sidebar, detail panel | `--cc-secondary-light` |
-| `--cc-text` | text inside components | `--cc-primary` |
-| `--cc-heading` | titles, price badge | `--cc-primary` |
-| `--cc-accent` | buttons, highlighted titles | `--cc-secondary` |
-| `--cc-accent-hover` | button hover | `--cc-secondary-dark` |
-| `--cc-on-accent` | text on buttons and badges | `--cc-bg` |
-| `--cc-font-heading` | title font | `inherit` |
+| `--cc-canvas` | page background behind components, input fields | `#ffffff` |
+| `--cc-surface` | cards, panels, sidebar | `#f5f5f4` |
+| `--cc-surface-alt` | alternative bands, image placeholders | `#fafaf9` |
+| `--cc-text` | body text | `#292524` |
+| `--cc-text-muted` | counters, metadata | `--cc-text` at 72% |
+| `--cc-heading` | titles | `#1c1917` |
+| `--cc-accent` / `--cc-accent-hover` | primary buttons, active items | `#1c1917` / `#44403c` |
+| `--cc-accent-text` | accent used as text (needs 4.5:1) | `--cc-heading` |
+| `--cc-on-accent` | text on the accent (needs 4.5:1) | `#ffffff` |
+| `--cc-inverse` / `--cc-inverse-hover` / `--cc-on-inverse` | dark blocks: price badge, dark buttons | `#1c1917` / `#000` / `#fff` |
+| `--cc-border` / `--cc-border-strong` | dividers / input borders (3:1) | `#d6d3d1` / `#78716c` |
+| `--cc-focus-ring` | keyboard focus | `--cc-heading` |
+| `--cc-overlay` | modal and lightbox backdrop | `rgb(0 0 0 / 0.7)` |
+| `--cc-danger`, `--cc-danger-surface`, `--cc-on-danger-surface` | warnings (`cc-notice tone="warning"`) | reds |
+| `--cc-whatsapp`, `--cc-whatsapp-hover`, `--cc-on-whatsapp` | WhatsApp buttons | WhatsApp green |
+| `--cc-font-body`, `--cc-font-heading` | font families | `inherit` |
+| `--cc-heading-style`, `--cc-heading-transform`, `--cc-heading-tracking` | italic, uppercase, letter spacing of titles | `normal`, `none`, `normal` |
+
+### Structure tokens (owned by the library)
+
+All of them can be overridden, but they already have values: `--cc-text-xs…4xl`, `--cc-leading-*`, `--cc-weight-*`, `--cc-space-1…24` (4px base, same steps as Tailwind), `--cc-radius`, `--cc-radius-sm|md|lg|pill`, `--cc-shadow-sm|…|xl`, `--cc-focus-width|offset`, `--cc-control-height` (44px) and its `-sm`/`-lg` versions, `--cc-duration(-fast)`, `--cc-ease`, `--cc-z-float|sticky|overlay`. Breakpoints: 640, 768 and 1024px.
 
 ### Components
 
-All text has Spanish defaults, and every label can be changed through an input.
+All text has Spanish defaults, and every label is an input.
 
-| Component | Main inputs | Outputs / notes |
+| Component | Main inputs | Notes |
 |---|---|---|
-| `<cc-plan-catalog>` | `plans`*, `services`, `priceRanges`, `categories`, `initialCategory`, `detailsLink`, `showCounts`, `showBanner`, `showSearch`, `titlePrefix`, `imageAltSuffix`, `emptyMessage`, `searchIconSrc`, `filterIconSrc` | `categoryChange`. The full plan list page. For a custom card: `<ng-template ccPlanCard let-plan let-link="link">` (import `PlanCardTemplateDirective`). |
-| `<cc-plan-details>` | `plan`*, `bookingUrl`*, `bookingLabel`, `backLink`, `perks`, `perksTitle`, `perksImageSrc`, `titleIconSrc`, `durationIconSrc`, `personIconSrc`, `peopleIconSrc`, `currencyCode`, `currencyDisplay`, `imageAltSuffix` | Content in `<ng-content>` goes above the gift box; an element with the `ccDetailsMedia` attribute goes under the photo. |
-| `<cc-plan-card>` | `name`*, `imageSrc`*, `link`, `ctaLabel`, `subtitle`, `imageAlt` | `ctaClick` |
-| `<cc-category-menu>` | `options`*, `[(selected)]`, `title` | |
-| `<cc-search-box>` | `[(value)]`, `placeholder`, `iconSrc` | `search` |
-| `<cc-plan-filter-form>` | `services`, `priceRanges`, labels | `filterChange` |
-| `<cc-page-banner>` | `title`*, `variant` (`band` \| `plain`), `iconSrc`, `backLink` | Renders the page `<h1>`. |
-| `<cc-gallery>` | `images`*, `backgroundImage` | Opens `cc-lightbox`. `numberedImages(18, i => \`assets/galery/${i}.jpeg\`)` builds the list. |
-| `<cc-lightbox>` | `images`*, `[(index)]` | Arrow keys and Escape. |
-| `<cc-info-item>` | `title`*, `text` | Projects extra content (lists). |
-| `<cc-faq>` | `items`*, `title` | Native `<details>`, prerendered. |
-| `<cc-whatsapp-button>` | `href`*, `iconSrc`, `position`, `label` | Floating button. Without `iconSrc` it draws the WhatsApp logo. |
-| `<cc-promo-modal>` | `[(open)]`, `imageSrc`, `imageAlt`, `link`, `closeOnBackdrop` | `closed`. Without `imageSrc` it shows the projected content. |
-| `<cc-social-links>` | `links`*, `size`, `gap` | |
+| `a[ccButton]`, `button[ccButton]` | `variant` (`primary`, `secondary`, `ghost`, `whatsapp`, `inverse`), `size` (`sm`, `md`, `lg`), `block` | The shared call-to-action style used by every component. |
+| `<cc-plan-catalog>` | `plans`* (`null` = loading), `[(category)]`, `initialCategory`, `services`, `priceRanges`, `categories`, `categoriesLayout` (`auto`, `list`, `chips`), `showPrice`, `priceFormat`, `planMeta`, `cardAppearance`, `ctaLabel`, `ctaVariant`, `detailsLink`, `contactHref`, `emptyMessage`, `emptyActionLabel` | Full plan list page. It shows skeletons while loading, an empty state with actions, and a custom card through `<ng-template ccPlanCard let-plan let-link="link">`. |
+| `<cc-plan-details>` | `plan`*, `bookingUrl`* (string or `(plan) => string`), `bookingLabel`, `barBookingLabel`, `bookingVariant`, `stickyBar`, `priceFormat`, `priceNote`, `perks`, `perksTitle`, `perksImageSrc`, icon inputs | It puts a booking button near the price and another at the end, and shows a fixed price and booking bar below 1024px. |
+| `<cc-plan-card>` | `name`, `imageSrc`, `price`, `priceLabel`, `priceFormat`, `meta`, `link`, `queryParams`, `ctaLabel`, `ctaVariant`, `appearance` (`filled`, `outlined`, `plain`), `headingLevel`, `skeleton` | The whole card is clickable when it has a `link`. |
+| `<cc-category-menu>` | `options`*, `[(selected)]`, `title`, `layout` | Toggle buttons with `aria-pressed`. |
+| `<cc-search-box>` | `[(value)]`, `placeholder`, `label`, `iconSrc` | `search` output. |
+| `<cc-plan-filter-form>` | `services`, `priceRanges`, `mode` (`instant`, `submit`), labels | `filterChange` output. |
+| `<cc-page-banner>` | `title`*, `subtitle`, `variant` (`band`, `plain`), `size`, `italic`, `align`, `iconSrc`, `backLink` | Renders the page `<h1>`. |
+| `<cc-section-heading>` | `title`*, `subtitle`, `eyebrow`, `iconSrc`, `level`, `size`, `italic`, `tone` (`default`, `inverse`, `accent`), `align`, `rule`, `headingId` | One heading pattern for every page section. |
+| `<cc-gallery>` | `images`*, `columns`, `backgroundImage` | Opens `cc-lightbox`. `numberedImages(18, i => …)` builds the list. |
+| `<cc-lightbox>` | `images`*, `[(index)]` | Arrows, swipe and Escape. Focus is trapped while open and restored on close. |
+| `<cc-info-item>` | `title`*, `text`, `tone`, `size`, `headingLevel`, `headingId` | Projects extra content. |
+| `<cc-notice>` | `tone` (`info`, `warning`, `success`), `title` | Highlighted note; content is projected. |
+| `<cc-faq>` + `<cc-faq-item>` | `items` or projected `<cc-faq-item question="…">` | Native `<details>`, so answers are prerendered. Items can contain links. |
+| `<cc-whatsapp-button>` | `href`*, `variant` (`icon`, `extended`), `label`, `size`, `position`, `iconSrc` | Floating button. |
+| `<cc-promo-modal>` | `[(open)]`, `autoOpen`, `delayMs`, `rememberKey`, `rememberDays`, `imageSrc`, `imageAlt`, `link`, `ctaLabel`, `ctaHref` | It opens by itself in the browser and remembers the dismissal. |
+| `<cc-social-links>` | `links`*, `size` (`sm`, `md`, `lg`), `tone` (`default`, `inverse`) | 44px tap area per link. |
 
-`*` required.
-
-Component variables (they default to the roles above): `--cc-plan-card-width`, `--cc-plan-card-width-lg`, `--cc-plan-card-height`, `--cc-plan-card-bg`, `--cc-plan-card-cta-bg`, `--cc-catalog-column-min`, `--cc-catalog-panel-bg`, `--cc-category-active-bg`, `--cc-category-active-color`, `--cc-details-panel-bg`, `--cc-details-price-bg`, `--cc-details-gift-border`, `--cc-banner-bg`, `--cc-banner-color`, `--cc-banner-font-size`, `--cc-info-title-color`, `--cc-info-text-color`, `--cc-faq-bg`, `--cc-gallery-thumb-width`, `--cc-gallery-thumb-width-lg`, `--cc-gallery-columns-lg`, `--cc-whatsapp-size`, `--cc-whatsapp-size-lg`, `--cc-whatsapp-offset-x`, `--cc-whatsapp-offset-y`, `--cc-modal-backdrop`, `--cc-lightbox-backdrop`.
+`*` required. Each component also exposes its own `--cc-<component>-*` variables, which are listed in its JSDoc (`Tokens: …`).
 
 ### Services and utilities
 
-- `PlanCatalogService`: `getPlans()` (with `additionalServices` joined), `getAdditionalServices()`, `getPriceRanges()`, `getPlanBySlug()`, `getPlansByCategory()`, `getPlansByFilter()`, `getPlansByName()`. Each JSON file is requested once and cached. Configure the paths with `providePlanCatalog({ plansUrl, additionalsUrl, priceRangesUrl })`; pass `priceRangesUrl: null` if the site has no price ranges.
-- `SeoService`: `update({ title, description, path, image })` sets the title, description, canonical URL and Open Graph/Twitter tags. `setJsonLd(id, data)` and `removeJsonLd(id)` manage JSON-LD blocks.
-- Pure functions: `slugify`, `planSlug`, `findPlanBySlug`, `filterPlans`, `filterPlansByCategory`, `searchPlansByName`, `withCategoryCounts`, `joinAdditionalServices`, `whatsappUrl(phone, message)`, `titleCase`, `truncateText`.
-- Models: `Plan`, `AdditionalService`, `PriceRange`, `PlanFilter`, `PlanCategory`, `CategoryOption`, `GalleryImage`, `SocialLink`, `FaqItem`.
+- `PlanCatalogService`: `getPlans()` (with `additionalServices` joined), `getAdditionalServices()`, `getPriceRanges()`, `getPlanBySlug()`, `getPlansByCategory()`, `getPlansByFilter()`, `getPlansByName()`. Each JSON file is requested once and cached. Configure the paths with `providePlanCatalog({ plansUrl, additionalsUrl, priceRangesUrl })`.
+- `SeoService`: `update({ title, description, path, image })`, `setJsonLd(id, data)`, `removeJsonLd(id)`, `absoluteUrl(path)`.
+- Pure functions (no Angular): `formatPrice(value, { locale, currency, digits })` (default `es-CO`/`COP`: `$ 259.900`), `slugify`, `planSlug`, `findPlanBySlug`, `filterPlans`, `filterPlansByCategory`, `searchPlansByName`, `withCategoryCounts`, `joinAdditionalServices`, `defaultPlanMeta`, `whatsappUrl(phone, message)`, `titleCase`, `truncateText`.
 
-### Example: plan list page
+### Migrating from 1.3
 
-```ts
-import { toSignal } from '@angular/core/rxjs-interop';
-import { PlanCatalogComponent, PlanCatalogService } from '@c-code/c-code-fw/ui';
-
-@Component({
-  imports: [PlanCatalogComponent],
-  template: `<cc-plan-catalog [plans]="plans()" [services]="services()" [priceRanges]="ranges()" />`,
-})
-export class PlanListComponent {
-  private catalog = inject(PlanCatalogService);
-  plans = toSignal(this.catalog.getPlans(), { initialValue: [] });
-  services = toSignal(this.catalog.getAdditionalServices(), { initialValue: [] });
-  ranges = toSignal(this.catalog.getPriceRanges(), { initialValue: [] });
-}
-```
+- The library no longer defines `--cc-primary`, `--cc-secondary`, `--cc-bg` or the other palette variables. Set the roles listed above from your own brand variables instead.
+- Default colors are now neutral grays, and `--cc-on-accent` must be set when the accent is light.
+- `cc-social-links`: `size` is now `sm`, `md` or `lg`, and `gap` became the `--cc-social-gap` token.
+- `cc-plan-catalog`: `plans` accepts `null` (loading), and the category is the `[(category)]` model. The old `categoryChange` output still works, because it is the model's change event.
+- `cc-promo-modal`: `open` now defaults to `false`; use `autoOpen` to open it by itself.
+- `cc-plan-details`: prices use `formatPrice` (`priceFormat` input) instead of the currency pipe inputs.
 
 ### Development
 
-`npx ng serve showcase` runs a playground with every component at http://localhost:4200. It loads the data and images from `../medellin-spa/src/assets`, and `?theme=xora` switches to a second palette.
+- `npx ng serve showcase` runs a playground with every component. It loads the data and images from `../medellin-spa/src/assets`. Add `?theme=laurel` or `?theme=xora` to the URL to try a site theme; without it, the neutral defaults show.
+- `npm run lint:ui` checks the architecture rules in `.claude/rules/ui-components.md`.
 
 ---
 

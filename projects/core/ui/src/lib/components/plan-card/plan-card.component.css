@@ -1,54 +1,139 @@
 :host {
+  --_card-bg: var(--cc-plan-card-bg, var(--_surface));
+  --_card-border: var(--cc-plan-card-border, transparent);
+  --_card-shadow: var(--cc-plan-card-shadow, var(--_shadow));
   display: block;
   width: 100%;
-  max-width: var(--cc-plan-card-width, 22rem);
+  height: 100%;
 }
+:host(.cc-card--outlined) {
+  --_card-bg: var(--cc-plan-card-bg, var(--_canvas));
+  --_card-border: var(--cc-plan-card-border, var(--_border));
+  --_card-shadow: var(--cc-plan-card-shadow, none);
+}
+:host(.cc-card--plain) {
+  --_card-bg: var(--cc-plan-card-bg, transparent);
+  --_card-shadow: var(--cc-plan-card-shadow, none);
+}
+
 .cc-card {
-  box-sizing: border-box;
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-around;
-  width: 100%;
-  height: var(--cc-plan-card-height, 24rem);
-  padding: 1.25rem;
-  background: var(--cc-plan-card-bg, var(--cc-surface, var(--cc-secondary-light, #f8f4ee)));
-  border-radius: var(--cc-radius, 0);
-  box-shadow: var(--cc-shadow, 0 4px 6px -1px rgb(0 0 0 / 0.1));
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--_card-border);
+  border-radius: var(--cc-plan-card-radius, var(--_radius));
+  color: var(--cc-plan-card-color, var(--_text));
+  background: var(--_card-bg);
+  box-shadow: var(--_card-shadow);
+  transition:
+    box-shadow var(--_duration) var(--_ease),
+    transform var(--_duration) var(--_ease);
 }
-@media (min-width: 1024px) {
-  :host {
-    max-width: var(--cc-plan-card-width-lg, 15rem);
-  }
+.cc-card--linked:hover {
+  box-shadow: var(--_shadow-lg);
+  transform: translateY(-2px);
+}
+.cc-card--linked:hover .cc-card__img {
+  transform: scale(1.03);
+}
+
+.cc-card__media {
+  aspect-ratio: var(--cc-plan-card-image-ratio, 1);
+  overflow: hidden;
+  background: var(--_surface-alt);
 }
 .cc-card__img {
-  width: 13rem;
-  max-width: 100%;
-  box-shadow: var(--cc-shadow, 0 4px 6px -1px rgb(0 0 0 / 0.1));
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--_duration) var(--_ease);
+}
+
+.cc-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--_space-2);
+  padding: var(--_space-5);
 }
 .cc-card__name {
+  font-style: var(--_heading-style);
+  letter-spacing: var(--_heading-tracking);
+  text-transform: var(--_heading-transform);
   margin: 0;
-  font-size: 1rem;
-  font-weight: 400;
-  text-align: center;
-  color: var(--cc-plan-card-color, inherit);
+  font-family: var(--_font-heading);
+  font-size: var(--_text-lg);
+  font-weight: var(--_weight-bold);
+  line-height: var(--_leading-snug);
+  color: var(--_heading);
 }
-.cc-card__subtitle {
+.cc-card__meta {
   margin: 0;
-  font-weight: 600;
-  color: var(--cc-heading, var(--cc-primary, #4c6b4a));
+  font-size: var(--_text-sm);
+  color: var(--_text-muted);
 }
-.cc-card__cta {
-  padding: 0.5rem 1.5rem;
-  border: 0;
-  font: inherit;
-  text-decoration: none;
-  color: var(--cc-on-accent, var(--cc-bg, #f0ffef));
-  background: var(--cc-plan-card-cta-bg, var(--cc-accent, var(--cc-secondary, #ceab5d)));
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 300ms ease-in, color 300ms ease-in;
+.cc-card__price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--_space-2);
+  margin: var(--_space-1) 0 0;
+  font-size: var(--_text-xl);
+  font-weight: var(--_weight-bold);
+  color: var(--cc-plan-card-price-color, var(--_heading));
 }
-.cc-card__cta:hover {
-  background: var(--cc-plan-card-cta-hover-bg, var(--cc-accent-hover, var(--cc-secondary-dark, #9a7521)));
+.cc-card__price-label {
+  font-size: var(--_text-sm);
+  font-weight: var(--_weight-regular);
+  color: var(--_text-muted);
+}
+.cc-card__actions {
+  margin-top: auto;
+  padding-top: var(--_space-3);
+}
+/* The link covers the whole card, so a tap anywhere opens the plan. */
+.cc-card__cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+/* Loading placeholder */
+.cc-card__shimmer {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--_text) 6%, transparent) 25%,
+    color-mix(in srgb, var(--_text) 12%, transparent) 50%,
+    color-mix(in srgb, var(--_text) 6%, transparent) 75%
+  );
+  background-size: 200% 100%;
+  animation: cc-shimmer 1.2s linear infinite;
+}
+.cc-card__line {
+  display: block;
+  height: 1rem;
+  width: 80%;
+  border-radius: var(--_radius-sm);
+}
+.cc-card__line--short {
+  width: 45%;
+}
+.cc-card__line--button {
+  width: 100%;
+  height: var(--_control-height);
+  margin-top: auto;
+}
+:host(.cc-card--skeleton) .cc-card__body {
+  gap: var(--_space-3);
+  min-height: 9rem;
+}
+@keyframes cc-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }

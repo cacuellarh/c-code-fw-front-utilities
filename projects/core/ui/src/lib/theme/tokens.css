@@ -1,45 +1,111 @@
 /*
- * Design tokens for @c-code/c-code-fw/ui.
+ * Structural tokens of @c-code/c-code-fw/ui: type scale, spacing, radii, shadows,
+ * controls, motion and layers.
  *
- * The components already fall back to these values, so this file is optional.
- * To apply a site's palette, set the variables in its global styles:
+ * Every component already falls back to these values, so this file is optional. Load it
+ * (angular.json → styles) when the site wants to use the same scales in its own markup,
+ * for example by mapping Tailwind's font sizes and spacing to var(--cc-text-*) and
+ * var(--cc-space-*). Override any of them to change the rhythm of a whole site.
+ *
+ * COLORS AND FONTS ARE NOT HERE. They belong to each site. The components read this
+ * contract of roles, which the site sets from its own palette (with any variable names):
+ *
+ *   --cc-canvas            page background behind components
+ *   --cc-surface           cards, panels, sidebar
+ *   --cc-surface-alt       alternative band, image placeholders
+ *   --cc-text              body text
+ *   --cc-text-muted        counters, metadata (default: --cc-text at 72%)
+ *   --cc-heading           titles
+ *   --cc-accent            primary buttons, active items
+ *   --cc-accent-hover      primary button hover
+ *   --cc-accent-text       accent used as text; needs 4.5:1 on --cc-canvas and --cc-surface
+ *   --cc-on-accent         text on --cc-accent; needs 4.5:1
+ *   --cc-inverse           dark blocks: price badge, dark buttons
+ *   --cc-inverse-hover
+ *   --cc-on-inverse        text on --cc-inverse
+ *   --cc-border            dividers
+ *   --cc-border-strong     input borders, 3:1 on --cc-canvas
+ *   --cc-focus-ring        keyboard focus outline
+ *   --cc-overlay           modal and lightbox backdrop
+ *   --cc-danger, --cc-danger-surface, --cc-on-danger-surface   warnings
+ *   --cc-whatsapp, --cc-whatsapp-hover                         WhatsApp buttons
+ *   --cc-font-body, --cc-font-heading                          font families
+ *   --cc-heading-style (normal|italic), --cc-heading-transform, --cc-heading-tracking
+ *
+ * Example, in the site's styles.css:
  *
  *   :root {
- *     --cc-primary: #4C6B4A;
- *     --cc-secondary: #CEAB5D;
+ *     --laurel-green: #4c6b4a;
+ *     --laurel-gold: #ceab5d;
+ *     --cc-heading: var(--laurel-green);
+ *     --cc-accent: var(--laurel-gold);
+ *     --cc-on-accent: #022b04;
  *   }
  *
- * The overrides work on any element, not just :root, so a section can use its own palette.
+ * Without a site theme the components render in neutral grays.
  *
- * ROLES (optional). By default each role follows a palette color. Set a role only
- * when a site needs it to differ from its palette:
- *
- *   --cc-surface       cards, sidebar, detail panel  (default --cc-secondary-light)
- *   --cc-text          text inside components        (default --cc-primary)
- *   --cc-heading       titles and the price badge    (default --cc-primary)
- *   --cc-accent        buttons and highlighted text  (default --cc-secondary)
- *   --cc-accent-hover  button hover                  (default --cc-secondary-dark)
- *   --cc-on-accent     text on buttons and badges    (default --cc-bg)
- *
- * Each component also has its own variables (for example --cc-plan-card-bg).
- * They are listed in the README.
+ * Breakpoints (media queries cannot use variables): sm 640px, md 768px, lg 1024px, xl 1280px.
  */
 :root {
-  /* Palette */
-  --cc-primary: #4c6b4a;
-  --cc-primary-light: #a0ba9e;
-  --cc-primary-dark: #022b04;
-  --cc-secondary: #ceab5d;
-  --cc-secondary-light: #f8f4ee;
-  --cc-secondary-dark: #9a7521;
-  --cc-bg: #f0ffef;
+  /* Type scale */
+  --cc-text-xs: 0.75rem;
+  --cc-text-sm: 0.875rem;
+  --cc-text-md: 1rem;
+  --cc-text-lg: 1.125rem;
+  --cc-text-xl: 1.25rem;
+  --cc-text-2xl: 1.5rem;
+  --cc-text-3xl: clamp(1.625rem, 1.2rem + 1.6vw, 2rem);
+  --cc-text-4xl: clamp(2rem, 1.4rem + 2.4vw, 2.75rem);
+  --cc-leading-tight: 1.2;
+  --cc-leading-snug: 1.4;
+  --cc-leading-body: 1.6;
+  --cc-weight-regular: 400;
+  --cc-weight-medium: 500;
+  --cc-weight-semibold: 600;
+  --cc-weight-bold: 700;
+  --cc-tracking-wide: 0.04em;
 
-  /* Typography */
-  --cc-font-body: inherit;
-  --cc-font-heading: inherit;
+  /* Spacing (4px base, same steps as Tailwind) */
+  --cc-space-1: 0.25rem;
+  --cc-space-2: 0.5rem;
+  --cc-space-3: 0.75rem;
+  --cc-space-4: 1rem;
+  --cc-space-5: 1.25rem;
+  --cc-space-6: 1.5rem;
+  --cc-space-8: 2rem;
+  --cc-space-10: 2.5rem;
+  --cc-space-12: 3rem;
+  --cc-space-16: 4rem;
+  --cc-space-20: 5rem;
+  --cc-space-24: 6rem;
 
   /* Shape */
-  --cc-radius: 0;
+  --cc-radius: 0; /* surfaces: cards, panels */
+  --cc-radius-sm: 0.125rem;
+  --cc-radius-md: 0.5rem;
+  --cc-radius-lg: 1rem;
+  --cc-radius-pill: 9999px;
+  --cc-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --cc-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --cc-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --cc-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Focus */
+  --cc-focus-width: 2px;
+  --cc-focus-offset: 2px;
+
+  /* Controls */
+  --cc-control-height: 2.75rem; /* 44px minimum tap target */
+  --cc-control-height-sm: 2.25rem;
+  --cc-control-height-lg: 3.25rem;
+
+  /* Motion */
+  --cc-duration-fast: 150ms;
+  --cc-duration: 250ms;
+  --cc-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layers */
+  --cc-z-float: 20;
+  --cc-z-sticky: 30;
+  --cc-z-overlay: 50;
 }

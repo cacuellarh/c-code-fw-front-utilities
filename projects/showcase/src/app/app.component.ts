@@ -9,7 +9,7 @@ export const WHATSAPP = whatsappUrl('573104948884', 'Hola, necesito más informa
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, WhatsappButtonComponent, PromoModalComponent, SocialLinksComponent],
   template: `
-    <div [class.theme-xora]="theme() === 'xora'">
+    <div [class.theme-laurel]="theme() === 'laurel'" [class.theme-xora]="theme() === 'xora'">
       <header class="bar">
         <strong>c-code-fw/ui</strong>
         <nav>
@@ -24,7 +24,7 @@ export const WHATSAPP = whatsappUrl('573104948884', 'Hola, necesito más informa
             { href: 'https://facebook.com', iconSrc: 'assets/images/face.png', label: 'Facebook' }
           ]"
         />
-        <button (click)="theme.set(theme() === 'xora' ? 'laurel' : 'xora')">Tema: {{ theme() }}</button>
+        <button (click)="nextTheme()">Tema: {{ theme() }}</button>
         <button (click)="promo.set(true)">Abrir modal</button>
       </header>
       <main class="page"><router-outlet /></main>
@@ -33,7 +33,7 @@ export const WHATSAPP = whatsappUrl('573104948884', 'Hola, necesito más informa
     </div>
   `,
   styles: `
-    .bar { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; padding: 0.75rem 1.5rem; background: var(--cc-primary); color: #fff; }
+    .bar { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; padding: 0.75rem 1.5rem; background: #1c1917; color: #fff; }
     .bar nav { display: flex; gap: 1rem; flex-wrap: wrap; }
     .bar a { color: #fff; }
     .bar a.on { font-weight: 700; text-decoration: none; }
@@ -42,7 +42,14 @@ export const WHATSAPP = whatsappUrl('573104948884', 'Hola, necesito más informa
   `,
 })
 export class AppComponent {
-  readonly theme = signal<'laurel' | 'xora'>(location.search.includes('theme=xora') ? 'xora' : 'laurel');
+  readonly theme = signal<'neutral' | 'laurel' | 'xora'>(
+    (new URLSearchParams(location.search).get('theme') as 'laurel' | 'xora' | null) ?? 'neutral'
+  );
+
+  nextTheme(): void {
+    const order = ['neutral', 'laurel', 'xora'] as const;
+    this.theme.set(order[(order.indexOf(this.theme()) + 1) % order.length]);
+  }
   readonly promo = signal(false);
   readonly whatsapp = WHATSAPP;
 }

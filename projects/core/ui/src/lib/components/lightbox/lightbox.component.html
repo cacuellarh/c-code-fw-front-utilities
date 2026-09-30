@@ -1,15 +1,38 @@
 @if (current(); as image) {
-  <div class="cc-lb" role="dialog" aria-modal="true" [attr.aria-label]="image.caption || image.alt || null" (click)="close()">
-    <button type="button" class="cc-lb__btn cc-lb__close" [attr.aria-label]="closeLabel()" (click)="close()">✕</button>
+  <div
+    #dialog
+    class="cc-lb"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="image.caption || image.alt || null"
+    (click)="close()"
+    (keydown)="trapFocus($event)"
+    (touchstart)="onTouchStart($event)"
+    (touchend)="onTouchEnd($event)"
+  >
+    <div class="cc-lb__top" (click)="$event.stopPropagation()">
+      <span class="cc-lb__counter">{{ (index() ?? 0) + 1 }} {{ counterSeparator() }} {{ images().length }}</span>
+      <button #closeButton type="button" class="cc-lb__btn" [attr.aria-label]="closeLabel()" (click)="close()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+      </button>
+    </div>
+
+    <figure class="cc-lb__figure" (click)="$event.stopPropagation()">
+      <img class="cc-lb__img" [src]="image.src" [alt]="image.alt ?? image.caption ?? ''" />
+      @if (image.caption) {
+        <figcaption class="cc-lb__caption">{{ image.caption }}</figcaption>
+      }
+    </figure>
+
     @if (images().length > 1) {
-      <button type="button" class="cc-lb__btn cc-lb__prev" [attr.aria-label]="prevLabel()" (click)="$event.stopPropagation(); prev()">‹</button>
-    }
-    <img class="cc-lb__img" [src]="image.src" [alt]="image.alt ?? image.caption ?? ''" (click)="$event.stopPropagation()" />
-    @if (images().length > 1) {
-      <button type="button" class="cc-lb__btn cc-lb__next" [attr.aria-label]="nextLabel()" (click)="$event.stopPropagation(); next()">›</button>
-    }
-    @if (image.caption) {
-      <p class="cc-lb__caption">{{ image.caption }}</p>
+      <div class="cc-lb__nav" (click)="$event.stopPropagation()">
+        <button type="button" class="cc-lb__btn" [attr.aria-label]="prevLabel()" (click)="prev()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+        <button type="button" class="cc-lb__btn" [attr.aria-label]="nextLabel()" (click)="next()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+      </div>
     }
   </div>
 }

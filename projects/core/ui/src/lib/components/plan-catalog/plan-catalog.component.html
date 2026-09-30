@@ -4,68 +4,94 @@
 
 <div class="cc-catalog">
   <aside class="cc-catalog__side">
-    @if (showSearch()) {
-      <cc-search-box
-        [placeholder]="searchPlaceholder()"
-        [iconSrc]="searchIconSrc()"
-        [(value)]="query"
-        (search)="onSearch($event)"
-      />
-    }
-
     <div class="cc-catalog__panel">
+      @if (showSearch()) {
+        <cc-search-box
+          [placeholder]="searchPlaceholder()"
+          [iconSrc]="searchIconSrc()"
+          [(value)]="query"
+          (search)="onSearch($event)"
+        />
+      }
+
       <cc-category-menu
         [title]="categoriesTitle()"
+        [layout]="categoriesLayout()"
         [options]="categoryOptions()"
-        [selected]="category()"
+        [selected]="activeCategory()"
         (selectedChange)="selectCategory($event)"
       />
 
       @if (hasFilter()) {
-        <hr class="cc-catalog__rule" />
-        <button
-          type="button"
-          class="cc-catalog__filter-toggle"
-          [attr.aria-expanded]="filterOpen()"
-          (click)="filterOpen.set(!filterOpen())"
-        >
-          <span>{{ filterTitle() }}</span>
-          @if (filterIconSrc()) {
-            <img [src]="filterIconSrc()" alt="" />
-          } @else {
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 5h18l-7 8v6l-4-2v-4L3 5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-            </svg>
+        <div class="cc-catalog__filter">
+          <button
+            type="button"
+            class="cc-catalog__filter-toggle"
+            aria-controls="cc-catalog-filter"
+            [attr.aria-expanded]="filterOpen()"
+            (click)="filterOpen.set(!filterOpen())"
+          >
+            <span>{{ filterTitle() }}</span>
+            @if (filterIconSrc()) {
+              <img [src]="filterIconSrc()" alt="" />
+            } @else {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 5h18l-7 8v6l-4-2v-4L3 5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+              </svg>
+            }
+          </button>
+          @if (filterOpen()) {
+            <cc-plan-filter-form
+              id="cc-catalog-filter"
+              [services]="services()"
+              [priceRanges]="priceRanges()"
+              (filterChange)="onFilter($event)"
+            />
           }
-        </button>
-        @if (filterOpen()) {
-          <cc-plan-filter-form
-            [services]="services()"
-            [priceRanges]="priceRanges()"
-            (filterChange)="onFilter($event)"
-          />
-        }
+        </div>
       }
     </div>
   </aside>
 
-  @if (visiblePlans().length) {
-    <div class="cc-catalog__grid">
-      @for (plan of visiblePlans(); track plan.id) {
-        @if (cardTemplate(); as tpl) {
-          <ng-container *ngTemplateOutlet="tpl; context: { $implicit: plan, link: linkFor(plan) }" />
-        } @else {
-          <cc-plan-card
-            [name]="plan.name"
-            [imageSrc]="plan.imgPath"
-            [imageAlt]="plan.name + imageAltSuffix()"
-            [link]="linkFor(plan)"
-            [ctaLabel]="ctaLabel()"
-          />
+  <section class="cc-catalog__results" [attr.aria-busy]="loading()" aria-live="polite">
+    @if (loading()) {
+      <div class="cc-catalog__grid">
+        @for (i of skeletons(); track i) {
+          <cc-plan-card [skeleton]="true" />
         }
-      }
-    </div>
-  } @else {
-    <p class="cc-catalog__empty">{{ emptyMessage() }}</p>
-  }
+      </div>
+    } @else if (visiblePlans().length) {
+      <div class="cc-catalog__grid">
+        @for (plan of visiblePlans(); track plan.id) {
+          @if (cardTemplate(); as tpl) {
+            <ng-container *ngTemplateOutlet="tpl; context: { $implicit: plan, link: linkFor(plan) }" />
+          } @else {
+            <cc-plan-card
+              [name]="plan.name"
+              [imageSrc]="plan.imgPath"
+              [imageAlt]="plan.name + imageAltSuffix()"
+              [meta]="metaFor(plan)"
+              [price]="showPrice() ? plan.price : null"
+              [priceLabel]="priceLabel()"
+              [priceFormat]="priceFormat()"
+              [link]="linkFor(plan)"
+              [ctaLabel]="ctaLabel()"
+              [ctaVariant]="ctaVariant()"
+              [appearance]="cardAppearance()"
+            />
+          }
+        }
+      </div>
+    } @else {
+      <div class="cc-catalog__empty">
+        <p>{{ emptyMessage() }}</p>
+        <div class="cc-catalog__empty-actions">
+          <button ccButton type="button" (click)="showAll()">{{ emptyActionLabel() }}</button>
+          @if (contactHref()) {
+            <a ccButton variant="secondary" [href]="contactHref()" target="_blank" rel="noopener">{{ contactLabel() }}</a>
+          }
+        </div>
+      </div>
+    }
+  </section>
 </div>

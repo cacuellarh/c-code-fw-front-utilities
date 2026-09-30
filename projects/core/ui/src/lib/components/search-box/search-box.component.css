@@ -1,43 +1,62 @@
 :host {
+  --_search-border: var(--cc-search-border, var(--_border-strong));
+  --_search-radius: var(--cc-search-radius, var(--_radius));
   display: block;
 }
 .cc-search {
   display: flex;
   width: 100%;
   margin: 0;
+  border-radius: var(--_search-radius);
+}
+.cc-search:focus-within {
+  outline: var(--_focus-width) solid var(--_focus-ring);
+  outline-offset: var(--_focus-offset);
 }
 .cc-search__input {
   flex: 1;
   min-width: 0;
-  padding: 0 0.75rem;
-  border: 2px solid var(--cc-search-border, #e5e7eb);
+  min-height: var(--_control-height);
+  padding: 0 var(--_space-4);
+  border: 1px solid var(--_search-border);
+  border-right: 0;
+  border-radius: var(--_search-radius) 0 0 var(--_search-radius);
   font: inherit;
-  color: inherit;
-  background: #fff;
+  font-size: var(--_text-md);
+  color: var(--_text);
+  background: var(--cc-search-bg, var(--_canvas));
 }
-.cc-search__input:focus {
+.cc-search__input::placeholder {
+  color: var(--_text-muted);
+  opacity: 1;
+}
+.cc-search__input:focus,
+.cc-search__input:focus-visible {
   outline: none;
-  border-color: var(--cc-accent, var(--cc-secondary, #ceab5d));
 }
 .cc-search__btn {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: center;
-  width: 3rem;
-  min-height: 3rem;
+  width: var(--_control-height);
+  min-height: var(--_control-height);
   padding: 0;
   border: 0;
-  color: var(--cc-on-accent, var(--cc-bg, #f0ffef));
-  background: var(--cc-search-btn-bg, var(--cc-accent, var(--cc-secondary, #ceab5d)));
+  border-radius: 0 var(--_search-radius) var(--_search-radius) 0;
+  color: var(--cc-search-btn-color, var(--_on-accent));
+  background: var(--cc-search-btn-bg, var(--_accent));
   cursor: pointer;
+  transition: background-color var(--_duration-fast) var(--_ease);
 }
-.cc-search__btn:has(img) {
-  background: transparent;
+.cc-search__btn:hover {
+  background: var(--_accent-hover);
 }
-.cc-search__btn img {
-  width: 3rem;
+.cc-search__btn:focus-visible {
+  outline: none;
 }
+.cc-search__btn img,
 .cc-search__btn svg {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }

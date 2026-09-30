@@ -1,0 +1,27 @@
+<div class="cc-sh">
+  @if (eyebrow()) {
+    <p class="cc-sh__eyebrow">{{ eyebrow() }}</p>
+  }
+  <div class="cc-sh__row">
+    @if (iconSrc()) {
+      <img class="cc-sh__icon" [src]="iconSrc()" alt="" />
+    }
+    @switch (level()) {
+      @case ('h1') {
+        <h1 class="cc-sh__title" [attr.id]="headingId()">{{ title() }}</h1>
+      }
+      @case ('h3') {
+        <h3 class="cc-sh__title" [attr.id]="headingId()">{{ title() }}</h3>
+      }
+      @default {
+        <h2 class="cc-sh__title" [attr.id]="headingId()">{{ title() }}</h2>
+      }
+    }
+  </div>
+  @if (rule()) {
+    <span class="cc-sh__rule" aria-hidden="true"></span>
+  }
+  @if (subtitle()) {
+    <p class="cc-sh__subtitle">{{ subtitle() }}</p>
+  }
+</div>

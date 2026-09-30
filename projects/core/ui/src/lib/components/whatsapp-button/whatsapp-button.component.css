@@ -1,36 +1,63 @@
-.cc-wa {
+:host {
+  --_wa-size: var(--cc-whatsapp-size, 3.5rem);
+  --_wa-offset-x: var(--cc-whatsapp-offset-x, var(--_space-5));
+  --_wa-offset-y: var(--cc-whatsapp-offset-y, var(--_space-6));
   position: fixed;
-  z-index: var(--cc-whatsapp-z, 20);
-  right: var(--cc-whatsapp-offset-x, 2rem);
-  bottom: var(--cc-whatsapp-offset-y, 2.5rem);
+  right: var(--_wa-offset-x);
+  bottom: var(--_wa-offset-y);
+  z-index: var(--_z-float);
   display: block;
-  transition: transform 300ms ease-in;
 }
-.cc-wa--left {
+:host(.cc-wa--left) {
   right: auto;
-  left: var(--cc-whatsapp-offset-x, 2rem);
+  left: var(--_wa-offset-x);
+}
+:host(.cc-wa--sm) {
+  --_wa-size: var(--cc-whatsapp-size, var(--_control-height));
+}
+.cc-wa {
+  display: flex;
+  align-items: center;
+  gap: var(--_space-2);
+  border-radius: var(--_radius-pill);
+  text-decoration: none;
+  box-shadow: var(--_shadow-lg);
+  transition:
+    transform var(--_duration) var(--_ease),
+    box-shadow var(--_duration) var(--_ease);
 }
 .cc-wa:hover {
-  transform: scale(1.25);
+  transform: scale(1.08);
+  box-shadow: var(--_shadow-xl);
 }
-.cc-wa__img,
-.cc-wa__svg {
+.cc-wa__icon {
   display: block;
-  width: var(--cc-whatsapp-size, 2.5rem);
-  height: auto;
-  border-radius: 9999px;
-  box-shadow: var(--cc-shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
+  flex: none;
+  width: var(--_wa-size);
+  height: var(--_wa-size);
+  border-radius: var(--_radius-pill);
+}
+:host(.cc-wa--extended) .cc-wa {
+  padding: var(--_space-1) var(--_space-5) var(--_space-1) var(--_space-1);
+  font-weight: var(--_weight-semibold);
+  color: var(--_on-whatsapp);
+  background: var(--_whatsapp);
+}
+:host(.cc-wa--extended) .cc-wa:hover {
+  background: var(--_whatsapp-hover);
+  transform: translateY(-2px);
+}
+:host(.cc-wa--extended) .cc-wa__icon {
+  width: calc(var(--_wa-size) - var(--_space-2));
+  height: calc(var(--_wa-size) - var(--_space-2));
 }
 @media (min-width: 1024px) {
-  .cc-wa {
-    right: var(--cc-whatsapp-offset-x-lg, 3.5rem);
+  :host {
+    right: var(--cc-whatsapp-offset-x-lg, var(--_space-10));
+    bottom: var(--cc-whatsapp-offset-y-lg, var(--_space-8));
   }
-  .cc-wa--left {
+  :host(.cc-wa--left) {
     right: auto;
-    left: var(--cc-whatsapp-offset-x-lg, 3.5rem);
-  }
-  .cc-wa__img,
-  .cc-wa__svg {
-    width: var(--cc-whatsapp-size-lg, 3.5rem);
+    left: var(--cc-whatsapp-offset-x-lg, var(--_space-10));
   }
 }

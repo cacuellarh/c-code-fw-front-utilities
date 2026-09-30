@@ -1,0 +1,45 @@
+:host {
+  display: block;
+}
+.cc-faq-item {
+  border-radius: var(--_radius);
+  background: var(--cc-faq-bg, var(--_surface));
+}
+summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--_space-4);
+  min-height: var(--_control-height);
+  padding: var(--_space-4) var(--_space-5);
+  font-size: var(--_text-md);
+  font-weight: var(--_weight-semibold);
+  line-height: var(--_leading-snug);
+  color: var(--cc-faq-question-color, var(--_text));
+  list-style: none;
+  cursor: pointer;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+.cc-faq-item__chevron {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform var(--_duration) var(--_ease);
+}
+.cc-faq-item[open] .cc-faq-item__chevron {
+  transform: rotate(180deg);
+}
+.cc-faq-item__answer {
+  padding: 0 var(--_space-5) var(--_space-5);
+  line-height: var(--_leading-body);
+  color: var(--cc-faq-answer-color, var(--_text));
+}
+/* Links inside the projected answer. */
+.cc-faq-item__answer ::ng-deep a {
+  color: inherit;
+  font-weight: var(--_weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}

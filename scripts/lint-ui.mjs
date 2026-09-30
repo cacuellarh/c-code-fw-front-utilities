@@ -56,6 +56,20 @@ for (const file of files) {
         errors.push(`${rel(file)}: missing ${base}${ext}.`);
       }
     }
+
+    // Every component resolves the shared tokens first.
+    const styleUrls = source.match(/styleUrls:\s*\[([^\]]*)\]/);
+    if (!styleUrls || !/^\s*'\.\.\/\.\.\/theme\/component-base\.css'/.test(styleUrls[1])) {
+      errors.push(`${rel(file)}: styleUrls must start with '../../theme/component-base.css'.`);
+    }
+
+    // Colors come from roles, never from hex values in the component.
+    const cssFile = join(dirname(file), base + '.css');
+    if (existsSync(cssFile)) {
+      for (const m of readFileSync(cssFile, 'utf8').matchAll(/#[0-9a-fA-F]{3,8}\b/g)) {
+        errors.push(`${rel(cssFile)}: hex color ${m[0]}; use a role variable such as var(--_accent).`);
+      }
+    }
   }
 }
 

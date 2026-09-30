@@ -1,40 +1,142 @@
 :host {
+  --_cat-color: var(--cc-category-color, var(--_text));
+  --_cat-hover-bg: var(--cc-category-hover-bg, color-mix(in srgb, var(--_text) 6%, transparent));
+  --_cat-active-bg: var(--cc-category-active-bg, var(--_accent));
+  --_cat-active-color: var(--cc-category-active-color, var(--_on-accent));
   display: block;
 }
-.cc-cat {
-  width: 100%;
+
+.cc-cat__title {
+  margin: 0 0 var(--_space-3);
+  font-size: var(--_text-sm);
+  font-weight: var(--_weight-semibold);
+  letter-spacing: var(--_tracking-wide);
+  text-transform: uppercase;
+  color: var(--_cat-color);
+}
+.cc-cat__list {
+  display: flex;
   margin: 0;
   padding: 0;
   list-style: none;
-}
-.cc-cat__title {
-  padding: 2rem 0.75rem;
-  font-weight: 600;
-  color: var(--cc-category-color, var(--cc-text, var(--cc-primary, #4c6b4a)));
 }
 .cc-cat__item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 4rem;
-  padding: 0 1.25rem;
-  color: var(--cc-category-color, var(--cc-text, var(--cc-primary, #4c6b4a)));
+  gap: var(--_space-3);
+  width: 100%;
+  min-height: var(--_control-height);
+  padding: var(--_space-2) var(--_space-4);
+  border: 0;
+  border-radius: var(--_radius);
+  font: inherit;
+  font-size: var(--_text-md);
+  color: var(--_cat-color);
+  background: transparent;
   cursor: pointer;
   user-select: none;
-  transition: background-color 150ms, color 150ms;
+  transition:
+    background-color var(--_duration-fast) var(--_ease),
+    color var(--_duration-fast) var(--_ease);
 }
 .cc-cat__item:hover {
-  background: var(--cc-category-hover-bg, rgb(0 0 0 / 0.04));
+  background: var(--_cat-hover-bg);
 }
-.cc-cat__item:focus-visible {
-  outline: 2px solid var(--cc-accent, var(--cc-secondary, #ceab5d));
-  outline-offset: -2px;
-}
-.cc-cat__item--active {
-  font-weight: 700;
-  color: var(--cc-category-active-color, var(--cc-on-accent, var(--cc-bg, #f0ffef)));
-  background: var(--cc-category-active-bg, var(--cc-accent, var(--cc-secondary, #ceab5d)));
-}
+.cc-cat__item--active,
 .cc-cat__item--active:hover {
-  background: var(--cc-category-active-bg, var(--cc-accent, var(--cc-secondary, #ceab5d)));
+  font-weight: var(--_weight-bold);
+  color: var(--_cat-active-color);
+  background: var(--_cat-active-bg);
+}
+.cc-cat__count {
+  min-width: 1.75rem;
+  padding: 0 var(--_space-2);
+  border-radius: var(--_radius-pill);
+  font-size: var(--_text-sm);
+  font-weight: var(--_weight-semibold);
+  line-height: 1.5rem;
+  text-align: center;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* List: vertical, for sidebars. */
+:host(.cc-cat--list) .cc-cat__list {
+  flex-direction: column;
+  gap: var(--_space-1);
+}
+:host(.cc-cat--list) .cc-cat__item {
+  min-height: 3.5rem;
+}
+
+/* Chips: one horizontal row of pills that scrolls when it does not fit. */
+:host(.cc-cat--chips) .cc-cat__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+:host(.cc-cat--chips) .cc-cat__list {
+  gap: var(--_space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: var(--_space-1);
+  margin: calc(-1 * var(--_space-1));
+}
+:host(.cc-cat--chips) .cc-cat__item {
+  width: auto;
+  white-space: nowrap;
+  border: 1px solid var(--cc-category-chip-border, var(--_border-strong));
+  border-radius: var(--_radius-pill);
+}
+:host(.cc-cat--chips) .cc-cat__item--active {
+  border-color: var(--_cat-active-bg);
+}
+
+/* Auto: chips on small screens, list from 1024px. */
+:host(.cc-cat--auto) .cc-cat__list {
+  gap: var(--_space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: var(--_space-1);
+  margin: calc(-1 * var(--_space-1));
+}
+:host(.cc-cat--auto) .cc-cat__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+:host(.cc-cat--auto) .cc-cat__item {
+  width: auto;
+  white-space: nowrap;
+  border: 1px solid var(--cc-category-chip-border, var(--_border-strong));
+  border-radius: var(--_radius-pill);
+}
+:host(.cc-cat--auto) .cc-cat__item--active {
+  border-color: var(--_cat-active-bg);
+}
+@media (min-width: 1024px) {
+  :host(.cc-cat--auto) .cc-cat__title {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+  :host(.cc-cat--auto) .cc-cat__list {
+    flex-direction: column;
+    gap: var(--_space-1);
+    overflow: visible;
+    padding: 0;
+    margin: 0;
+  }
+  :host(.cc-cat--auto) .cc-cat__item {
+    width: 100%;
+    min-height: 3.5rem;
+    border: 0;
+    border-radius: var(--_radius);
+  }
 }

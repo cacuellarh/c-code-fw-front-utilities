@@ -1,0 +1,9 @@
+<details class="cc-faq-item" [open]="open()">
+  <summary>
+    <span>{{ question() }}</span>
+    <svg class="cc-faq-item__chevron" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </summary>
+  <div class="cc-faq-item__answer"><ng-content /></div>
+</details>

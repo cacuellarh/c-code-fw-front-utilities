@@ -1,21 +1,41 @@
 :host {
+  --_social-size: var(--cc-social-icon-size, 1.5rem);
+  --_social-hover: color-mix(in srgb, var(--_text) 10%, transparent);
   display: block;
+}
+:host(.cc-social--sm) {
+  --_social-size: var(--cc-social-icon-size, 1rem);
+}
+:host(.cc-social--lg) {
+  --_social-size: var(--cc-social-icon-size, 2.5rem);
+}
+:host(.cc-social--inverse) {
+  --_social-hover: rgb(255 255 255 / 0.15);
+  --_focus-ring: var(--cc-focus-ring, var(--_on-inverse));
 }
 .cc-social {
   display: flex;
   align-items: center;
+  gap: var(--cc-social-gap, var(--_space-1));
   margin: 0;
   padding: 0;
   list-style: none;
 }
-a {
-  display: block;
-  transition: transform 150ms ease-in;
+.cc-social__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--_control-height);
+  min-height: var(--_control-height);
+  border-radius: var(--_radius-pill);
+  transition: background-color var(--_duration-fast) var(--_ease);
 }
-a:hover {
-  transform: scale(1.1);
+.cc-social__link:hover {
+  background: var(--_social-hover);
 }
-img {
+.cc-social__link img {
   display: block;
-  height: auto;
+  width: var(--_social-size);
+  height: var(--_social-size);
+  object-fit: contain;
 }

@@ -1,45 +1,70 @@
 .cc-modal {
   position: fixed;
   inset: 0;
-  z-index: var(--cc-modal-z, 50);
+  z-index: var(--_z-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-  background: var(--cc-modal-backdrop, rgb(0 0 0 / 0.7));
+  padding: var(--_space-4);
+  background: var(--cc-modal-backdrop, var(--_overlay));
+  animation: cc-modal-fade var(--_duration) var(--_ease);
 }
 .cc-modal__box {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--_space-3);
   width: fit-content;
-  max-width: 92vw;
+  max-width: min(92vw, 36rem);
+}
+.cc-modal__media {
+  display: block;
 }
 .cc-modal__img {
   display: block;
   max-width: 100%;
-  max-height: 85vh;
-  border-radius: var(--cc-modal-radius, 0.5rem);
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  max-height: calc(85vh - var(--_control-height-lg));
+  border-radius: var(--cc-modal-radius, var(--_radius-md));
+  box-shadow: var(--_shadow-xl);
+}
+.cc-modal__content {
+  padding: var(--_space-6);
+  border-radius: var(--cc-modal-radius, var(--_radius-md));
+  color: var(--_text);
+  background: var(--_canvas);
+  box-shadow: var(--_shadow-xl);
 }
 .cc-modal__close {
   position: absolute;
-  top: -0.75rem;
-  right: -0.75rem;
-  width: 2.25rem;
-  height: 2.25rem;
+  top: calc(-1 * var(--_space-3));
+  right: calc(-1 * var(--_space-3));
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: var(--_control-height);
+  height: var(--_control-height);
+  padding: 0;
   border: 0;
-  border-radius: 9999px;
-  background: #fff;
-  color: #374151;
-  font-size: 1.125rem;
-  line-height: 1;
+  border-radius: var(--_radius-pill);
+  color: var(--cc-modal-close-color, var(--_heading));
+  background: var(--cc-modal-close-bg, var(--_canvas));
+  box-shadow: var(--_shadow-lg);
   cursor: pointer;
-  box-shadow: var(--cc-shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
-  transition: transform 150ms, background-color 150ms;
+  transition: transform var(--_duration-fast) var(--_ease);
 }
 .cc-modal__close:hover {
-  background: #f3f4f6;
-  transform: scale(1.1);
+  transform: scale(1.08);
+}
+.cc-modal__close svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+@keyframes cc-modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

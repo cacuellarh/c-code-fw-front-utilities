@@ -1,8 +1,8 @@
-<ul class="cc-social" [style.gap]="gap()">
+<ul class="cc-social">
   @for (link of links(); track link.href) {
     <li>
-      <a [href]="link.href" target="_blank" rel="noopener" [attr.aria-label]="link.label">
-        <img [src]="link.iconSrc" alt="" [style.width]="size()" />
+      <a class="cc-social__link" [href]="link.href" target="_blank" rel="noopener" [attr.aria-label]="link.label">
+        <img [src]="link.iconSrc" alt="" />
       </a>
     </li>
   }

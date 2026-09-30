@@ -8,7 +8,7 @@ import {
   searchPlansByName,
   withCategoryCounts,
 } from './plan.utils';
-import { slugify, titleCase, truncateText, whatsappUrl } from './text.utils';
+import { formatPrice, slugify, titleCase, truncateText, whatsappUrl } from './text.utils';
 
 const jacuzzi = { id: 101, iconPath: 'j.png', name: 'Jacuzzi' };
 const masaje = { id: 103, iconPath: 'm.png', name: 'Masaje' };
@@ -106,5 +106,12 @@ describe('plan utils', () => {
       plans
     );
     expect(counts.map((c) => c.count)).toEqual([1, 2, 0]);
+  });
+});
+
+describe('formatPrice', () => {
+  it('formats Colombian pesos by default and accepts other locales', () => {
+    expect(formatPrice(259900).replace(/\s/g, ' ')).toBe('$ 259.900');
+    expect(formatPrice(1234.5, { locale: 'en-US', currency: 'USD', digits: 2 })).toBe('$1,234.50');
   });
 });

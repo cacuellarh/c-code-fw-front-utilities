@@ -1,9 +1,13 @@
 @if (title()) {
-  <h2 class="cc-faq__title">{{ title() }}</h2>
+  @if (headingLevel() === 'h3') {
+    <h3 class="cc-faq__title">{{ title() }}</h3>
+  } @else {
+    <h2 class="cc-faq__title">{{ title() }}</h2>
+  }
 }
-@for (item of items(); track item.question) {
-  <details class="cc-faq__item">
-    <summary>{{ item.question }}</summary>
-    <p>{{ item.answer }}</p>
-  </details>
-}
+<div class="cc-faq__list">
+  @for (item of items(); track item.question) {
+    <cc-faq-item [question]="item.question">{{ item.answer }}</cc-faq-item>
+  }
+  <ng-content />
+</div>

@@ -1,5 +1,9 @@
-<h2 class="cc-info__title">{{ title() }}</h2>
+@if (headingLevel() === 'h3') {
+  <h3 class="cc-info__title" [attr.id]="headingId()">{{ title() }}</h3>
+} @else {
+  <h2 class="cc-info__title" [attr.id]="headingId()">{{ title() }}</h2>
+}
 @if (text()) {
   <p class="cc-info__text">{{ text() }}</p>
 }
-<ng-content />
+<div class="cc-info__extra"><ng-content /></div>

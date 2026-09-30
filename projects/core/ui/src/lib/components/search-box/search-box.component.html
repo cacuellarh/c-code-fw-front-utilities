@@ -3,7 +3,7 @@
     type="search"
     class="cc-search__input"
     [placeholder]="placeholder()"
-    [attr.aria-label]="placeholder()"
+    [attr.aria-label]="label() || placeholder()"
     [value]="value()"
     (input)="onInput($event)"
   />

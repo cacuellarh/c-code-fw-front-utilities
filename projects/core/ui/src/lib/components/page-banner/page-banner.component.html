@@ -1,4 +1,4 @@
-<div class="cc-banner" [class.cc-banner--plain]="variant() === 'plain'" [class.cc-banner--split]="!!backLink()">
+<div class="cc-banner">
   @if (backLink()) {
     <a class="cc-banner__back" [routerLink]="backLink()" [attr.aria-label]="backLabel()">
       @if (backIconSrc()) {
@@ -10,13 +10,18 @@
       }
     </a>
   }
-  <div class="cc-banner__title">
-    <h1>{{ title() }}</h1>
-    @if (iconSrc()) {
-      <img [src]="iconSrc()" alt="" class="cc-banner__icon" />
+  <div class="cc-banner__text">
+    <div class="cc-banner__title">
+      <h1>{{ title() }}</h1>
+      @if (iconSrc()) {
+        <img [src]="iconSrc()" alt="" class="cc-banner__icon" />
+      }
+    </div>
+    @if (subtitle()) {
+      <p class="cc-banner__subtitle">{{ subtitle() }}</p>
     }
   </div>
   @if (backLink()) {
-    <span class="cc-banner__spacer"></span>
+    <span class="cc-banner__spacer" aria-hidden="true"></span>
   }
 </div>

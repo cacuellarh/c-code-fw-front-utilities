@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;600;700&family=El+Messiri:wght@600;700&display=swap');
 
 html {
   font-family: 'Albert Sans', sans-serif;
@@ -8,16 +8,49 @@ body {
   background: #fff;
 }
 
-/* Xora Spa palette, applied by the toggle in the showcase header. */
+/*
+ * Example site themes. A real site defines its brand variables and maps them to the
+ * --cc-* roles in its own styles.css. Without a theme, the components use neutral grays.
+ */
+.theme-laurel {
+  --laurel-green: #4c6b4a;
+  --laurel-green-dark: #022b04;
+  --laurel-gold: #ceab5d;
+  --laurel-cream: #f8f4ee;
+  --laurel-mint: #f0ffef;
+
+  --cc-surface: var(--laurel-cream);
+  --cc-surface-alt: var(--laurel-mint);
+  --cc-text: var(--laurel-green);
+  --cc-heading: var(--laurel-green);
+  --cc-accent: var(--laurel-gold);
+  --cc-accent-hover: #bf9a45;
+  --cc-accent-text: #7a5c17;
+  --cc-on-accent: var(--laurel-green-dark);
+  --cc-inverse: var(--laurel-green);
+  --cc-inverse-hover: var(--laurel-green-dark);
+  --cc-on-inverse: var(--laurel-mint);
+  --cc-focus-ring: var(--laurel-green-dark);
+  --cc-font-heading: 'El Messiri', sans-serif;
+  --cc-radius: 0.25rem;
+}
+
 .theme-xora {
-  --cc-primary: #66928b;
-  --cc-primary-light: #a7d7cf;
-  --cc-primary-dark: #43615c;
-  --cc-secondary: #dda0a0;
-  --cc-secondary-light: #fff0f0;
-  --cc-secondary-dark: #9e7676;
-  --cc-bg: #fff0f0;
-  --cc-surface: var(--cc-bg);
-  --cc-text: var(--cc-secondary-dark);
-  --cc-heading: var(--cc-secondary-dark);
+  --xora-teal: #66928b;
+  --xora-teal-dark: #43615c;
+  --xora-pink: #dda0a0;
+  --xora-rose: #9e7676;
+  --xora-blush: #fff0f0;
+
+  --cc-surface: var(--xora-blush);
+  --cc-text: #5c4545;
+  --cc-heading: var(--xora-rose);
+  --cc-accent: var(--xora-pink);
+  --cc-accent-hover: #cf8b8b;
+  --cc-accent-text: #7d5555;
+  --cc-on-accent: #3b2626;
+  --cc-inverse: var(--xora-teal-dark);
+  --cc-on-inverse: #ffffff;
+  --cc-heading-style: italic;
+  --cc-radius: 1rem;
 }

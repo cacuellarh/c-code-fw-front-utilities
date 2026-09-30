@@ -1,25 +1,32 @@
 @if (open()) {
   <div class="cc-modal" (click)="closeOnBackdrop() && close()">
     <div
+      #box
       class="cc-modal__box"
       role="dialog"
       aria-modal="true"
       [attr.aria-label]="imageAlt() || null"
       (click)="$event.stopPropagation()"
+      (keydown)="trapFocus($event)"
     >
-      <button type="button" class="cc-modal__close" [attr.aria-label]="closeLabel()" (click)="close()">
-        ✕
+      <button #closeButton type="button" class="cc-modal__close" [attr.aria-label]="closeLabel()" (click)="close()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
       </button>
       @if (imageSrc()) {
         @if (link()) {
-          <a [href]="link()" target="_blank" rel="noopener">
+          <a [href]="link()" target="_blank" rel="noopener" class="cc-modal__media">
             <img [src]="imageSrc()" [alt]="imageAlt()" class="cc-modal__img" />
           </a>
         } @else {
           <img [src]="imageSrc()" [alt]="imageAlt()" class="cc-modal__img" />
         }
       } @else {
-        <ng-content />
+        <div class="cc-modal__content"><ng-content /></div>
+      }
+      @if (ctaHref()) {
+        <a ccButton [variant]="ctaVariant()" size="lg" block class="cc-modal__cta" [href]="ctaHref()" target="_blank" rel="noopener" (click)="close()">
+          {{ ctaLabel() }}
+        </a>
       }
     </div>
   </div>

@@ -1,18 +1,51 @@
-<article class="cc-card">
-  <img
-    class="cc-card__img"
-    [src]="imageSrc()"
-    [alt]="imageAlt() || name()"
-    loading="lazy"
-    decoding="async"
-  />
-  <h2 class="cc-card__name">{{ name() }}</h2>
-  @if (subtitle()) {
-    <p class="cc-card__subtitle">{{ subtitle() }}</p>
-  }
-  @if (link()) {
-    <a class="cc-card__cta" [routerLink]="link()" (click)="ctaClick.emit()">{{ ctaLabel() }}</a>
-  } @else {
-    <button type="button" class="cc-card__cta" (click)="ctaClick.emit()">{{ ctaLabel() }}</button>
-  }
-</article>
+@if (skeleton()) {
+  <article class="cc-card" aria-hidden="true">
+    <div class="cc-card__media cc-card__shimmer"></div>
+    <div class="cc-card__body">
+      <span class="cc-card__line cc-card__shimmer"></span>
+      <span class="cc-card__line cc-card__line--short cc-card__shimmer"></span>
+      <span class="cc-card__line cc-card__line--button cc-card__shimmer"></span>
+    </div>
+  </article>
+} @else {
+  <article class="cc-card" [class.cc-card--linked]="!!link()">
+    <div class="cc-card__media">
+      <img
+        class="cc-card__img"
+        [src]="imageSrc()"
+        [alt]="imageAlt() || name()"
+        width="400"
+        height="400"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+    <div class="cc-card__body">
+      @if (headingLevel() === 'h3') {
+        <h3 class="cc-card__name">{{ name() }}</h3>
+      } @else {
+        <h2 class="cc-card__name">{{ name() }}</h2>
+      }
+      @if (meta()) {
+        <p class="cc-card__meta">{{ meta() }}</p>
+      }
+      @if (formattedPrice()) {
+        <p class="cc-card__price">
+          @if (priceLabel()) {
+            <span class="cc-card__price-label">{{ priceLabel() }}</span>
+          }
+          {{ formattedPrice() }}
+        </p>
+      }
+      <div class="cc-card__actions">
+        @if (link()) {
+          <a ccButton [variant]="ctaVariant()" block class="cc-card__cta" [routerLink]="link()" [queryParams]="queryParams()" (click)="ctaClick.emit()">
+            {{ ctaLabel() }}<span class="cc-sr-only">: {{ name() }}</span>
+          </a>
+        } @else {
+          <button ccButton [variant]="ctaVariant()" block type="button" (click)="ctaClick.emit()">{{ ctaLabel() }}</button>
+        }
+      </div>
+    </div>
+  </article>
+}

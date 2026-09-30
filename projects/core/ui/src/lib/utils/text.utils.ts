@@ -36,3 +36,23 @@ export function whatsappUrl(phone: string, message?: string): string {
   params.set('app_absent', '0');
   return `https://api.whatsapp.com/send/?${params.toString()}`;
 }
+
+export interface PriceFormat {
+  /** BCP 47 locale. Defaults to "es-CO", which prints 259900 as "$ 259.900". */
+  locale?: string;
+  /** ISO 4217 code. Defaults to "COP". */
+  currency?: string;
+  /** Decimals to show. Defaults to 0. */
+  digits?: number;
+}
+
+/** Formats a price with `Intl.NumberFormat`: formatPrice(259900) -> "$ 259.900". */
+export function formatPrice(value: number, { locale = 'es-CO', currency = 'COP', digits = 0 }: PriceFormat = {}): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    currencyDisplay: 'narrowSymbol',
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
+}

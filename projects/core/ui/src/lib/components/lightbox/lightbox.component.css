@@ -1,49 +1,96 @@
+:host {
+  --_lb-color: var(--cc-lightbox-color, var(--_on-inverse));
+  --_lb-control-bg: var(--cc-lightbox-control-bg, rgb(255 255 255 / 0.14));
+  --_focus-ring: var(--cc-focus-ring, var(--_lb-color));
+}
 .cc-lb {
   position: fixed;
   inset: 0;
-  z-index: var(--cc-lightbox-z, 50);
+  z-index: var(--_z-overlay);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--_space-4);
+  padding: var(--_space-4);
+  color: var(--_lb-color);
+  background: var(--cc-lightbox-backdrop, rgb(0 0 0 / 0.92));
+}
+.cc-lb__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.cc-lb__counter {
+  font-size: var(--_text-sm);
+  font-weight: var(--_weight-semibold);
+  opacity: 0.85;
+}
+.cc-lb__figure {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--_space-3);
+  min-height: 0;
+  margin: 0;
+}
+.cc-lb__img {
+  max-width: 100%;
+  max-height: calc(100% - 3rem);
+  object-fit: contain;
+  border-radius: var(--_radius-md);
+  box-shadow: var(--_shadow-lg);
+}
+.cc-lb__caption {
+  font-size: var(--_text-md);
+  text-align: center;
+}
+.cc-lb__nav {
+  display: flex;
+  gap: var(--_space-4);
+}
+.cc-lb__btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--cc-lightbox-backdrop, rgb(0 0 0 / 0.9));
-}
-.cc-lb__img {
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 0.5rem;
-  box-shadow: var(--cc-shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
-}
-.cc-lb__btn {
-  position: absolute;
-  padding: 0.5rem;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
   border: 0;
-  font-weight: 700;
-  line-height: 1;
-  color: #fff;
-  background: transparent;
+  border-radius: var(--_radius-pill);
+  color: var(--_lb-color);
+  background: var(--_lb-control-bg);
   cursor: pointer;
+  transition: background-color var(--_duration-fast) var(--_ease);
 }
-.cc-lb__close {
-  top: 1.25rem;
-  right: 1.25rem;
-  font-size: 1.875rem;
+.cc-lb__btn:hover {
+  background: rgb(255 255 255 / 0.26);
 }
-.cc-lb__prev,
-.cc-lb__next {
-  font-size: 2.5rem;
+.cc-lb__btn svg {
+  width: 1.5rem;
+  height: 1.5rem;
 }
-.cc-lb__prev {
-  left: 1.25rem;
-}
-.cc-lb__next {
-  right: 1.25rem;
-}
-.cc-lb__caption {
-  position: absolute;
-  bottom: 2.5rem;
-  margin: 0;
-  padding: 0 1rem;
-  font-size: 1.125rem;
-  text-align: center;
-  color: #fff;
+@media (min-width: 1024px) {
+  .cc-lb {
+    padding: var(--_space-6) var(--_space-8);
+  }
+  /* On large screens the arrows sit at the sides of the photo. */
+  .cc-lb__nav {
+    position: absolute;
+    top: 50%;
+    left: var(--_space-6);
+    right: var(--_space-6);
+    justify-content: space-between;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+  .cc-lb__nav .cc-lb__btn {
+    pointer-events: auto;
+  }
+  .cc-lb__figure {
+    padding: 0 var(--_space-16);
+  }
 }

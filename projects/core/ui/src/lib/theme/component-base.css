@@ -1,0 +1,136 @@
+/*
+ * Shared base for every @c-code/c-code-fw/ui component. Each component lists this file
+ * first in `styleUrls`, so the rules below are scoped to that component.
+ *
+ * The library does not own any brand. It reads a contract of semantic roles (--cc-*)
+ * that each site defines from its own palette and fonts, and resolves them into private
+ * --_* variables on the component host. Without a site theme, components render in
+ * neutral grays. Resolution happens on each host, so a role set on any ancestor element
+ * re-themes the components inside it.
+ *
+ * Structure (spacing, type scale, radii, shadows, motion) does belong to the library:
+ * those tokens have library defaults and components expose props to pick from them.
+ */
+:host {
+  /* ---- Color roles: defined by the site ---- */
+  --_canvas: var(--cc-canvas, #ffffff); /* page background behind components */
+  --_surface: var(--cc-surface, #f5f5f4); /* cards, panels */
+  --_surface-alt: var(--cc-surface-alt, #fafaf9); /* alternative band, image placeholders */
+  --_text: var(--cc-text, #292524);
+  --_text-muted: var(--cc-text-muted, color-mix(in srgb, var(--_text) 72%, transparent));
+  --_heading: var(--cc-heading, #1c1917);
+  --_accent: var(--cc-accent, #1c1917); /* primary buttons, active items */
+  --_accent-hover: var(--cc-accent-hover, #44403c);
+  --_accent-text: var(--cc-accent-text, var(--_heading)); /* accent used as text, ≥4.5:1 */
+  --_on-accent: var(--cc-on-accent, #ffffff);
+  --_inverse: var(--cc-inverse, #1c1917); /* dark blocks: price badge, dark buttons */
+  --_inverse-hover: var(--cc-inverse-hover, #000000);
+  --_on-inverse: var(--cc-on-inverse, #ffffff);
+  --_border: var(--cc-border, #d6d3d1);
+  --_border-strong: var(--cc-border-strong, #78716c); /* inputs, ≥3:1 on white */
+  --_focus-ring: var(--cc-focus-ring, var(--_heading));
+  --_overlay: var(--cc-overlay, rgb(0 0 0 / 0.7));
+  --_danger: var(--cc-danger, #b91c1c);
+  --_danger-surface: var(--cc-danger-surface, #fef2f2);
+  --_on-danger-surface: var(--cc-on-danger-surface, #7f1d1d);
+  --_whatsapp: var(--cc-whatsapp, #1faf38);
+  --_whatsapp-hover: var(--cc-whatsapp-hover, #17902d);
+  --_on-whatsapp: var(--cc-on-whatsapp, #ffffff);
+
+  /* ---- Typography roles: defined by the site ---- */
+  --_font-body: var(--cc-font-body, inherit);
+  --_font-heading: var(--cc-font-heading, inherit);
+  --_heading-style: var(--cc-heading-style, normal); /* normal | italic */
+  --_heading-transform: var(--cc-heading-transform, none); /* none | uppercase */
+  --_heading-tracking: var(--cc-heading-tracking, normal);
+
+  /* ---- Structure: owned by the library ---- */
+  --_text-xs: var(--cc-text-xs, 0.75rem);
+  --_text-sm: var(--cc-text-sm, 0.875rem);
+  --_text-md: var(--cc-text-md, 1rem);
+  --_text-lg: var(--cc-text-lg, 1.125rem);
+  --_text-xl: var(--cc-text-xl, 1.25rem);
+  --_text-2xl: var(--cc-text-2xl, 1.5rem);
+  --_text-3xl: var(--cc-text-3xl, clamp(1.625rem, 1.2rem + 1.6vw, 2rem));
+  --_text-4xl: var(--cc-text-4xl, clamp(2rem, 1.4rem + 2.4vw, 2.75rem));
+  --_leading-tight: var(--cc-leading-tight, 1.2);
+  --_leading-snug: var(--cc-leading-snug, 1.4);
+  --_leading-body: var(--cc-leading-body, 1.6);
+  --_weight-regular: var(--cc-weight-regular, 400);
+  --_weight-medium: var(--cc-weight-medium, 500);
+  --_weight-semibold: var(--cc-weight-semibold, 600);
+  --_weight-bold: var(--cc-weight-bold, 700);
+  --_tracking-wide: var(--cc-tracking-wide, 0.04em);
+
+  --_space-1: var(--cc-space-1, 0.25rem);
+  --_space-2: var(--cc-space-2, 0.5rem);
+  --_space-3: var(--cc-space-3, 0.75rem);
+  --_space-4: var(--cc-space-4, 1rem);
+  --_space-5: var(--cc-space-5, 1.25rem);
+  --_space-6: var(--cc-space-6, 1.5rem);
+  --_space-8: var(--cc-space-8, 2rem);
+  --_space-10: var(--cc-space-10, 2.5rem);
+  --_space-12: var(--cc-space-12, 3rem);
+  --_space-16: var(--cc-space-16, 4rem);
+  --_space-20: var(--cc-space-20, 5rem);
+  --_space-24: var(--cc-space-24, 6rem);
+
+  --_radius: var(--cc-radius, 0);
+  --_radius-sm: var(--cc-radius-sm, 0.125rem);
+  --_radius-md: var(--cc-radius-md, 0.5rem);
+  --_radius-lg: var(--cc-radius-lg, 1rem);
+  --_radius-pill: var(--cc-radius-pill, 9999px);
+  --_shadow-sm: var(--cc-shadow-sm, 0 1px 2px 0 rgb(0 0 0 / 0.05));
+  --_shadow: var(--cc-shadow, 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1));
+  --_shadow-lg: var(--cc-shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1));
+  --_shadow-xl: var(--cc-shadow-xl, 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1));
+
+  --_focus-width: var(--cc-focus-width, 2px);
+  --_focus-offset: var(--cc-focus-offset, 2px);
+  --_control-height: var(--cc-control-height, 2.75rem);
+  --_control-height-sm: var(--cc-control-height-sm, 2.25rem);
+  --_control-height-lg: var(--cc-control-height-lg, 3.25rem);
+  --_duration-fast: var(--cc-duration-fast, 150ms);
+  --_duration: var(--cc-duration, 250ms);
+  --_ease: var(--cc-ease, cubic-bezier(0.2, 0, 0, 1));
+  --_z-float: var(--cc-z-float, 20);
+  --_z-sticky: var(--cc-z-sticky, 30);
+  --_z-overlay: var(--cc-z-overlay, 50);
+
+  box-sizing: border-box;
+  font-family: var(--_font-body);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:focus-visible {
+  outline: var(--_focus-width) solid var(--_focus-ring);
+  outline-offset: var(--_focus-offset);
+}
+
+/* Visually hidden text for screen readers. */
+.cc-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

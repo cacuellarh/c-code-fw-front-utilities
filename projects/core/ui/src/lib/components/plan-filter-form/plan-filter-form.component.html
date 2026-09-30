@@ -2,7 +2,7 @@
   @if (services().length) {
     <label class="cc-filter__field">
       <span>{{ serviceLabel() }}</span>
-      <select (change)="serviceIndex.set(toIndex($event))">
+      <select (change)="onServiceChange($event)">
         <option value="-1" [selected]="serviceIndex() === -1">{{ anyLabel() }}</option>
         @for (service of services(); track $index) {
           <option [value]="$index" [selected]="serviceIndex() === $index">{{ service.name }}</option>
@@ -13,7 +13,7 @@
   @if (priceRanges().length) {
     <label class="cc-filter__field">
       <span>{{ priceLabel() }}</span>
-      <select (change)="rangeIndex.set(toIndex($event))">
+      <select (change)="onRangeChange($event)">
         <option value="-1" [selected]="rangeIndex() === -1">{{ anyLabel() }}</option>
         @for (range of priceRanges(); track $index) {
           <option [value]="$index" [selected]="rangeIndex() === $index">{{ range.description }}</option>
@@ -22,7 +22,11 @@
     </label>
   }
   <div class="cc-filter__actions">
-    <button type="submit" class="cc-filter__submit">{{ submitLabel() }}</button>
-    <button type="button" class="cc-filter__reset" (click)="reset()">{{ resetLabel() }}</button>
+    @if (mode() === 'submit') {
+      <button ccButton size="sm" type="submit">{{ submitLabel() }}</button>
+    }
+    @if (mode() === 'submit' || hasSelection()) {
+      <button ccButton variant="ghost" size="sm" type="button" (click)="reset()">{{ resetLabel() }}</button>
+    }
   </div>
 </form>

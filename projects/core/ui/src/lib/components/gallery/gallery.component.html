@@ -1,8 +1,13 @@
-<ul class="cc-gallery" [style.background-image]="backgroundImage() ? 'url(' + backgroundImage() + ')' : null">
+<ul class="cc-gallery" [class.cc-gallery--bg]="!!backgroundImage()" [style.background-image]="backgroundImage() ? 'url(' + backgroundImage() + ')' : null">
   @for (image of images(); track image.src; let i = $index) {
     <li>
-      <button type="button" class="cc-gallery__item" [attr.aria-label]="openLabel() + ': ' + (image.alt ?? image.caption ?? i + 1)" (click)="open.set(i)">
-        <img [src]="image.thumb ?? image.src" [alt]="image.alt ?? image.caption ?? ''" loading="lazy" decoding="async" />
+      <button
+        type="button"
+        class="cc-gallery__item"
+        [attr.aria-label]="openLabel() + ': ' + (image.alt ?? image.caption ?? i + 1)"
+        (click)="open.set(i)"
+      >
+        <img [src]="image.thumb ?? image.src" [alt]="image.alt ?? image.caption ?? ''" width="400" height="400" loading="lazy" decoding="async" />
       </button>
     </li>
   }

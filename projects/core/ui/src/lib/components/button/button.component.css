@@ -1,0 +1,90 @@
+:host {
+  --_btn-bg: var(--cc-btn-bg, var(--_accent));
+  --_btn-color: var(--cc-btn-color, var(--_on-accent));
+  --_btn-hover-bg: var(--cc-btn-hover-bg, var(--_accent-hover));
+  --_btn-hover-color: var(--cc-btn-hover-color, var(--_btn-color));
+  --_btn-border: var(--cc-btn-border, transparent);
+  --_btn-padding-x: var(--cc-btn-padding-x, var(--_space-6));
+  --_btn-height: var(--_control-height);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--_space-2);
+  min-height: var(--_btn-height);
+  padding: var(--_space-2) var(--_btn-padding-x);
+  border: 2px solid var(--_btn-border);
+  border-radius: var(--cc-btn-radius, var(--_radius));
+  font: inherit;
+  font-size: var(--_text-md);
+  font-weight: var(--cc-btn-font-weight, var(--_weight-semibold));
+  letter-spacing: var(--cc-btn-letter-spacing, var(--_tracking-wide));
+  line-height: var(--_leading-tight);
+  text-align: center;
+  text-decoration: none;
+  text-transform: var(--cc-btn-text-transform, none);
+  color: var(--_btn-color);
+  background: var(--_btn-bg);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--_duration) var(--_ease),
+    color var(--_duration) var(--_ease),
+    border-color var(--_duration) var(--_ease),
+    box-shadow var(--_duration) var(--_ease);
+}
+:host(:hover) {
+  color: var(--_btn-hover-color);
+  background: var(--_btn-hover-bg);
+}
+:host(:focus-visible) {
+  outline: var(--_focus-width) solid var(--_focus-ring);
+  outline-offset: var(--_focus-offset);
+}
+:host(:disabled),
+:host([aria-disabled='true']) {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+:host(.cc-btn--secondary) {
+  --_btn-bg: var(--cc-btn-bg, transparent);
+  --_btn-color: var(--cc-btn-color, var(--_accent-text));
+  --_btn-border: var(--cc-btn-border, var(--_accent));
+  --_btn-hover-bg: var(--cc-btn-hover-bg, var(--_accent));
+  --_btn-hover-color: var(--cc-btn-hover-color, var(--_on-accent));
+}
+:host(.cc-btn--ghost) {
+  --_btn-bg: var(--cc-btn-bg, transparent);
+  --_btn-color: var(--cc-btn-color, var(--_text));
+  --_btn-hover-bg: var(--cc-btn-hover-bg, color-mix(in srgb, var(--_text) 8%, transparent));
+  --_btn-padding-x: var(--cc-btn-padding-x, var(--_space-3));
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+:host(.cc-btn--whatsapp) {
+  --_btn-bg: var(--cc-btn-bg, var(--_whatsapp));
+  --_btn-color: var(--cc-btn-color, var(--_on-whatsapp));
+  --_btn-hover-bg: var(--cc-btn-hover-bg, var(--_whatsapp-hover));
+}
+:host(.cc-btn--inverse) {
+  --_btn-bg: var(--cc-btn-bg, var(--_inverse));
+  --_btn-color: var(--cc-btn-color, var(--_on-inverse));
+  --_btn-hover-bg: var(--cc-btn-hover-bg, var(--_inverse-hover));
+}
+
+:host(.cc-btn--sm) {
+  --_btn-height: var(--_control-height-sm);
+  --_btn-padding-x: var(--cc-btn-padding-x, var(--_space-4));
+  font-size: var(--_text-sm);
+}
+:host(.cc-btn--lg) {
+  --_btn-height: var(--_control-height-lg);
+  --_btn-padding-x: var(--cc-btn-padding-x, var(--_space-10));
+  font-size: var(--_text-lg);
+}
+:host(.cc-btn--block) {
+  display: flex;
+  width: 100%;
+}

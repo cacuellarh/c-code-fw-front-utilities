@@ -1,0 +1,28 @@
+:host {
+  --_notice-accent: var(--cc-notice-border, var(--_accent));
+  --_notice-bg: var(--cc-notice-bg, var(--_surface));
+  --_notice-color: var(--cc-notice-color, var(--_text));
+  display: block;
+  padding: var(--_space-4) var(--_space-5);
+  border-left: 4px solid var(--_notice-accent);
+  border-radius: var(--_radius);
+  color: var(--_notice-color);
+  background: var(--_notice-bg);
+  line-height: var(--_leading-body);
+}
+:host(.cc-notice--warning) {
+  --_notice-accent: var(--cc-notice-border, var(--_danger));
+  --_notice-bg: var(--cc-notice-bg, var(--_danger-surface));
+  --_notice-color: var(--cc-notice-color, var(--_on-danger-surface));
+}
+:host(.cc-notice--success) {
+  --_notice-accent: var(--cc-notice-border, var(--_inverse));
+  --_notice-bg: var(--cc-notice-bg, var(--_surface-alt));
+}
+.cc-notice__title {
+  margin: 0 0 var(--_space-1);
+  font-weight: var(--_weight-bold);
+}
+.cc-notice__body {
+  font-size: var(--_text-md);
+}
