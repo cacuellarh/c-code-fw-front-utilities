@@ -1,0 +1,20 @@
+<form class="cc-search" role="search" (submit)="$event.preventDefault(); search.emit(value())">
+  <input
+    type="search"
+    class="cc-search__input"
+    [placeholder]="placeholder()"
+    [attr.aria-label]="placeholder()"
+    [value]="value()"
+    (input)="onInput($event)"
+  />
+  <button type="submit" class="cc-search__btn" [attr.aria-label]="buttonLabel()">
+    @if (iconSrc()) {
+      <img [src]="iconSrc()" alt="" />
+    } @else {
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
+        <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+    }
+  </button>
+</form>

@@ -31,8 +31,93 @@
             "polyfills": [
               "zone.js",
               "zone.js/testing"
+            ],
+            "include": [
+              "**/*.spec.ts",
+              "../ui/**/*.spec.ts"
             ]
           }
+        }
+      }
+    },
+    "c-code-api-base": {
+      "projectType": "library",
+      "root": "projects/c-code-api-base",
+      "sourceRoot": "projects/c-code-api-base/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/c-code-api-base/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/c-code-api-base/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/c-code-api-base/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/c-code-api-base/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
+    },
+    "showcase": {
+      "projectType": "application",
+      "root": "projects/showcase",
+      "sourceRoot": "projects/showcase/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist/showcase",
+            "index": "projects/showcase/src/index.html",
+            "browser": "projects/showcase/src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "projects/showcase/tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "../../medellin-spa/src/assets",
+                "output": "assets"
+              }
+            ],
+            "styles": [
+              "projects/core/ui/src/lib/theme/tokens.css",
+              "projects/showcase/src/styles.css"
+            ]
+          },
+          "configurations": {
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "configurations": {
+            "development": {
+              "buildTarget": "showcase:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
         }
       }
     }

@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../out-tsc/showcase",
+    "types": [],
+    "paths": {
+      "@c-code/c-code-fw/ui": ["./projects/core/ui/src/public-api.ts"]
+    },
+    "baseUrl": "../.."
+  },
+  "files": ["src/main.ts"]
+}

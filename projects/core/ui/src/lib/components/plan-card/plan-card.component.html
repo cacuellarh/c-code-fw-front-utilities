@@ -1,0 +1,18 @@
+<article class="cc-card">
+  <img
+    class="cc-card__img"
+    [src]="imageSrc()"
+    [alt]="imageAlt() || name()"
+    loading="lazy"
+    decoding="async"
+  />
+  <h2 class="cc-card__name">{{ name() }}</h2>
+  @if (subtitle()) {
+    <p class="cc-card__subtitle">{{ subtitle() }}</p>
+  }
+  @if (link()) {
+    <a class="cc-card__cta" [routerLink]="link()" (click)="ctaClick.emit()">{{ ctaLabel() }}</a>
+  } @else {
+    <button type="button" class="cc-card__cta" (click)="ctaClick.emit()">{{ ctaLabel() }}</button>
+  }
+</article>

@@ -1,0 +1,70 @@
+:host {
+  display: block;
+}
+.cc-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+.cc-catalog__side {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+}
+.cc-catalog__panel {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1.25rem;
+  background: var(--cc-catalog-panel-bg, var(--cc-surface, var(--cc-secondary-light, #f8f4ee)));
+}
+.cc-catalog__rule {
+  height: 0.1rem;
+  margin: 0 0 1.5rem;
+  border: 0;
+  background: #d1d5db;
+}
+.cc-catalog__filter-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 1.25rem;
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--cc-text, var(--cc-primary, #4c6b4a));
+  background: transparent;
+  cursor: pointer;
+}
+.cc-catalog__filter-toggle img,
+.cc-catalog__filter-toggle svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+.cc-catalog__grid {
+  display: grid;
+  /* As many columns as fit a card; set --cc-catalog-column-min to change it. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--cc-catalog-column-min, 15rem)), 1fr));
+  gap: 2rem 1.5rem;
+  width: 100%;
+  height: auto;
+  place-items: center;
+  align-content: start;
+}
+.cc-catalog__empty {
+  width: 100%;
+  margin: 0;
+  font-size: 1.5rem;
+  text-align: center;
+  color: var(--cc-accent, var(--cc-secondary, #ceab5d));
+}
+@media (min-width: 1024px) {
+  .cc-catalog {
+    flex-direction: row;
+  }
+  .cc-catalog__side {
+    flex: none;
+    width: 24rem;
+  }
+}

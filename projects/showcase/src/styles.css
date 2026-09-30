@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;700&display=swap');
+
+html {
+  font-family: 'Albert Sans', sans-serif;
+}
+body {
+  margin: 0;
+  background: #fff;
+}
+
+/* Xora Spa palette, applied by the toggle in the showcase header. */
+.theme-xora {
+  --cc-primary: #66928b;
+  --cc-primary-light: #a7d7cf;
+  --cc-primary-dark: #43615c;
+  --cc-secondary: #dda0a0;
+  --cc-secondary-light: #fff0f0;
+  --cc-secondary-dark: #9e7676;
+  --cc-bg: #fff0f0;
+  --cc-surface: var(--cc-bg);
+  --cc-text: var(--cc-secondary-dark);
+  --cc-heading: var(--cc-secondary-dark);
+}

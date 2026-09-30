@@ -1,0 +1,49 @@
+.cc-lb {
+  position: fixed;
+  inset: 0;
+  z-index: var(--cc-lightbox-z, 50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cc-lightbox-backdrop, rgb(0 0 0 / 0.9));
+}
+.cc-lb__img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 0.5rem;
+  box-shadow: var(--cc-shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
+}
+.cc-lb__btn {
+  position: absolute;
+  padding: 0.5rem;
+  border: 0;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: transparent;
+  cursor: pointer;
+}
+.cc-lb__close {
+  top: 1.25rem;
+  right: 1.25rem;
+  font-size: 1.875rem;
+}
+.cc-lb__prev,
+.cc-lb__next {
+  font-size: 2.5rem;
+}
+.cc-lb__prev {
+  left: 1.25rem;
+}
+.cc-lb__next {
+  right: 1.25rem;
+}
+.cc-lb__caption {
+  position: absolute;
+  bottom: 2.5rem;
+  margin: 0;
+  padding: 0 1rem;
+  font-size: 1.125rem;
+  text-align: center;
+  color: #fff;
+}

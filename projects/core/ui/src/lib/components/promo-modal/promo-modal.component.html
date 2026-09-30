@@ -1,0 +1,26 @@
+@if (open()) {
+  <div class="cc-modal" (click)="closeOnBackdrop() && close()">
+    <div
+      class="cc-modal__box"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="imageAlt() || null"
+      (click)="$event.stopPropagation()"
+    >
+      <button type="button" class="cc-modal__close" [attr.aria-label]="closeLabel()" (click)="close()">
+        ✕
+      </button>
+      @if (imageSrc()) {
+        @if (link()) {
+          <a [href]="link()" target="_blank" rel="noopener">
+            <img [src]="imageSrc()" [alt]="imageAlt()" class="cc-modal__img" />
+          </a>
+        } @else {
+          <img [src]="imageSrc()" [alt]="imageAlt()" class="cc-modal__img" />
+        }
+      } @else {
+        <ng-content />
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,54 @@
+:host {
+  display: block;
+  width: 100%;
+  max-width: var(--cc-plan-card-width, 22rem);
+}
+.cc-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  height: var(--cc-plan-card-height, 24rem);
+  padding: 1.25rem;
+  background: var(--cc-plan-card-bg, var(--cc-surface, var(--cc-secondary-light, #f8f4ee)));
+  border-radius: var(--cc-radius, 0);
+  box-shadow: var(--cc-shadow, 0 4px 6px -1px rgb(0 0 0 / 0.1));
+}
+@media (min-width: 1024px) {
+  :host {
+    max-width: var(--cc-plan-card-width-lg, 15rem);
+  }
+}
+.cc-card__img {
+  width: 13rem;
+  max-width: 100%;
+  box-shadow: var(--cc-shadow, 0 4px 6px -1px rgb(0 0 0 / 0.1));
+}
+.cc-card__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 400;
+  text-align: center;
+  color: var(--cc-plan-card-color, inherit);
+}
+.cc-card__subtitle {
+  margin: 0;
+  font-weight: 600;
+  color: var(--cc-heading, var(--cc-primary, #4c6b4a));
+}
+.cc-card__cta {
+  padding: 0.5rem 1.5rem;
+  border: 0;
+  font: inherit;
+  text-decoration: none;
+  color: var(--cc-on-accent, var(--cc-bg, #f0ffef));
+  background: var(--cc-plan-card-cta-bg, var(--cc-accent, var(--cc-secondary, #ceab5d)));
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 300ms ease-in, color 300ms ease-in;
+}
+.cc-card__cta:hover {
+  background: var(--cc-plan-card-cta-hover-bg, var(--cc-accent-hover, var(--cc-secondary-dark, #9a7521)));
+}

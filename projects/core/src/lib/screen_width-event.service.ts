@@ -1,8 +1,8 @@
-import { DestroyRef, inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, fromEvent } from 'rxjs';
-import { ScreenWidthType } from './types/screen_width-type';
 import { isPlatformBrowser } from '@angular/common';
+import { ScreenWidthType } from './types/screen_width-type';
 
 /**
  * Tailwind CSS Breakpoints:
@@ -16,30 +16,35 @@ import { isPlatformBrowser } from '@angular/common';
 
 // @Service: ScreenWidthEventService
 @Injectable({
-  providedIn: 'root',
+  providedIn:'root'
 })
-export class ScreenWidthEventService {
+export class ScreenWidthEventService2 {
   // @Property: Stores the current screen width
-  private screenWidth: number = window.innerWidth;
+  private screenWidth!: number
 
   // @Property: Stores the current screen height
-  private screenHeight: number = window.innerHeight;
+  private screenHeight!: number
 
   // @Property: Platform ID for browser/server detection
-  private platformId = inject(PLATFORM_ID);
+  private platformId!: Object;
 
   // @Property: DestroyRef for managing subscriptions
-  private destroyRef = inject(DestroyRef);
+  private destroyRef!: DestroyRef;
+  private currentWindow!: Window;
 
-  /**
-   * @Constructor
-   * @Description: Initializes the screen width and height if running in a browser environment
-   */
-  constructor() {
+  setWindows(currentWindow: Window): void {
     if (isPlatformBrowser(this.platformId)) {
-      this.screenWidth = window.innerWidth;
-      this.screenHeight = window.innerHeight;
+      this.currentWindow = currentWindow;
+      this.screenWidth = currentWindow.innerWidth;
+      this.screenHeight = currentWindow.innerHeight;
     }
+  }
+
+  setPlatformId(platformId: Object): void {
+    this.platformId = platformId;
+  }
+  setDestroyRef(destroyRef: DestroyRef): void {
+    this.destroyRef = destroyRef;
   }
 
   /**
@@ -104,7 +109,10 @@ export class ScreenWidthEventService {
    */
   private onResize(func: () => void, debounceTimeValue: number = 200): void {
     if (isPlatformBrowser(this.platformId)) {
-      fromEvent(window, 'resize')
+      if(this.currentWindow === undefined){
+        throw new Error('The current window is not set. Please call setWindows() first.');
+      }
+      fromEvent(this.currentWindow, 'resize')
         .pipe(
           debounceTime(debounceTimeValue),
           takeUntilDestroyed(this.destroyRef)

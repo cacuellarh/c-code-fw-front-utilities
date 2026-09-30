@@ -1,0 +1,45 @@
+/*
+ * Design tokens for @c-code/c-code-fw/ui.
+ *
+ * The components already fall back to these values, so this file is optional.
+ * To apply a site's palette, set the variables in its global styles:
+ *
+ *   :root {
+ *     --cc-primary: #4C6B4A;
+ *     --cc-secondary: #CEAB5D;
+ *   }
+ *
+ * The overrides work on any element, not just :root, so a section can use its own palette.
+ *
+ * ROLES (optional). By default each role follows a palette color. Set a role only
+ * when a site needs it to differ from its palette:
+ *
+ *   --cc-surface       cards, sidebar, detail panel  (default --cc-secondary-light)
+ *   --cc-text          text inside components        (default --cc-primary)
+ *   --cc-heading       titles and the price badge    (default --cc-primary)
+ *   --cc-accent        buttons and highlighted text  (default --cc-secondary)
+ *   --cc-accent-hover  button hover                  (default --cc-secondary-dark)
+ *   --cc-on-accent     text on buttons and badges    (default --cc-bg)
+ *
+ * Each component also has its own variables (for example --cc-plan-card-bg).
+ * They are listed in the README.
+ */
+:root {
+  /* Palette */
+  --cc-primary: #4c6b4a;
+  --cc-primary-light: #a0ba9e;
+  --cc-primary-dark: #022b04;
+  --cc-secondary: #ceab5d;
+  --cc-secondary-light: #f8f4ee;
+  --cc-secondary-dark: #9a7521;
+  --cc-bg: #f0ffef;
+
+  /* Typography */
+  --cc-font-body: inherit;
+  --cc-font-heading: inherit;
+
+  /* Shape */
+  --cc-radius: 0;
+  --cc-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --cc-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}

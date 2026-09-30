@@ -1,0 +1,51 @@
+:host {
+  display: block;
+}
+.cc-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 1.25rem;
+  padding: 0.5rem 1.25rem;
+  text-align: center;
+  background: var(--cc-banner-bg, var(--cc-surface, var(--cc-secondary-light, #f8f4ee)));
+}
+.cc-banner--plain {
+  margin-bottom: 2.5rem;
+  background: var(--cc-banner-bg, var(--cc-bg, #f0ffef));
+}
+.cc-banner--split {
+  justify-content: space-between;
+}
+.cc-banner__title {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+h1 {
+  margin: 0;
+  font-family: var(--cc-font-heading, inherit);
+  font-size: var(--cc-banner-font-size, 2rem);
+  font-weight: 700;
+  color: var(--cc-banner-color, var(--cc-heading, var(--cc-primary, #4c6b4a)));
+}
+.cc-banner__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+.cc-banner__back {
+  display: flex;
+  color: var(--cc-banner-color, var(--cc-heading, var(--cc-primary, #4c6b4a)));
+  transition: transform 300ms ease-in;
+}
+.cc-banner__back:hover {
+  transform: scale(1.25);
+}
+.cc-banner__back img,
+.cc-banner__back svg,
+.cc-banner__spacer {
+  width: 2rem;
+  height: 2rem;
+}

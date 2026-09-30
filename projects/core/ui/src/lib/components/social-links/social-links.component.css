@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+.cc-social {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+a {
+  display: block;
+  transition: transform 150ms ease-in;
+}
+a:hover {
+  transform: scale(1.1);
+}
+img {
+  display: block;
+  height: auto;
+}

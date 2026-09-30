@@ -1,0 +1,19 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+.cc-info__title {
+  margin: 0;
+  font-family: var(--cc-font-heading, inherit);
+  font-size: var(--cc-info-title-size, 1.5rem);
+  font-weight: 700;
+  color: var(--cc-info-title-color, var(--cc-accent, var(--cc-secondary, #ceab5d)));
+}
+.cc-info__text {
+  margin: 0;
+  font-size: 1rem;
+  text-align: justify;
+  color: var(--cc-info-text-color, var(--cc-text, var(--cc-primary, #4c6b4a)));
+}

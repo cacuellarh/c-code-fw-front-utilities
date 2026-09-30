@@ -1,0 +1,71 @@
+@if (showBanner()) {
+  <cc-page-banner [title]="title()" />
+}
+
+<div class="cc-catalog">
+  <aside class="cc-catalog__side">
+    @if (showSearch()) {
+      <cc-search-box
+        [placeholder]="searchPlaceholder()"
+        [iconSrc]="searchIconSrc()"
+        [(value)]="query"
+        (search)="onSearch($event)"
+      />
+    }
+
+    <div class="cc-catalog__panel">
+      <cc-category-menu
+        [title]="categoriesTitle()"
+        [options]="categoryOptions()"
+        [selected]="category()"
+        (selectedChange)="selectCategory($event)"
+      />
+
+      @if (hasFilter()) {
+        <hr class="cc-catalog__rule" />
+        <button
+          type="button"
+          class="cc-catalog__filter-toggle"
+          [attr.aria-expanded]="filterOpen()"
+          (click)="filterOpen.set(!filterOpen())"
+        >
+          <span>{{ filterTitle() }}</span>
+          @if (filterIconSrc()) {
+            <img [src]="filterIconSrc()" alt="" />
+          } @else {
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 5h18l-7 8v6l-4-2v-4L3 5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            </svg>
+          }
+        </button>
+        @if (filterOpen()) {
+          <cc-plan-filter-form
+            [services]="services()"
+            [priceRanges]="priceRanges()"
+            (filterChange)="onFilter($event)"
+          />
+        }
+      }
+    </div>
+  </aside>
+
+  @if (visiblePlans().length) {
+    <div class="cc-catalog__grid">
+      @for (plan of visiblePlans(); track plan.id) {
+        @if (cardTemplate(); as tpl) {
+          <ng-container *ngTemplateOutlet="tpl; context: { $implicit: plan, link: linkFor(plan) }" />
+        } @else {
+          <cc-plan-card
+            [name]="plan.name"
+            [imageSrc]="plan.imgPath"
+            [imageAlt]="plan.name + imageAltSuffix()"
+            [link]="linkFor(plan)"
+            [ctaLabel]="ctaLabel()"
+          />
+        }
+      }
+    </div>
+  } @else {
+    <p class="cc-catalog__empty">{{ emptyMessage() }}</p>
+  }
+</div>

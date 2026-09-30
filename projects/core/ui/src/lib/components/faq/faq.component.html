@@ -1,0 +1,9 @@
+@if (title()) {
+  <h2 class="cc-faq__title">{{ title() }}</h2>
+}
+@for (item of items(); track item.question) {
+  <details class="cc-faq__item">
+    <summary>{{ item.question }}</summary>
+    <p>{{ item.answer }}</p>
+  </details>
+}

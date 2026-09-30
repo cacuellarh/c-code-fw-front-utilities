@@ -4,6 +4,9 @@
   "compileOnSave": false,
   "compilerOptions": {
     "paths": {
+      "c-code-api-base": [
+        "./dist/c-code-api-base"
+      ],
       "core": [
         "./dist/core"
       ]

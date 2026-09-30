@@ -1,0 +1,22 @@
+<ul class="cc-cat" role="listbox" [attr.aria-label]="title() || null">
+  @if (title()) {
+    <li class="cc-cat__title" role="presentation">{{ title() }}</li>
+  }
+  @for (option of options(); track option.value) {
+    <li
+      class="cc-cat__item"
+      role="option"
+      tabindex="0"
+      [class.cc-cat__item--active]="option.value === selected()"
+      [attr.aria-selected]="option.value === selected()"
+      (click)="select(option.value)"
+      (keydown.enter)="select(option.value)"
+      (keydown.space)="$event.preventDefault(); select(option.value)"
+    >
+      <span>{{ option.label }}</span>
+      @if (option.count !== undefined && option.count !== null) {
+        <small>{{ option.count }}</small>
+      }
+    </li>
+  }
+</ul>

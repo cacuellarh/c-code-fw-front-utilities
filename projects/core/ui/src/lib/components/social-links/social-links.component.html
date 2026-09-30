@@ -1,0 +1,9 @@
+<ul class="cc-social" [style.gap]="gap()">
+  @for (link of links(); track link.href) {
+    <li>
+      <a [href]="link.href" target="_blank" rel="noopener" [attr.aria-label]="link.label">
+        <img [src]="link.iconSrc" alt="" [style.width]="size()" />
+      </a>
+    </li>
+  }
+</ul>

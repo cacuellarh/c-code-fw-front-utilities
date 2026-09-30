@@ -1,0 +1,99 @@
+@if (showBanner()) {
+  <cc-page-banner
+    variant="plain"
+    [title]="plan().name"
+    [iconSrc]="titleIconSrc()"
+    [backLink]="backLink()"
+    [backLabel]="backLabel()"
+    [backIconSrc]="backIconSrc()"
+  />
+}
+
+<div class="cc-details">
+  <div class="cc-details__media">
+    <img class="cc-details__photo" [src]="plan().imgPath" [alt]="plan().name + imageAltSuffix()" />
+    <ng-content select="[ccDetailsMedia]" />
+  </div>
+
+  <div class="cc-details__panel">
+    <div class="cc-details__info">
+      <div class="cc-details__price">
+        <p>{{ plan().price | currency: currencyCode() : currencyDisplay() : currencyDigits() }}</p>
+      </div>
+
+      <p class="cc-details__description">{{ plan().description }}</p>
+
+      <div class="cc-details__facts">
+        <div class="cc-details__fact">
+          @if (durationIconSrc()) {
+            <img [src]="durationIconSrc()" alt="Duración" />
+          } @else {
+            <svg viewBox="0 0 24 24" role="img" aria-label="Duración">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
+              <path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          }
+          <small>{{ plan().duration }}</small>
+        </div>
+
+        <div class="cc-details__fact">
+          @if (people() > 1) {
+            @if (peopleIconSrc()) {
+              <img [src]="peopleIconSrc()" alt="" />
+            } @else {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2" />
+                <circle cx="17" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="2" />
+                <path d="M2.5 20a6.5 6.5 0 0 1 13 0M15 14.5a5 5 0 0 1 6.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+            }
+            <small>{{ people() }} {{ peopleLabel() }}</small>
+          } @else {
+            @if (personIconSrc()) {
+              <img [src]="personIconSrc()" alt="" />
+            } @else {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2" />
+                <path d="M4.5 20a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+            }
+            <small>1 {{ personLabel() }}</small>
+          }
+        </div>
+      </div>
+
+      @if (services().length) {
+        <h2 class="cc-details__includes">{{ includesLabel() }}</h2>
+        <ul class="cc-details__services">
+          @for (service of services(); track $index) {
+            <li>
+              <img [src]="service.iconPath" alt="" />
+              <small>{{ service.name }}</small>
+            </li>
+          }
+        </ul>
+      }
+
+      <ng-content />
+
+      <div class="cc-details__gift" [class.cc-details__gift--solo]="!perks().length">
+        @if (perks().length) {
+          @if (perksImageSrc()) {
+            <img class="cc-details__gift-img" [src]="perksImageSrc()" [alt]="perksImageAlt()" loading="lazy" />
+          }
+          <div class="cc-details__perks">
+            <h2>{{ perksTitle() }}</h2>
+            <ul>
+              @for (perk of perks(); track $index) {
+                <li>{{ perk }}</li>
+              }
+            </ul>
+          </div>
+        }
+        <div class="cc-details__cta-wrap">
+          <a class="cc-details__cta" [href]="bookingUrl()" target="_blank" rel="noopener">{{ bookingLabel() }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

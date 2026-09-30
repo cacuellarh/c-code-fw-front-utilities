@@ -1,0 +1,22 @@
+<div class="cc-banner" [class.cc-banner--plain]="variant() === 'plain'" [class.cc-banner--split]="!!backLink()">
+  @if (backLink()) {
+    <a class="cc-banner__back" [routerLink]="backLink()" [attr.aria-label]="backLabel()">
+      @if (backIconSrc()) {
+        <img [src]="backIconSrc()" alt="" />
+      } @else {
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      }
+    </a>
+  }
+  <div class="cc-banner__title">
+    <h1>{{ title() }}</h1>
+    @if (iconSrc()) {
+      <img [src]="iconSrc()" alt="" class="cc-banner__icon" />
+    }
+  </div>
+  @if (backLink()) {
+    <span class="cc-banner__spacer"></span>
+  }
+</div>

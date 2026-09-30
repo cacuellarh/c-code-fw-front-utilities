@@ -1,0 +1,15 @@
+@if (current(); as image) {
+  <div class="cc-lb" role="dialog" aria-modal="true" [attr.aria-label]="image.caption || image.alt || null" (click)="close()">
+    <button type="button" class="cc-lb__btn cc-lb__close" [attr.aria-label]="closeLabel()" (click)="close()">✕</button>
+    @if (images().length > 1) {
+      <button type="button" class="cc-lb__btn cc-lb__prev" [attr.aria-label]="prevLabel()" (click)="$event.stopPropagation(); prev()">‹</button>
+    }
+    <img class="cc-lb__img" [src]="image.src" [alt]="image.alt ?? image.caption ?? ''" (click)="$event.stopPropagation()" />
+    @if (images().length > 1) {
+      <button type="button" class="cc-lb__btn cc-lb__next" [attr.aria-label]="nextLabel()" (click)="$event.stopPropagation(); next()">›</button>
+    }
+    @if (image.caption) {
+      <p class="cc-lb__caption">{{ image.caption }}</p>
+    }
+  </div>
+}

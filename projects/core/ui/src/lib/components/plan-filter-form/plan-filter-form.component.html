@@ -1,0 +1,28 @@
+<form class="cc-filter" (submit)="$event.preventDefault(); submit()">
+  @if (services().length) {
+    <label class="cc-filter__field">
+      <span>{{ serviceLabel() }}</span>
+      <select (change)="serviceIndex.set(toIndex($event))">
+        <option value="-1" [selected]="serviceIndex() === -1">{{ anyLabel() }}</option>
+        @for (service of services(); track $index) {
+          <option [value]="$index" [selected]="serviceIndex() === $index">{{ service.name }}</option>
+        }
+      </select>
+    </label>
+  }
+  @if (priceRanges().length) {
+    <label class="cc-filter__field">
+      <span>{{ priceLabel() }}</span>
+      <select (change)="rangeIndex.set(toIndex($event))">
+        <option value="-1" [selected]="rangeIndex() === -1">{{ anyLabel() }}</option>
+        @for (range of priceRanges(); track $index) {
+          <option [value]="$index" [selected]="rangeIndex() === $index">{{ range.description }}</option>
+        }
+      </select>
+    </label>
+  }
+  <div class="cc-filter__actions">
+    <button type="submit" class="cc-filter__submit">{{ submitLabel() }}</button>
+    <button type="button" class="cc-filter__reset" (click)="reset()">{{ resetLabel() }}</button>
+  </div>
+</form>
