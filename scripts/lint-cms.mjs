@@ -8,6 +8,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = join(root, 'projects/cms/src');
 const domain = join(src, 'domain');
 const shellUi = join(src, 'shell/ui');
+const cli = join(src, 'cli');
+const shell = join(src, 'shell');
 
 /** Packages the domain may import: only the framework-free part of the component library. */
 const DOMAIN_PACKAGES = ['@cc/ui-domain'];
@@ -41,6 +43,16 @@ for (const file of walk(domain).filter((f) => f.endsWith('.ts'))) {
     const code = stripComments(source);
     const match = BROWSER_GLOBALS.exec(code);
     if (match) errors.push(`${rel(file)}: the domain must not use "${match[1]}"; put it behind a port (domain/ports.ts).`);
+  }
+}
+
+// The build command (cli/) is a second shell, for Node: it may use the domain and Node's
+// built-ins, but not the browser shell or Angular.
+for (const file of walk(cli).filter((f) => f.endsWith('.ts'))) {
+  for (const spec of importsOf(readFileSync(file, 'utf8'))) {
+    if (spec.startsWith('.') ? resolve(dirname(file), spec).startsWith(shell) : !spec.startsWith('node:')) {
+      errors.push(`${rel(file)}: the build command must not import "${spec}"; only domain/ and node: built-ins.`);
+    }
   }
 }
 

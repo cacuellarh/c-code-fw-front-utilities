@@ -9,7 +9,8 @@
     "test": "ng test",
     "lint:ui": "node scripts/lint-ui.mjs",
     "lint:cms": "node scripts/lint-cms.mjs",
-    "cms": "ng serve cms"
+    "cms": "ng serve cms",
+    "build:content": "tsc -p projects/cms/tsconfig.cli.json && node scripts/build-content.mjs"
   },
   "private": false,
   "dependencies": {

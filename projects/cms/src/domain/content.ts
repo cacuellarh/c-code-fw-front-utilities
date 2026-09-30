@@ -177,3 +177,17 @@ export function serialize(items: Entry[]): string {
 function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
+
+/**
+ * The entry with its fields in a fixed order: the order of the collection's new entry
+ * (`create`), which is the order of the sites' files, then any other field alphabetically.
+ * Firestore does not keep field order, so files are written in this order.
+ */
+export function orderFields(def: CollectionDef, item: Entry, ctx: ScopeContext): Entry {
+  const template = Object.keys(def.create(ctx));
+  const known = template.filter((key) => key in item);
+  const others = Object.keys(item)
+    .filter((key) => !template.includes(key))
+    .sort();
+  return Object.fromEntries([...known, ...others].map((key) => [key, item[key]]));
+}

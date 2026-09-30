@@ -27,6 +27,14 @@ The CMS (`projects/cms`) is split in two layers. `npm run lint:cms` enforces the
   - The site's `--cc-*` roles are only used inside `.site-theme`, for previews.
   - Previews are registered by key in `ui/previews/previews.ts`. A scope only names the key (`preview: 'spa.plan'`).
 
+## `src/cli/`: the build command (second shell, for Node)
+
+- `c-code-content pull --site <id> --project <firebase-project>` runs before each site's build.
+  - It reads Firestore through its public REST API (`firestore-rest-reader.ts`).
+  - It writes the site folder (`NodeSiteFiles`) with the domain's `writeSiteFolder`, so the JSON, routes and sitemap come out exactly as the domain defines them.
+- **May import:** `domain/` and `node:` built-ins only. It must not import the browser shell, Angular or Firebase.
+- **Build:** `npm run build:content` type-checks it and bundles it into `dist/content` (package `@c-code/content`). The version lives in `projects/cms/content.version.json`.
+
 ## Adding a kind of site
 
 See `src/domain/scopes/README.md`. A scope must not require changes in the shell. The exception is a new field type or a preview.

@@ -160,6 +160,21 @@ describe('write the site folder (build)', () => {
   });
 });
 
+describe('field order', () => {
+  it('writes the same file whatever order the repository returns the fields in', async () => {
+    const repo = await importedRepo();
+    const site = (await repo.loadSite('spa'))!;
+    const shuffled = structuredClone(site);
+    for (const c of shuffled.collections) c.items = c.items.map((item) => Object.fromEntries(Object.entries(item).reverse()));
+    const a = spaFolder();
+    const b = spaFolder();
+    await writeSiteFolder(a, site);
+    await writeSiteFolder(b, shuffled);
+    expect(b.text(PLANS)).toBe(a.text(PLANS));
+    expect(b.text(PLANS)).toBe(spaFolder().text(PLANS));
+  });
+});
+
 describe('content rules', () => {
   it('gives new entries the next id and removes deleted ids from the plans', async () => {
     const { content: site } = await openSite(await importedRepo(), 'spa');

@@ -1,5 +1,5 @@
 import { slugify } from '@cc/ui-domain';
-import { CollectionData, contextOf, dirtyCollections, serialize, SiteContent } from './content';
+import { CollectionData, contextOf, dirtyCollections, orderFields, serialize, SiteContent } from './content';
 import { DEFAULT_JSON_STYLE, detectJsonStyle, formatJson } from './json-format';
 import { suggestManifest } from './manifest';
 import { ContentRepository, NewSite, Publisher, SiteFiles, SiteSummary, StoredSite } from './ports';
@@ -122,12 +122,13 @@ export async function writeSiteFolder(files: SiteFiles, stored: StoredSite): Pro
     await files.write(path, text);
     written.push(path);
   };
+  const ctx = contextOf(content);
   for (const c of content.collections) {
     const current = (await files.read(c.path))?.text ?? null;
     const style = current === null ? { ...DEFAULT_JSON_STYLE, indent: '    ' } : detectJsonStyle(current);
-    await write(c.path, formatJson(c.items, style), current);
+    const items = c.items.map((item) => orderFields(c.def, item, ctx));
+    await write(c.path, formatJson(items, style), current);
   }
-  const ctx = contextOf(content);
   for (const generator of scope.generators ?? []) {
     const path = generator.file(ctx);
     const current = (await files.read(path))?.text ?? null;
