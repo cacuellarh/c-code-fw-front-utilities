@@ -20,6 +20,8 @@ export class EntryEditorComponent {
   protected editor = inject(EditorService);
   readonly collection = input.required<CollectionData>();
   readonly index = input.required<number>();
+  /** Single-entry collection (settings): no duplicate or delete. */
+  readonly single = input(false);
   readonly removed = output<void>();
   readonly duplicated = output<number>();
 

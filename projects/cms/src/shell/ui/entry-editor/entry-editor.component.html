@@ -4,10 +4,12 @@
       <p class="kind">{{ collection().def.singular }} @if (idLabel()) { · {{ idLabel() }} }</p>
       <h2>{{ title() }}</h2>
     </div>
-    <div class="actions">
-      <button type="button" class="btn ghost" (click)="duplicate()">Duplicar</button>
-      <button type="button" class="btn danger" (click)="remove()">Eliminar</button>
-    </div>
+    @if (!single()) {
+      <div class="actions">
+        <button type="button" class="btn ghost" (click)="duplicate()">Duplicar</button>
+        <button type="button" class="btn danger" (click)="remove()">Eliminar</button>
+      </div>
+    }
   </header>
 
   @if (issues().length) {

@@ -3,7 +3,9 @@ import * as content from '../../domain/content';
 import { SiteContent } from '../../domain/content';
 import { SiteSummary } from '../../domain/ports';
 import { Entry, ScopeDef } from '../../domain/schema';
-import { needsPublish, openSite, publishSite, renameSite, saveSite } from '../../domain/site';
+import { addEmptyCollection, importMissingCollections, missingCollections, needsPublish, openSite, publishSite, readSiteFolder, renameSite, saveSite } from '../../domain/site';
+import { CollectionDef } from '../../domain/schema';
+import { FsSiteFiles } from '../adapters/fs-site-files';
 import { EMPTY_THEME, SiteTheme } from '../../domain/theme';
 import { checkBeforePublish } from '../../domain/media';
 import { loadFonts } from '../adapters/fonts';
@@ -130,6 +132,30 @@ export class EditorService {
     const clean = await renameSite(this.repo, site.id, name);
     this.site.set({ ...site, name: clean });
     this.content.update((c) => (c ? { ...c, manifest: { ...c.manifest, name: clean } } : c));
+  }
+
+  /** Optional sections (gallery, popup…) the open site does not have yet. */
+  async missingSections(): Promise<CollectionDef[]> {
+    const stored = await this.repo.loadSite(this.requireSite().id);
+    const scope = this.scope();
+    return stored && scope ? missingCollections(scope, stored) : [];
+  }
+
+  /** Adds an empty section and reopens the site to show it. */
+  async addSection(def: CollectionDef): Promise<void> {
+    const site = this.requireSite();
+    await addEmptyCollection(this.repo, site.id, def, this.auth.email());
+    await this.open(site.id);
+  }
+
+  /** Imports, from the site's folder, the sections it does not have yet. Returns their labels. */
+  async importSections(handle: FileSystemDirectoryHandle): Promise<string[]> {
+    const site = this.requireSite();
+    const stored = await this.repo.loadSite(site.id);
+    if (!stored) throw new Error('El sitio no existe.');
+    const imported = await importMissingCollections(this.repo, stored, await readSiteFolder(new FsSiteFiles(handle)), this.auth.email());
+    if (imported.length) await this.open(site.id);
+    return imported;
   }
 
   getDeployHook(): Promise<string> {

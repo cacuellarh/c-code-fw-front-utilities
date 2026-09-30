@@ -101,8 +101,7 @@ export async function readSiteFolder(files: SiteFiles): Promise<Omit<NewSite, 'i
       if (def.optional && !explicit) continue;
       throw new Error(`No se encontró ${path}.`);
     }
-    const items = JSON.parse(file.text);
-    if (!Array.isArray(items)) throw new Error(`${path} no es una lista.`);
+    const items = itemsOfFile(def, JSON.parse(file.text), path);
     collections.push({ id: def.id, items });
   }
   const css = manifest.theme ? await files.read(manifest.theme) : null;
@@ -127,7 +126,9 @@ export async function writeSiteFolder(files: SiteFiles, stored: StoredSite): Pro
     const current = (await files.read(c.path))?.text ?? null;
     const style = current === null ? { ...DEFAULT_JSON_STYLE, indent: '    ' } : detectJsonStyle(current);
     const items = c.items.map((item) => orderFields(c.def, item, ctx));
-    await write(c.path, formatJson(items, style), current);
+    // A single-entry collection is one object in its file (the first entry, or a new one).
+    const data = c.def.single ? (items[0] ?? orderFields(c.def, c.def.create(ctx), ctx)) : items;
+    await write(c.path, formatJson(data, style), current);
   }
   for (const generator of scope.generators ?? []) {
     const path = generator.file(ctx);
@@ -165,4 +166,45 @@ export async function renameSite(repo: ContentRepository, siteId: string, name: 
   if (!clean) throw new Error('El nombre no puede quedar vacío.');
   await repo.renameSite(siteId, clean);
   return clean;
+}
+
+/** The entries of a collection file: a list, or one object for single-entry collections. */
+function itemsOfFile(def: CollectionDef, data: unknown, path: string): Entry[] {
+  if (def.single) {
+    if (data === null || typeof data !== 'object' || Array.isArray(data)) throw new Error(`${path} debe ser un objeto.`);
+    return [data as Entry];
+  }
+  if (!Array.isArray(data)) throw new Error(`${path} no es una lista.`);
+  return data;
+}
+
+/** Optional collections of the scope that the site does not have yet (gallery, popup…). */
+export function missingCollections(scope: ScopeDef, stored: StoredSite): CollectionDef[] {
+  const have = new Set(stored.collections.map((c) => c.id));
+  return collectionsOf(scope, stored.manifest)
+    .map(({ def }) => def)
+    .filter((def) => def.optional && !have.has(def.id));
+}
+
+/** Adds an empty collection (a single-entry one starts with its default entry). */
+export async function addEmptyCollection(repo: ContentRepository, siteId: string, def: CollectionDef, author: string): Promise<void> {
+  const ctx = contextOf({ manifest: { scope: '', name: '' }, collections: [] });
+  await repo.addCollections(siteId, [{ id: def.id, items: def.single ? [def.create(ctx)] : [] }], author);
+}
+
+/**
+ * Imports, from the site's folder, the collections the site does not have in the repository
+ * yet. Returns the labels of the imported ones (none if the folder has none of them).
+ */
+export async function importMissingCollections(
+  repo: ContentRepository,
+  stored: StoredSite,
+  folder: Omit<NewSite, 'id'>,
+  author: string
+): Promise<string[]> {
+  const scope = requireScope(stored.manifest.scope);
+  const missing = new Map(missingCollections(scope, stored).map((def) => [def.id, def]));
+  const found = folder.collections.filter((c) => missing.has(c.id));
+  if (found.length) await repo.addCollections(stored.id, found, author);
+  return found.map((c) => missing.get(c.id)!.label);
 }

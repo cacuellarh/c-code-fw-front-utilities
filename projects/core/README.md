@@ -291,6 +291,7 @@ All text has Spanish defaults, and every label is an input.
 - `PlanCatalogService`: `getPlans()` (with `additionalServices` joined), `getAdditionalServices()`, `getPriceRanges()`, `getPlanBySlug()`, `getPlansByCategory()`, `getPlansByFilter()`, `getPlansByName()`. Each JSON file is requested once and cached. Configure the paths with `providePlanCatalog({ plansUrl, additionalsUrl, priceRangesUrl })`.
 - `SeoService`: `update({ title, description, path, image })`, `setJsonLd(id, data)`, `removeJsonLd(id)`, `absoluteUrl(path)`.
 - Pure functions (no Angular): `formatPrice(value, { locale, currency, digits })` (default `es-CO`/`COP`: `$ 259.900`), `slugify`, `planSlug`, `findPlanBySlug`, `filterPlans`, `filterPlansByCategory`, `searchPlansByName`, `withCategoryCounts`, `joinAdditionalServices`, `defaultPlanMeta`, `whatsappUrl(phone, message)`, `titleCase`, `truncateText`.
+- Popup rules (no Angular): `PromoConfig` (the CMS `promo.json`), `promoState(promo, now)` → `off | incomplete | scheduled | running | ended`, `isPromoRunning`, `promoRememberKey(promo)` (changes with the image or the dates, so a new promotion shows again) and `localDate`. Pass them to `cc-promo-modal`: `[delayMs]="promo.delaySeconds * 1000"`, `[rememberDays]="promo.repeatDays"`, `[rememberKey]="promoRememberKey(promo)"`.
 
 ### Migrating from 1.3
 

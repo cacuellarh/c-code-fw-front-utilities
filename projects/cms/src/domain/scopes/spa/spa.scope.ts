@@ -1,5 +1,7 @@
 import { formatPrice, PlanCategory, planSlug } from '@cc/ui-domain';
 import { Entry, ScopeContext, ScopeDef } from '../../schema';
+import { galleryCollection } from '../shared/gallery.collection';
+import { promoCollection } from '../shared/promo.collection';
 import { generateRoutes, generateSitemap, planRoute } from './spa.generators';
 
 const CATEGORY_OPTIONS = [
@@ -143,6 +145,8 @@ export const SPA_SCOPE: ScopeDef = {
       ],
       create: () => ({ route: '', name: '' }),
     },
+    galleryCollection(),
+    promoCollection(),
   ],
   generators: [
     {

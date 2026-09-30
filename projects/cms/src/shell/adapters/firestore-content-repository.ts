@@ -114,6 +114,23 @@ export class FirestoreContentRepository implements ContentRepository {
     await updateDoc(doc(this.db, 'sites', siteId), { publishedAt: at });
   }
 
+  async addCollections(siteId: string, collections: { id: string; items: Entry[] }[], author: string): Promise<void> {
+    const updatedAt = new Date().toISOString();
+    await runTransaction(this.db, async (tx) => {
+      const refs = collections.map((c) => doc(this.db, 'sites', siteId, 'collections', c.id));
+      const existing = await Promise.all(refs.map((ref) => tx.get(ref)));
+      const taken = collections.filter((_, i) => existing[i].exists()).map((c) => c.id);
+      if (taken.length) throw new Error(`Ya existen: ${taken.join(', ')}.`);
+      collections.forEach((c, i) => tx.set(refs[i], { items: c.items, version: 1, updatedAt } satisfies CollectionDoc));
+      tx.update(doc(this.db, 'sites', siteId), { updatedAt });
+      tx.set(doc(collection(this.db, 'sites', siteId, 'history')), {
+        at: updatedAt,
+        author,
+        collections: Object.fromEntries(collections.map((c) => [c.id, c.items])),
+      });
+    });
+  }
+
   async renameSite(siteId: string, name: string): Promise<void> {
     await updateDoc(doc(this.db, 'sites', siteId), { name, 'manifest.name': name });
   }

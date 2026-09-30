@@ -72,6 +72,21 @@
           <button type="button" class="btn" (click)="saveHook()" [disabled]="!hook().trim()">
             {{ hookSaved() ? 'Guardado' : 'Guardar' }}
           </button>
+          @if (missing().length) {
+            <hr />
+            <p class="label">Secciones disponibles</p>
+            <p class="hint">Este sitio todavía no tiene:</p>
+            <ul class="sections">
+              @for (def of missing(); track def.id) {
+                <li>
+                  <span>{{ def.label }}</span>
+                  <button type="button" class="link" (click)="addSection(def)" [disabled]="sectionBusy()">Crear vacía</button>
+                </li>
+              }
+            </ul>
+            <button type="button" class="btn" (click)="importSections()" [disabled]="sectionBusy()">Importar desde la carpeta…</button>
+            <p class="hint">Lee los archivos de la carpeta del proyecto (por ejemplo gallery.json) y trae las secciones que encuentre.</p>
+          }
         </div>
       }
     </section>

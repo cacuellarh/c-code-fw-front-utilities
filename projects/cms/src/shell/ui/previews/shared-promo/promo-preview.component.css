@@ -1,0 +1,71 @@
+:host {
+  display: grid;
+  gap: 12px;
+  font-family: var(--cc-font-body, system-ui, sans-serif);
+}
+.state {
+  justify-self: start;
+  margin: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--cms-subtle);
+  color: var(--cms-muted);
+  font: 700 var(--cms-text-xs) / 1.6 var(--cms-font);
+}
+.state.running {
+  background: var(--cms-accent-soft);
+  color: var(--cms-accent-strong);
+}
+.state.scheduled {
+  background: var(--cms-warning-soft);
+  color: var(--cms-warning);
+}
+.state.ended,
+.state.incomplete {
+  background: var(--cms-danger-soft);
+  color: var(--cms-danger);
+}
+.when {
+  margin: 0;
+  color: var(--cms-muted);
+  font: var(--cms-text-xs) / 1.5 var(--cms-font);
+}
+.modal {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--cms-radius-lg);
+  background: color-mix(in srgb, var(--cc-overlay, #000) 60%, transparent);
+  pointer-events: none;
+}
+.frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--cc-radius, 8px);
+  background: var(--cc-canvas, #fff);
+}
+.frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.empty {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 5;
+  color: var(--cms-muted);
+  font: var(--cms-text-sm) var(--cms-font);
+}
+.close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 12px;
+}

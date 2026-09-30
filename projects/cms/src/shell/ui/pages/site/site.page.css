@@ -228,3 +228,20 @@ nav .extra {
   padding-top: 8px;
   border-top: 1px solid var(--cms-border);
 }
+.settings .label {
+  margin: 0;
+  font-weight: 600;
+}
+.sections {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sections li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}

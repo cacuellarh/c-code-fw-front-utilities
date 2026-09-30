@@ -1,0 +1,15 @@
+<p class="state" [class]="state()">{{ stateLabel() }}</p>
+<p class="when">{{ when() }}</p>
+<div class="modal">
+  <div class="frame">
+    @if (image.value(); as src) {
+      <img [src]="src" [alt]="promo().imageAlt" />
+    } @else {
+      <div class="empty">Elige la imagen del popup</div>
+    }
+    <span class="close" aria-hidden="true">✕</span>
+  </div>
+  @if (promo().ctaLabel) {
+    <button ccButton type="button" variant="primary" [block]="true" tabindex="-1" aria-hidden="true">{{ promo().ctaLabel }}</button>
+  }
+</div>

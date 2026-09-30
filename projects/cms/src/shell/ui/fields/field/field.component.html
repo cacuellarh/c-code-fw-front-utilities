@@ -48,6 +48,24 @@
       @if (price()) {
         <span class="hint">{{ price() }}</span>
       }
+      @if (f.unit) {
+        <span class="unit">{{ f.unit }}</span>
+      }
+    </div>
+  }
+  @case ('boolean') {
+    <label class="switch">
+      <input type="checkbox" role="switch" [id]="id" [checked]="!!value()" (change)="value.set($any($event.target).checked)" />
+      <span class="track" aria-hidden="true"></span>
+      <span>{{ value() ? (f.onLabel ?? 'Sí') : 'Apagado' }}</span>
+    </label>
+  }
+  @case ('date') {
+    <div class="with-hint">
+      <input class="control date" [id]="id" type="date" [value]="text()" (input)="value.set($any($event.target).value)" />
+      @if (text()) {
+        <button type="button" class="clear" (click)="value.set('')">Quitar fecha</button>
+      }
     </div>
   }
   @case ('select') {

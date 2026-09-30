@@ -9,6 +9,7 @@ import { EntryEditorComponent } from '../../entry-editor/entry-editor.component'
 /** One collection of the site: the list of entries and the editor of the selected one (`?i=`). */
 @Component({
   selector: 'cms-collection-page',
+  host: { '[class.is-single]': 'state()?.def?.single' },
   imports: [EntryEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './collection.page.html',

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, OnInit, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { isDirty } from '../../../../domain/content';
+import { CollectionDef } from '../../../../domain/schema';
 import { ConflictError } from '../../../../domain/site';
 import { EditorService } from '../../../state/editor.service';
 
@@ -26,6 +27,8 @@ export class SitePage implements OnInit {
   protected readonly hookSaved = signal(false);
   protected readonly name = signal('');
   protected readonly nameSaved = signal(false);
+  protected readonly missing = signal<CollectionDef[]>([]);
+  protected readonly sectionBusy = signal(false);
   protected readonly isDirty = isDirty;
   protected readonly ready = computed(() => this.editor.site()?.id === this.siteId());
   protected readonly issueCount = computed(() => this.editor.issues().length);
@@ -88,7 +91,10 @@ export class SitePage implements OnInit {
     this.hookSaved.set(false);
     this.nameSaved.set(false);
     this.name.set(this.editor.site()?.name ?? '');
-    if (open) this.hook.set(await this.editor.getDeployHook().catch(() => ''));
+    if (open) {
+      this.hook.set(await this.editor.getDeployHook().catch(() => ''));
+      this.missing.set(await this.editor.missingSections().catch(() => []));
+    }
   }
 
   protected async saveHook(): Promise<void> {
@@ -106,6 +112,40 @@ export class SitePage implements OnInit {
       this.nameSaved.set(true);
     } catch (e) {
       this.error.set(`No se pudo cambiar el nombre: ${messageOf(e)}`);
+    }
+  }
+
+  protected async addSection(def: CollectionDef): Promise<void> {
+    await this.sectionTask(async () => {
+      await this.editor.addSection(def);
+      await this.router.navigate(['/sitio', this.siteId(), def.id]);
+    });
+  }
+
+  protected async importSections(): Promise<void> {
+    let handle: FileSystemDirectoryHandle;
+    try {
+      handle = await window.showDirectoryPicker({ id: 'cms-site', mode: 'read' });
+    } catch {
+      return; // The user closed the picker.
+    }
+    await this.sectionTask(async () => {
+      const imported = await this.editor.importSections(handle);
+      if (!imported.length) this.error.set(`La carpeta «${handle.name}» no tiene archivos de las secciones que faltan.`);
+      else alert(`Importado: ${imported.join(', ')}.`);
+    });
+  }
+
+  private async sectionTask(run: () => Promise<void>): Promise<void> {
+    this.sectionBusy.set(true);
+    this.error.set('');
+    try {
+      await run();
+      this.missing.set(await this.editor.missingSections());
+    } catch (e) {
+      this.error.set(`No se pudo agregar la sección: ${messageOf(e)}`);
+    } finally {
+      this.sectionBusy.set(false);
     }
   }
 

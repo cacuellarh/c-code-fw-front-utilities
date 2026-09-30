@@ -1,4 +1,5 @@
 import { CollectionChange, ContentRepository, NewSite, SavedCollection, SiteSummary, StoredSite } from '../ports';
+import { Entry } from '../schema';
 import { ConflictError } from '../site';
 
 /** `ContentRepository` in memory, for tests. Behaves like Firestore: versions and conflicts. */
@@ -52,6 +53,16 @@ export class MemoryContentRepository implements ContentRepository {
   async markPublished(siteId: string, at: string): Promise<void> {
     const site = this.sites.get(siteId);
     if (site) site.publishedAt = at;
+  }
+
+  async addCollections(siteId: string, collections: { id: string; items: Entry[] }[], _author: string): Promise<void> {
+    const site = this.sites.get(siteId);
+    if (!site) throw new Error(`El sitio "${siteId}" no existe.`);
+    const taken = collections.filter((c) => site.collections.some((s) => s.id === c.id));
+    if (taken.length) throw new Error(`Ya existen: ${taken.map((c) => c.id).join(', ')}.`);
+    const updatedAt = this.now();
+    site.collections = [...site.collections, ...collections.map((c) => ({ ...structuredClone(c), version: 1, updatedAt }))];
+    site.updatedAt = updatedAt;
   }
 
   async renameSite(siteId: string, name: string): Promise<void> {

@@ -6,5 +6,7 @@
  */
 export * from './lib/models/plan.models';
 export * from './lib/models/ui.models';
+export * from './lib/models/promo.models';
 export * from './lib/utils/text.utils';
 export * from './lib/utils/plan.utils';
+export * from './lib/utils/promo.utils';

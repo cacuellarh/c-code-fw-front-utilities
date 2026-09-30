@@ -65,6 +65,7 @@ export function validateContent(content: SiteContent): EntryIssue[] {
       for (const field of collection.def.fields) {
         const value = item[field.key];
         if (field.required && (value === '' || value === null || value === undefined)) add(`Falta "${field.label}".`);
+        if (field.type === 'date' && value && !isIsoDate(String(value))) add(`"${field.label}" no es una fecha válida.`);
         if (field.type === 'relation') {
           const target = findCollection(content, field.collection);
           if (!target) continue;
@@ -190,4 +191,9 @@ export function orderFields(def: CollectionDef, item: Entry, ctx: ScopeContext):
     .filter((key) => !template.includes(key))
     .sort();
   return Object.fromEntries([...known, ...others].map((key) => [key, item[key]]));
+}
+
+/** "2026-09-30". */
+export function isIsoDate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value));
 }

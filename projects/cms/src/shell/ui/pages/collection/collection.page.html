@@ -1,4 +1,21 @@
 @if (state(); as s) {
+  @if (s.def.single) {
+    <section class="single" [attr.aria-labelledby]="'title-' + s.def.id">
+      <header class="head">
+        <div>
+          <h2 [id]="'title-' + s.def.id">{{ s.def.label }}</h2>
+          @if (s.def.description) {
+            <p class="desc">{{ s.def.description }}</p>
+          }
+        </div>
+      </header>
+      @if (s.error) {
+        <p class="alert" role="alert">{{ s.error }}</p>
+      } @else if (s.items.length) {
+        <cms-entry-editor [collection]="s" [index]="0" [single]="true" />
+      }
+    </section>
+  } @else {
   <section class="list" [attr.aria-labelledby]="'title-' + s.def.id">
     <header class="head">
       <div>
@@ -78,6 +95,7 @@
       </div>
     }
   </section>
+  }
 } @else {
   <p class="alert">Esta colección no existe en el sitio.</p>
 }

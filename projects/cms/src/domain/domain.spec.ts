@@ -5,7 +5,9 @@ import { suggestManifest } from './manifest';
 import { diskPath } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
-import { ConflictError, needsPublish, openSite, readSiteFolder, renameSite, saveSite, siteIdFor, writeSiteFolder } from './site';
+import { addEmptyCollection, ConflictError, importMissingCollections, missingCollections, needsPublish, openSite, readSiteFolder, renameSite, saveSite, siteIdFor, writeSiteFolder } from './site';
+import { galleryCollection } from './scopes/shared/gallery.collection';
+import { DEFAULT_PROMO, promoCollection } from './scopes/shared/promo.collection';
 import { MemoryContentRepository } from './testing/memory-content-repository';
 import { FakeImageEncoder, MemoryMediaStore } from './testing/memory-media';
 import { MemorySiteFiles } from './testing/memory-site-files';
@@ -198,7 +200,7 @@ describe('content rules', () => {
   });
 
   it('knows the spa scope collections', () => {
-    expect(SPA_SCOPE.collections.map((c) => c.id)).toEqual(['plans', 'additionals', 'priceRanges', 'services']);
+    expect(SPA_SCOPE.collections.map((c) => c.id)).toEqual(['plans', 'additionals', 'priceRanges', 'services', 'gallery', 'promo']);
   });
 });
 
@@ -316,6 +318,59 @@ describe('image library in the build and before publishing', () => {
     const withIcon = content.updateItem(site, 'additionals', 0, { id: 101, iconPath: mediaPath('perfil'), name: 'User' });
     expect(await checkBeforePublish(withIcon, probe(false))).toMatch(/User \(Servicios\).*@c-code\/content/);
     expect(await checkBeforePublish(withIcon, probe(true))).toBeNull();
+  });
+});
+
+describe('gallery and popup (shared blocks)', () => {
+  const GALLERY = 'src/assets/data/gallery.json';
+  const PROMO = 'src/assets/data/promo.json';
+  const promoFile = { ...DEFAULT_PROMO, active: true, imageSrc: '/assets/images/pop.jpeg', imageAlt: 'Promo', startDate: '2026-02-01', endDate: '2026-02-14' };
+
+  it('offers the gallery and the popup as sections a site can add', async () => {
+    const repo = await importedRepo();
+    const stored = (await repo.loadSite('spa'))!;
+    expect(missingCollections(SPA_SCOPE, stored).map((d) => d.id)).toEqual(['priceRanges', 'services', 'gallery', 'promo']);
+
+    await addEmptyCollection(repo, 'spa', promoCollection(), 'yo');
+    const { content: site } = await openSite(repo, 'spa');
+    const promo = content.findCollection(site, 'promo')!;
+    expect(promo.def.single).toBeTrue();
+    expect(promo.items).toEqual([{ ...DEFAULT_PROMO }]);
+  });
+
+  it('imports the gallery and the popup from the site folder, the popup as one object', async () => {
+    const repo = await importedRepo();
+    const folder = spaFolder();
+    await folder.write(GALLERY, JSON.stringify([{ src: '/assets/images/galery/1.webp', thumb: '/assets/images/galery/thumbs/1.webp', caption: 'Jacuzzi' }]));
+    await folder.write(PROMO, JSON.stringify(promoFile));
+    const imported = await importMissingCollections(repo, (await repo.loadSite('spa'))!, await readSiteFolder(folder), 'yo');
+    expect(imported).toEqual(['Galería', 'Popup de promoción']);
+
+    const out = spaFolder();
+    await writeSiteFolder(out, (await repo.loadSite('spa'))!);
+    expect(JSON.parse(out.text(PROMO))).toEqual(promoFile);
+    expect(JSON.parse(out.text(GALLERY))[0].caption).toBe('Jacuzzi');
+  });
+
+  it('refuses a popup file that is a list, and validates dates', async () => {
+    const folder = spaFolder();
+    await folder.write(PROMO, '[]');
+    await expectAsync(readSiteFolder(folder)).toBeRejectedWithError(/debe ser un objeto/);
+
+    const def = promoCollection();
+    const bad = { ...promoFile, startDate: '2026-02-14', endDate: '2026-02-01' };
+    expect(def.validate!(bad, [bad], {} as never)).toContain('«Hasta» es anterior a «Desde».');
+    const repo = await importedRepo();
+    await addEmptyCollection(repo, 'spa', def, 'yo');
+    const { content: site } = await openSite(repo, 'spa');
+    const withBadDate = content.updateItem(site, 'promo', 0, { ...DEFAULT_PROMO, startDate: '14/02/2026' });
+    expect(content.validateContent(withBadDate).map((i) => i.message)).toContain('"Desde" no es una fecha válida.');
+  });
+
+  it('fills the gallery thumbnail when a photo is chosen', async () => {
+    const { item } = await prepareMedia(new FakeImageEncoder(), { name: 'sauna.jpg', type: 'image/jpeg', data: new Blob(['x']) }, 'photo', []);
+    const field = galleryCollection().fields[0] as ImageField;
+    expect(applyImage(field, { caption: 'Sauna' }, item)).toEqual({ caption: 'Sauna', src: '/assets/cms/sauna.webp', thumb: '/assets/cms/sauna-thumb.webp' });
   });
 });
 

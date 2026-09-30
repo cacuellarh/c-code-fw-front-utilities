@@ -180,3 +180,15 @@ h2 {
     border-bottom: 1px solid var(--cms-border);
   }
 }
+:host(.is-single) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.single {
+  min-width: 0;
+}
+.single > .head {
+  padding: 24px 32px 0;
+}
+.single > .alert {
+  margin: 16px 32px;
+}

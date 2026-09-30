@@ -27,6 +27,11 @@ export interface CollectionDef {
   file: string;
   /** When the file does not exist in a site, the collection is hidden instead of failing. */
   optional?: boolean;
+  /**
+   * The file holds one object instead of a list (settings such as the popup). The CMS shows
+   * the form directly, without a list, and entries cannot be added or deleted.
+   */
+  single?: boolean;
   /** Numeric id field. New entries get the highest id + 1. */
   idKey?: string;
   /** Field shown as the entry's name in the list. */
@@ -76,6 +81,8 @@ export interface NumberField extends BaseField {
   step?: number;
   /** Shows the value formatted as a price next to the input. */
   format?: 'price';
+  /** Shown after the input: "segundos", "días". */
+  unit?: string;
 }
 
 export interface SelectField extends BaseField {
@@ -102,7 +109,27 @@ export interface ImageField extends BaseField {
   thumbKey?: string;
 }
 
-export type FieldDef = TextField | TextareaField | NumberField | SelectField | RelationField | ImageField;
+/** Yes/no switch. */
+export interface BooleanField extends BaseField {
+  type: 'boolean';
+  /** Text next to the switch when it is on: "Mostrar el popup". */
+  onLabel?: string;
+}
+
+/** A day, stored as YYYY-MM-DD. Empty when the field is optional and not set. */
+export interface DateField extends BaseField {
+  type: 'date';
+}
+
+export type FieldDef =
+  | TextField
+  | TextareaField
+  | NumberField
+  | SelectField
+  | RelationField
+  | ImageField
+  | BooleanField
+  | DateField;
 
 /** A file rebuilt from the content, such as the prerender routes or the sitemap. */
 export interface GeneratorDef {

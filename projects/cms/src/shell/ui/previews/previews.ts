@@ -1,4 +1,5 @@
 import { Type } from '@angular/core';
+import { PromoPreviewComponent } from './shared-promo/promo-preview.component';
 import { PlanPreviewComponent } from './spa-plan/plan-preview.component';
 
 /**
@@ -7,4 +8,5 @@ import { PlanPreviewComponent } from './spa-plan/plan-preview.component';
  */
 export const PREVIEWS: Record<string, Type<unknown>> = {
   'spa.plan': PlanPreviewComponent,
+  'shared.promo': PromoPreviewComponent,
 };
