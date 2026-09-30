@@ -19,7 +19,7 @@ The CMS (`projects/cms`) is split in two layers. `npm run lint:cms` enforces the
 
 ## `src/shell/`: communication with the outside
 
-- **`adapters/`:** implementations of the ports. They are Firestore (`FirestoreContentRepository`), the Vercel Deploy Hook (`VercelDeployHookPublisher`), File System Access for importing sites (`FsSiteFiles`), canvas to WebP (`CanvasImageEncoder`) and fonts. Firebase setup lives in `adapters/firebase.ts` and `firebase.config.ts`; nothing Firebase-specific goes into the domain. `app.config.ts` provides them through the tokens in `state/ports.tokens.ts`.
+- **`adapters/`:** implementations of the ports. They are Firestore (`FirestoreContentRepository`, and `FirestoreMediaStore` for the image library), the Vercel Deploy Hook (`VercelDeployHookPublisher`), File System Access for importing sites (`FsSiteFiles`), canvas to WebP/JPEG (`CanvasImageEncoder`) and fonts. Firebase setup lives in `adapters/firebase.ts` and `firebase.config.ts`; nothing Firebase-specific goes into the domain. `app.config.ts` provides them through the tokens in `state/ports.tokens.ts`.
 - **`state/`:** Angular services with signals. They hold the current snapshot and call the domain. No business rules here: if a service starts deciding something about the content, move that into the domain.
 - **`ui/`:** pages, fields and previews.
   - Each component has its own `.ts`, `.html` and `.css` files, with no inline templates or styles.

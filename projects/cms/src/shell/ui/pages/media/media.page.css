@@ -1,0 +1,23 @@
+:host {
+  display: block;
+  max-width: 1120px;
+  padding: 24px 32px 96px;
+}
+.head {
+  margin-bottom: 20px;
+}
+h2 {
+  margin: 0;
+  font-size: var(--cms-text-xl);
+}
+.desc {
+  max-width: 70ch;
+  margin: 4px 0 0;
+  color: var(--cms-muted);
+  font-size: var(--cms-text-sm);
+}
+@media (max-width: 720px) {
+  :host {
+    padding: 16px 16px 96px;
+  }
+}

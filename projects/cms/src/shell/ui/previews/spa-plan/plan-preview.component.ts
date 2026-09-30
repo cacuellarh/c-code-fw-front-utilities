@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, resource } from '@angular/core';
 import { AdditionalService, defaultPlanMeta, Plan, PlanCardComponent, planSlug } from '@c-code/c-code-fw/ui';
 import { Entry, ScopeContext } from '../../../../domain/schema';
-import { EditorService } from '../../../state/editor.service';
+import { MediaService } from '../../../state/media.service';
 import { planRoute } from '../../../../domain/scopes/spa/spa.generators';
 
 /** How the plan looks on the site: its card with the site's colors, its address and its services. */
@@ -13,7 +13,7 @@ import { planRoute } from '../../../../domain/scopes/spa/spa.generators';
   styleUrl: './plan-preview.component.css',
 })
 export class PlanPreviewComponent {
-  private session = inject(EditorService);
+  private media = inject(MediaService);
   readonly item = input.required<Entry>();
   readonly ctx = input.required<ScopeContext>();
 
@@ -31,7 +31,7 @@ export class PlanPreviewComponent {
   });
   protected readonly image = resource({
     request: () => this.plan().imgPath,
-    loader: ({ request }) => this.session.imageUrl(request),
+    loader: ({ request }) => this.media.urlFor(request),
   });
   protected readonly services = computed(() => {
     const byId = new Map(this.ctx().data('additionals').map((s) => [s['id'], s as unknown as AdditionalService]));
@@ -39,6 +39,6 @@ export class PlanPreviewComponent {
   });
   protected readonly icons = resource({
     request: () => this.services().map((s) => s.iconPath),
-    loader: ({ request }) => Promise.all(request.map((path) => this.session.imageUrl(path))),
+    loader: ({ request }) => Promise.all(request.map((path) => this.media.urlFor(path))),
   });
 }

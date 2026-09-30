@@ -21,7 +21,12 @@
   <div class="body" [class.with-preview]="preview()">
     <form class="fields" (submit)="$event.preventDefault()">
       @for (field of collection().def.fields; track field.key) {
-        <cms-field [field]="field" [value]="entry[field.key]" (valueChange)="set(field.key, $event)" />
+        <cms-field
+          [field]="field"
+          [value]="entry[field.key]"
+          (valueChange)="set(field.key, $event)"
+          (imagePicked)="setImage(field, $event)"
+        />
       }
     </form>
 

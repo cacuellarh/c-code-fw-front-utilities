@@ -37,6 +37,17 @@ service cloud.firestore {
         allow write: if isEditor(site);
       }
 
+      // Image library: public like the rest of the site's content (the build downloads it).
+      match /media/{image} {
+        allow read: if true;
+        allow write: if isEditor(site);
+
+        match /data/{variant} {
+          allow read: if true;
+          allow write: if isEditor(site);
+        }
+      }
+
       match /history/{entry} {
         allow read, create: if isEditor(site);
       }

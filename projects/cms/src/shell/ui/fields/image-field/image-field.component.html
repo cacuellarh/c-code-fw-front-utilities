@@ -1,26 +1,43 @@
 <div class="row">
-  <div class="thumb" [class.icon]="field().kind === 'icon'">
+  <button
+    type="button"
+    class="thumb"
+    [class.icon]="field().kind === 'icon'"
+    (click)="pickerOpen.set(true)"
+    [attr.aria-label]="(value() ? 'Cambiar ' : 'Elegir ') + field().label.toLowerCase()"
+  >
     @if (preview.value(); as src) {
       <img [src]="src" alt="" (error)="broken.set(true)" (load)="broken.set(false)" [hidden]="broken()" />
       @if (broken()) {
-        <span class="missing">No está en el sitio</span>
+        <span class="missing">No se encuentra</span>
       }
+    } @else if (preview.isLoading()) {
+      <span class="empty">Cargando…</span>
     } @else {
       <span class="empty">Sin imagen</span>
     }
-  </div>
+  </button>
   <div class="side">
-    <input
-      class="path"
-      [id]="inputId()"
-      type="text"
-      [value]="value()"
-      placeholder="/assets/images/foto.webp"
-      spellcheck="false"
-      (change)="broken.set(false); value.set($any($event.target).value.trim())"
-    />
-    <p class="note">
-      Ruta de una imagen que ya está en el sitio publicado. Subir imágenes nuevas desde el CMS llegará después.
-    </p>
+    @if (name()) {
+      <span class="name">{{ name() }}</span>
+    } @else if (legacy()) {
+      <span class="note">Imagen anterior del sitio. Elige una de la biblioteca para reemplazarla.</span>
+    }
+    <div class="actions">
+      <button type="button" class="btn" [id]="inputId()" (click)="pickerOpen.set(true)">
+        {{ value() ? 'Cambiar imagen' : 'Elegir imagen' }}
+      </button>
+      @if (value() && !field().required) {
+        <button type="button" class="btn ghost" (click)="picked.emit(null)">Quitar</button>
+      }
+    </div>
   </div>
 </div>
+
+<cms-media-picker
+  [(open)]="pickerOpen"
+  [kind]="field().kind ?? 'photo'"
+  [selectedId]="libraryId()"
+  [title]="'Elegir ' + field().label.toLowerCase()"
+  (picked)="choose($event)"
+/>

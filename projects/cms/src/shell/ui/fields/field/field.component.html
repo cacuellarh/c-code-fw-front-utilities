@@ -61,7 +61,7 @@
     </select>
   }
   @case ('image') {
-    <cms-image-field [inputId]="id" [field]="f" [value]="text()" (valueChange)="value.set($event)" />
+    <cms-image-field [inputId]="id" [field]="f" [value]="text()" (picked)="imagePicked.emit($event)" />
   }
   @case ('relation') {
     <cms-relation-field [inputId]="id" [field]="f" [value]="asIds(value())" (valueChange)="value.set($event)" />

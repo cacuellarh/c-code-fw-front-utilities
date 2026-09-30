@@ -30,7 +30,7 @@ A scope describes one kind of client site: which JSON files it has, what each en
            { key: 'name', label: 'Nombre', type: 'text', required: true },
            { key: 'price', label: 'Precio', type: 'number', format: 'price', width: 'half' },
            { key: 'category', label: 'Categoría', type: 'relation', collection: 'categories' },
-           { key: 'photo', label: 'Foto', type: 'image', uploadDir: 'images/menu' },
+           { key: 'photo', label: 'Foto', type: 'image', kind: 'photo' },
          ],
          create: () => ({ id: 0, name: '', price: 0, category: [], photo: '' }),
        },
@@ -49,7 +49,7 @@ A site joins the scope through its `cms.json`, which the CMS creates the first t
 - **Field types:**
   - `text`, `textarea`, `number` (with `format: 'price'`), `select`.
   - `relation`: ids of another collection.
-  - `image`: uploaded into `uploadDir` under the site's assets. Photos are converted to WebP.
+  - `image`: chosen from the site's image library (`kind`: `photo` or `icon`; `thumbKey` also stores the thumbnail, for galleries). Everything is converted to WebP when uploaded.
 - **`validate(item, all, ctx)`:** warnings shown in the list and the form. They don't block saving.
 - **`generators`:** files rebuilt from the content every time the site is saved, for example routes or a sitemap. Each one receives the file's current text, so it can keep what it doesn't own.
 - **`preview`:** the key of a preview component in the shell (`shell/ui/previews/previews.ts`).

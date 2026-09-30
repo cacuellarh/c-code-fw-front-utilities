@@ -1,6 +1,9 @@
 import { NgComponentOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { CollectionData, titleOf } from '../../../domain/content';
+import { applyImage } from '../../../domain/media';
+import { MediaItem } from '../../../domain/ports';
+import { FieldDef } from '../../../domain/schema';
 import { EditorService } from '../../state/editor.service';
 import { FieldComponent } from '../fields/field/field.component';
 import { PREVIEWS } from '../previews/previews';
@@ -37,6 +40,11 @@ export class EntryEditorComponent {
 
   protected set(key: string, value: unknown): void {
     this.editor.updateItem(this.collection().def.id, this.index(), { ...this.item(), [key]: value });
+  }
+
+  protected setImage(field: FieldDef, media: MediaItem | null): void {
+    if (field.type !== 'image') return;
+    this.editor.updateItem(this.collection().def.id, this.index(), applyImage(field, this.item(), media));
   }
 
   protected duplicate(): void {

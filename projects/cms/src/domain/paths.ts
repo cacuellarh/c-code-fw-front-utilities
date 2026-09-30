@@ -1,4 +1,4 @@
-import { DEFAULT_ASSETS, ImageField, SiteManifest } from './schema';
+import { DEFAULT_ASSETS, SiteManifest } from './schema';
 
 /** Joins path parts with "/": joinPath('src/assets/', '/images/a.jpg') -> 'src/assets/images/a.jpg'. */
 export function joinPath(...parts: string[]): string {
@@ -28,15 +28,4 @@ export function diskPath(manifest: SiteManifest, sitePath: string): string {
   const clean = '/' + sitePath.replace(/^\/+/, '').split(/[?#]/)[0];
   const prefix = '/' + url.replace(/^\/+/, '');
   return clean.startsWith(prefix) ? joinPath(dir, clean.slice(prefix.length)) : joinPath('public', clean);
-}
-
-/** Folder on disk where a field saves its uploads: "src/assets/images/planes". */
-export function uploadDir(manifest: SiteManifest, field: ImageField): string {
-  return joinPath(assetsOf(manifest).dir, field.uploadDir);
-}
-
-/** Path the site uses for an uploaded file: "/assets/images/planes/foto.webp". */
-export function sitePath(manifest: SiteManifest, field: ImageField, name: string): string {
-  const path = joinPath(assetsOf(manifest).url, field.uploadDir, name).replace(/^\/+/, '');
-  return field.relative ? path : '/' + path;
 }

@@ -1,5 +1,5 @@
 import * as content from './content';
-import { freeFileName, saveImage } from './images';
+import { applyImage, deleteMedia, MAX_VARIANT_BYTES, MediaError, mediaId, mediaIdOf, mediaPath, MediaSource, prepareMedia, uploadMedia } from './media';
 import { detectJsonStyle, formatJson } from './json-format';
 import { suggestManifest } from './manifest';
 import { diskPath } from './paths';
@@ -7,6 +7,7 @@ import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
 import { ConflictError, needsPublish, openSite, readSiteFolder, renameSite, saveSite, siteIdFor, writeSiteFolder } from './site';
 import { MemoryContentRepository } from './testing/memory-content-repository';
+import { FakeImageEncoder, MemoryMediaStore } from './testing/memory-media';
 import { MemorySiteFiles } from './testing/memory-site-files';
 import { extractTheme } from './theme';
 
@@ -220,22 +221,71 @@ describe('rename', () => {
   });
 });
 
-describe('images and paths', () => {
-  const field: ImageField = { key: 'imgPath', label: 'Foto', type: 'image', uploadDir: 'images/planes' };
-
+describe('paths', () => {
   it('maps JSON paths to files on disk', () => {
     expect(diskPath(manifest, '/assets/images/8.jpeg')).toBe('src/assets/images/8.jpeg');
     expect(diskPath(manifest, 'assets/icons/a.png')).toBe('src/assets/icons/a.png');
     expect(diskPath(manifest, '/logo.png')).toBe('public/logo.png');
   });
+});
 
-  it('saves photos as WebP with a free name and returns the site path', async () => {
-    const files = new MemorySiteFiles('spa', { 'src/assets/images/planes/foto-spa.webp': 'x' });
-    const encoder = { toWebp: async () => new Blob(['webp']) };
-    const path = await saveImage(files, encoder, manifest, field, { name: 'Foto Spa.JPG', type: 'image/jpeg', data: new Blob(['jpg']) });
-    expect(path).toBe('/assets/images/planes/foto-spa-2.webp');
-    expect(await files.exists('src/assets/images/planes/foto-spa-2.webp')).toBeTrue();
-    expect(freeFileName('Ícono.PNG', 'png', [])).toBe('icono.png');
+describe('image library', () => {
+  const photo = (name = 'Jacuzzi_con-espuma.JPG'): MediaSource => ({ name, type: 'image/jpeg', data: new Blob(['x']) });
+
+  it('turns a photo into a WebP of at most 1600 px, a thumbnail and a JPEG for link previews', async () => {
+    const encoder = new FakeImageEncoder(4000, 3000);
+    const { item, files } = await prepareMedia(encoder, photo(), 'photo', [], '2026-01-01T00:00:00.000Z');
+    expect(item).toEqual(jasmine.objectContaining({ id: 'jacuzzi-con-espuma', name: 'Jacuzzi con espuma', kind: 'photo', width: 1600, height: 1200 }));
+    expect(item.variants).toEqual(['full', 'thumb', 'og']);
+    expect(encoder.calls.map((c) => [c.format, c.maxSize])).toEqual([['webp', 1600], ['webp', 600], ['jpeg', 1200], ['webp', 160]]);
+    expect(item.bytes).toBe(files.full!.byteLength);
+    expect(Object.values(files).every((f) => f!.byteLength <= MAX_VARIANT_BYTES)).toBeTrue();
+  });
+
+  it('keeps icons small and without extra variants', async () => {
+    const { item, files } = await prepareMedia(new FakeImageEncoder(512, 512), photo('masaje.png'), 'icon', []);
+    expect([item.width, item.height, item.variants]).toEqual([256, 256, ['full']]);
+    expect(Object.keys(files)).toEqual(['full']);
+  });
+
+  it('lowers the quality of heavy photos and refuses the ones that stay too heavy', async () => {
+    const heavy = new FakeImageEncoder(4000, 3000, 0.6); // 1600×1200×0.6×0.82 ≈ 945 KB: too heavy at first
+    await prepareMedia(heavy, photo(), 'photo', []);
+    expect(heavy.calls.filter((c) => c.maxSize === 1600).length).toBeGreaterThan(1);
+    await expectAsync(prepareMedia(new FakeImageEncoder(4000, 3000, 2), photo(), 'photo', [])).toBeRejectedWithError(MediaError);
+  });
+
+  it('refuses formats the browser cannot convert, such as HEIC', async () => {
+    const heic = { name: 'IMG_0001.HEIC', type: 'image/heic', data: new Blob(['x']) };
+    await expectAsync(prepareMedia(new FakeImageEncoder(), heic, 'photo', [])).toBeRejectedWithError(MediaError);
+  });
+
+  it('gives unique ids and maps them to the paths the site uses', () => {
+    expect(mediaId('Foto Spa.jpg', ['foto-spa', 'foto-spa-2'])).toBe('foto-spa-3');
+    expect(mediaPath('foto-spa')).toBe('/assets/cms/foto-spa.webp');
+    expect(mediaPath('foto-spa', 'thumb')).toBe('/assets/cms/foto-spa-thumb.webp');
+    expect(mediaIdOf('/assets/cms/foto-spa-thumb.webp')).toEqual({ id: 'foto-spa', variant: 'thumb' });
+    expect(mediaIdOf('/assets/cms/foto-spa.jpg')).toEqual({ id: 'foto-spa', variant: 'og' });
+    expect(mediaIdOf('/assets/images/8.jpeg')).toBeNull();
+  });
+
+  it('sets the image and the gallery thumbnail in an entry', async () => {
+    const { item } = await prepareMedia(new FakeImageEncoder(), photo('sala.jpg'), 'photo', []);
+    const field: ImageField = { key: 'src', label: 'Foto', type: 'image', kind: 'photo', thumbKey: 'thumb' };
+    expect(applyImage(field, { caption: 'Sala' }, item)).toEqual({ caption: 'Sala', src: '/assets/cms/sala.webp', thumb: '/assets/cms/sala-thumb.webp' });
+  });
+
+  it('does not delete an image that a plan uses, even in unsaved changes', async () => {
+    const repo = await importedRepo();
+    const { content: site } = await openSite(repo, 'spa');
+    const store = new MemoryMediaStore();
+    const item = await uploadMedia(store, new FakeImageEncoder(), 'spa', photo('rosa.jpg'), 'photo', []);
+    const edited = content.updateItem(site, 'plans', 0, { ...plan(1, 'PLAN ROSA'), imgPath: mediaPath(item.id) });
+    await expectAsync(deleteMedia(store, 'spa', edited, item)).toBeRejectedWithError(MediaError, /PLAN ROSA/);
+    expect(await store.list('spa')).toEqual([item]);
+    await deleteMedia(store, 'spa', site, item);
+    expect(await store.list('spa')).toEqual([]);
+    expect(await store.read('spa', item.id, 'full')).toBeNull();
   });
 });
 

@@ -1,27 +1,33 @@
 :host {
-  display: grid;
-  gap: 12px;
+  display: block;
 }
 .row {
   display: flex;
   gap: 16px;
-  align-items: flex-start;
+  align-items: center;
 }
 .thumb {
   flex: none;
   display: grid;
   place-items: center;
-  width: 128px;
+  width: 144px;
   aspect-ratio: 4 / 3;
+  padding: 0;
+  border: 1px solid var(--cms-border);
   border-radius: var(--cms-radius);
   background: var(--cms-subtle);
   overflow: hidden;
   color: var(--cms-muted);
+  font: inherit;
   font-size: var(--cms-text-xs);
   text-align: center;
+  cursor: pointer;
+}
+.thumb:hover {
+  border-color: var(--cms-accent);
 }
 .thumb.icon {
-  width: 64px;
+  width: 72px;
   aspect-ratio: 1;
 }
 .thumb img {
@@ -31,31 +37,31 @@
 }
 .thumb.icon img {
   object-fit: contain;
-  padding: 8px;
+  padding: 10px;
 }
 .missing {
+  padding: 4px;
   color: var(--cms-danger);
   font-weight: 600;
-  padding: 4px;
 }
 .side {
   display: grid;
   gap: 8px;
-  flex: 1;
   min-width: 0;
 }
-.path {
-  width: 100%;
-  min-height: 36px;
-  padding: 6px 10px;
-  border: 1px solid var(--cms-border-strong);
-  border-radius: var(--cms-radius);
-  font: 13px/1.4 var(--cms-font-mono);
-  color: inherit;
-  background: var(--cms-panel);
+.name {
+  font-weight: 600;
+  font-size: var(--cms-text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .note {
-  margin: 0;
   color: var(--cms-muted);
   font-size: var(--cms-text-xs);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }

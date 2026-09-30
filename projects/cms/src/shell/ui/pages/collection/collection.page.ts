@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { slugify } from '@c-code/c-code-fw/ui';
 import { titleOf } from '../../../../domain/content';
 import { EditorService } from '../../../state/editor.service';
+import { MediaService } from '../../../state/media.service';
 import { EntryEditorComponent } from '../../entry-editor/entry-editor.component';
 
 /** One collection of the site: the list of entries and the editor of the selected one (`?i=`). */
@@ -15,6 +16,7 @@ import { EntryEditorComponent } from '../../entry-editor/entry-editor.component'
 })
 export class CollectionPage {
   protected editor = inject(EditorService);
+  private media = inject(MediaService);
   private router = inject(Router);
 
   readonly collection = input.required<string>();
@@ -55,7 +57,7 @@ export class CollectionPage {
   protected readonly thumbs = resource({
     request: () => this.rows().map((row) => row.image),
     loader: async ({ request }) => {
-      const urls = await Promise.all(request.map((path) => this.editor.imageUrl(path)));
+      const urls = await Promise.all(request.map((path) => this.media.urlFor(path)));
       return new Map(request.map((path, i) => [path, urls[i]]));
     },
   });

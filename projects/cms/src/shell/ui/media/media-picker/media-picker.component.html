@@ -1,0 +1,9 @@
+<dialog #dialog class="dialog" (close)="open.set(false)" aria-labelledby="picker-title">
+  <header class="head">
+    <h2 id="picker-title">{{ title() }}</h2>
+    <button type="button" class="btn ghost" (click)="open.set(false)">Cerrar</button>
+  </header>
+  @if (open()) {
+    <cms-media-library mode="pick" [kind]="kind()" [selectedId]="selectedId()" (picked)="choose($event)" />
+  }
+</dialog>

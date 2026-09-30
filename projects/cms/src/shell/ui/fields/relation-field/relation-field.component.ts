@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output, re
 import { slugify } from '@c-code/c-code-fw/ui';
 import { RelationField } from '../../../../domain/schema';
 import { EditorService } from '../../../state/editor.service';
+import { MediaService } from '../../../state/media.service';
 
 /** Picks entries of another collection (the services a plan includes) with checkboxes. */
 @Component({
@@ -12,6 +13,7 @@ import { EditorService } from '../../../state/editor.service';
 })
 export class RelationFieldComponent {
   private editor = inject(EditorService);
+  private media = inject(MediaService);
   readonly field = input.required<RelationField>();
   readonly inputId = input<string>('');
   readonly value = input<number[]>([]);
@@ -37,7 +39,7 @@ export class RelationFieldComponent {
   protected readonly icons = resource({
     request: () => this.options().map((o) => o.icon),
     loader: async ({ request }) => {
-      const urls = await Promise.all(request.map((path) => this.editor.imageUrl(path)));
+      const urls = await Promise.all(request.map((path) => this.media.urlFor(path)));
       return new Map(request.map((path, i) => [path, urls[i]]));
     },
   });

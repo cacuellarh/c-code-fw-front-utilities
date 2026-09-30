@@ -1,0 +1,91 @@
+@if (!kind()) {
+  <div class="tabs" role="tablist" aria-label="Tipo de imagen">
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'photo'" [class.on]="tab() === 'photo'" (click)="tab.set('photo')">
+      Fotos
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'icon'" [class.on]="tab() === 'icon'" (click)="tab.set('icon')">
+      Íconos
+    </button>
+  </div>
+}
+
+<label
+  class="drop"
+  [class.over]="dragging()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="dragging.set(false)"
+  (drop)="onDrop($event)"
+>
+  <input type="file" class="file" [accept]="accept" multiple (change)="onFiles($any($event.target).files); $any($event.target).value = ''" />
+  <strong>{{ activeKind() === 'photo' ? 'Subir fotos' : 'Subir íconos' }}</strong>
+  <span>Arrástralas aquí o haz clic para elegirlas. Se convierten a WebP de máximo {{ limits() }} px.</span>
+</label>
+
+@if (media.uploads().length) {
+  <ul class="uploads" aria-live="polite">
+    @for (u of media.uploads(); track $index) {
+      <li [class]="u.state">
+        <span class="name">{{ u.name }}</span>
+        <span class="state">
+          @switch (u.state) {
+            @case ('waiting') { En espera }
+            @case ('working') { Convirtiendo… }
+            @case ('done') { Lista }
+            @case ('error') { {{ u.message }} }
+          }
+        </span>
+      </li>
+    }
+    @if (!media.uploading()) {
+      <li class="close"><button type="button" class="link" (click)="media.clearUploads()">Ocultar</button></li>
+    }
+  </ul>
+}
+
+@if (error()) {
+  <p class="alert" role="alert">{{ error() }}</p>
+}
+
+<div class="bar">
+  <input
+    class="search"
+    type="search"
+    [value]="query()"
+    (input)="query.set($any($event.target).value)"
+    placeholder="Buscar por nombre…"
+    aria-label="Buscar imágenes"
+  />
+  <span class="count">{{ visible().length }} {{ activeKind() === 'photo' ? 'fotos' : 'íconos' }}</span>
+</div>
+
+@if (media.loading()) {
+  <p class="note">Cargando imágenes…</p>
+} @else {
+  <ul class="grid" [class.icons]="activeKind() === 'icon'">
+    @for (item of visible(); track item.id) {
+      <li class="tile" [class.on]="item.id === selectedId()">
+        <button
+          type="button"
+          class="thumb"
+          (click)="choose(item)"
+          [disabled]="mode() !== 'pick'"
+          [attr.aria-label]="mode() === 'pick' ? 'Elegir ' + item.name : item.name"
+          [attr.aria-pressed]="mode() === 'pick' ? item.id === selectedId() : null"
+        >
+          <img [src]="media.previewUrl(item)" [alt]="item.name" loading="lazy" />
+        </button>
+        <div class="meta">
+          <span class="title" [title]="item.name">{{ item.name }}</span>
+          <span class="dims">{{ item.width }}×{{ item.height }} · {{ kb(item.bytes) }}</span>
+        </div>
+        @if (mode() === 'manage') {
+          <button type="button" class="delete" (click)="remove(item)" [attr.aria-label]="'Borrar ' + item.name">Borrar</button>
+        }
+      </li>
+    } @empty {
+      <li class="none">
+        {{ query() ? 'Ninguna imagen coincide con la búsqueda.' : 'Todavía no hay imágenes. Sube la primera.' }}
+      </li>
+    }
+  </ul>
+}

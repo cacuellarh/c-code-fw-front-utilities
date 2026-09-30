@@ -86,7 +86,57 @@ export interface FileText {
   lastModified: number;
 }
 
-/** Converts a photo for the web. */
+/** Encodes images in the browser (canvas) or wherever the shell can. */
 export interface ImageEncoder {
-  toWebp(image: Blob, maxSize: number): Promise<Blob>;
+  /** Scales the image so its longest side is at most `maxSize` and encodes it. */
+  encode(image: Blob, options: EncodeOptions): Promise<EncodedImage>;
+}
+
+export interface EncodeOptions {
+  format: 'webp' | 'jpeg';
+  maxSize: number;
+  /** 0–1. */
+  quality: number;
+}
+
+export interface EncodedImage {
+  data: Uint8Array;
+  width: number;
+  height: number;
+}
+
+/**
+ * Where a site's images live. Each image has a small metadata record (listed quickly, with a
+ * tiny preview) and its files by variant: the full WebP, the gallery thumbnail and the JPEG
+ * copy for link previews.
+ */
+export interface MediaStore {
+  list(siteId: string): Promise<MediaItem[]>;
+  /** The bytes of one variant, or null if the image or the variant does not exist. */
+  read(siteId: string, id: string, variant: MediaVariant): Promise<Uint8Array | null>;
+  save(siteId: string, upload: MediaUpload): Promise<void>;
+  remove(siteId: string, item: MediaItem): Promise<void>;
+}
+
+export type MediaKind = 'photo' | 'icon';
+export type MediaVariant = 'full' | 'thumb' | 'og';
+
+export interface MediaItem {
+  id: string;
+  /** Name shown in the CMS, from the original file: "Jacuzzi con espuma". */
+  name: string;
+  kind: MediaKind;
+  width: number;
+  height: number;
+  /** Size of the full WebP, in bytes. */
+  bytes: number;
+  variants: MediaVariant[];
+  /** Tiny WebP (about 160 px) for the library grid, stored with the metadata. */
+  preview: Uint8Array;
+  createdAt: string;
+}
+
+export interface MediaUpload {
+  item: MediaItem;
+  files: Partial<Record<MediaVariant, Uint8Array>>;
 }

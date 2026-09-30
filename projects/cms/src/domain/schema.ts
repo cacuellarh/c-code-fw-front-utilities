@@ -89,17 +89,17 @@ export interface RelationField extends BaseField {
   collection: string;
 }
 
-/** Path of an image inside the site, as the site uses it (`/assets/images/8.jpeg`). */
+/**
+ * Image of an entry, chosen from the site's image library. The JSON stores the path the site
+ * uses: `/assets/cms/<id>.webp` for library images, or an older path such as
+ * `/assets/images/8.jpeg` until it is imported into the library.
+ */
 export interface ImageField extends BaseField {
   type: 'image';
-  /** Folder under the assets folder where uploaded images are saved: `images/planes`. */
-  uploadDir: string;
-  /** Longest side of uploaded images, in pixels. */
-  maxSize?: number;
-  /** Icons keep their format and size; photos are converted to WebP. */
+  /** `photo`: up to 1600 px, with thumbnail and link-preview copy. `icon`: up to 256 px. */
   kind?: 'photo' | 'icon';
-  /** Store the path without the leading "/" (`assets/icons/a.png`), as some files do. */
-  relative?: boolean;
+  /** Field that receives the thumbnail's path too (for galleries). */
+  thumbKey?: string;
 }
 
 export type FieldDef = TextField | TextareaField | NumberField | SelectField | RelationField | ImageField;

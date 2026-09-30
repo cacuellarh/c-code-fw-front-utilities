@@ -60,9 +60,9 @@ export const SPA_SCOPE: ScopeDef = {
           key: 'imgPath',
           label: 'Foto',
           type: 'image',
-          uploadDir: 'images/planes',
+          kind: 'photo',
           required: true,
-          help: 'Horizontal o cuadrada. Se guarda en WebP de máximo 1600 px.',
+          help: 'Horizontal o cuadrada. Se guarda en WebP de máximo 1600 px, con una copia JPEG para las vistas previas de WhatsApp.',
         },
         { key: 'description', label: 'Descripción', type: 'textarea', rows: 5, required: true },
         { key: 'additionalServicesId', label: 'Servicios incluidos', type: 'relation', collection: 'additionals' },
@@ -103,7 +103,7 @@ export const SPA_SCOPE: ScopeDef = {
       subtitle: (service, ctx) => usedIn(service, ctx),
       fields: [
         { key: 'name', label: 'Nombre', type: 'text', required: true, placeholder: 'Masaje relajante' },
-        { key: 'iconPath', label: 'Ícono', type: 'image', kind: 'icon', uploadDir: 'icons', required: true },
+        { key: 'iconPath', label: 'Ícono', type: 'image', kind: 'icon', required: true },
       ],
       create: () => ({ id: 0, iconPath: '', name: '' }),
       validate: (service, all) =>
@@ -139,7 +139,7 @@ export const SPA_SCOPE: ScopeDef = {
       imageKey: 'route',
       fields: [
         { key: 'name', label: 'Nombre', type: 'text', required: true },
-        { key: 'route', label: 'Ícono', type: 'image', kind: 'icon', uploadDir: 'icons', relative: true, required: true },
+        { key: 'route', label: 'Ícono', type: 'image', kind: 'icon', required: true },
       ],
       create: () => ({ route: '', name: '' }),
     },

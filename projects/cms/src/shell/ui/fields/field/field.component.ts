@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
 import { formatPrice } from '@c-code/c-code-fw/ui';
+import { MediaItem } from '../../../../domain/ports';
 import { FieldDef } from '../../../../domain/schema';
 import { ImageFieldComponent } from '../image-field/image-field.component';
 import { RelationFieldComponent } from '../relation-field/relation-field.component';
@@ -18,6 +19,8 @@ let nextId = 0;
 export class FieldComponent {
   readonly field = input.required<FieldDef>();
   readonly value = model<unknown>();
+  /** For image fields: the image chosen in the library (null to remove it). */
+  readonly imagePicked = output<MediaItem | null>();
 
   protected readonly id = `field-${nextId++}`;
   protected readonly text = computed(() => (this.value() ?? '') as string);
