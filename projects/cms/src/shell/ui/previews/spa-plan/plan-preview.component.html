@@ -1,0 +1,24 @@
+<p class="url" title="Dirección de la página del plan">{{ url() }}</p>
+<div class="card">
+  <cc-plan-card
+    [name]="plan().name"
+    [imageSrc]="image.value() || placeholder"
+    [meta]="meta()"
+    [price]="plan().price"
+    ctaLabel="Ver plan"
+    headingLevel="h3"
+  />
+</div>
+@if (services().length) {
+  <h3 class="title">Incluye</h3>
+  <ul class="services">
+    @for (service of services(); track service.id; let i = $index) {
+      <li>
+        @if (icons.value()?.[i]; as src) {
+          <img [src]="src" alt="" width="24" height="24" />
+        }
+        {{ service.name }}
+      </li>
+    }
+  </ul>
+}

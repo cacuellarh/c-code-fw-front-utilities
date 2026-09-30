@@ -1,0 +1,36 @@
+:host {
+  display: block;
+  font-family: var(--cc-font-body, system-ui, sans-serif);
+  color: var(--cc-text, #292524);
+}
+.url {
+  margin: 0 0 12px;
+  font: 500 12px/1.4 var(--cms-font-mono);
+  color: var(--cms-muted);
+  overflow-wrap: anywhere;
+}
+.card {
+  max-width: 320px;
+  pointer-events: none;
+}
+.title {
+  margin: 20px 0 8px;
+  font: 600 14px/1.3 var(--cc-font-heading, inherit);
+  color: var(--cc-heading, inherit);
+}
+.services {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.services li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.services img {
+  object-fit: contain;
+}

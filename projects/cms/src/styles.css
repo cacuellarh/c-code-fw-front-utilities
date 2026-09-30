@@ -1,0 +1,123 @@
+/*
+ * CMS interface. Its own tokens (--cms-*) are kept apart from the site's roles (--cc-*),
+ * which only apply inside the previews (.site-theme) with the colors of the open site.
+ */
+:root {
+  --cms-bg: #f6f5f2;
+  --cms-panel: #ffffff;
+  --cms-subtle: #efede8;
+  --cms-text: #1f1d1a;
+  --cms-muted: #6b655e;
+  --cms-border: #e4e0d9;
+  --cms-border-strong: #c9c3b9;
+  --cms-accent: #2f5d50;
+  --cms-accent-strong: #1f4238;
+  --cms-accent-soft: #e6efeb;
+  --cms-on-accent: #ffffff;
+  --cms-inverse: #1f1d1a;
+  --cms-on-inverse: #f6f5f2;
+  --cms-on-inverse-ok: #9be3b8;
+  --cms-on-inverse-bad: #ffb4a8;
+  --cms-on-inverse-warn: #fcd68a;
+  --cms-danger: #b42318;
+  --cms-danger-soft: #fdecea;
+  --cms-warning: #93370d;
+  --cms-warning-soft: #fef4e6;
+  --cms-focus: #2f5d50;
+
+  --cms-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --cms-font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --cms-text-xs: 0.75rem;
+  --cms-text-sm: 0.875rem;
+  --cms-text-md: 1rem;
+  --cms-text-lg: 1.125rem;
+  --cms-text-xl: 1.375rem;
+  --cms-text-2xl: 1.875rem;
+  --cms-radius: 8px;
+  --cms-radius-lg: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  font-family: var(--cms-font);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--cms-text);
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  margin: 0;
+  background: var(--cms-bg);
+}
+:focus-visible {
+  outline: 2px solid var(--cms-focus);
+  outline-offset: 2px;
+}
+code {
+  font-family: var(--cms-font-mono);
+  font-size: 0.9em;
+}
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--cms-border-strong);
+  border-radius: var(--cms-radius);
+  background: var(--cms-panel);
+  color: var(--cms-text);
+  font: 600 var(--cms-text-sm) / 1 var(--cms-font);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.btn:hover:not(:disabled) {
+  background: var(--cms-subtle);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.btn.primary {
+  border-color: var(--cms-accent);
+  background: var(--cms-accent);
+  color: var(--cms-on-accent);
+}
+.btn.primary:hover:not(:disabled) {
+  border-color: var(--cms-accent-strong);
+  background: var(--cms-accent-strong);
+}
+.btn.ghost {
+  background: transparent;
+}
+.btn.danger {
+  border-color: transparent;
+  background: transparent;
+  color: var(--cms-danger);
+}
+.btn.danger:hover:not(:disabled) {
+  background: var(--cms-danger-soft);
+}
+
+.alert {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-radius: var(--cms-radius);
+  background: var(--cms-danger-soft);
+  color: var(--cms-danger);
+  font-size: var(--cms-text-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

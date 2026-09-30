@@ -1,0 +1,79 @@
+@if (ready()) {
+  <aside class="side">
+    <button type="button" class="back" (click)="leave()">← Sitios</button>
+    <div class="site">
+      <p class="scope">{{ editor.scope()?.label }}</p>
+      <h1>{{ editor.site()?.name }}</h1>
+      <p class="folder">{{ editor.site()?.ref?.name }}</p>
+    </div>
+    <nav aria-label="Contenido del sitio">
+      <ul>
+        @for (c of editor.collections(); track c.def.id) {
+          <li>
+            <a [routerLink]="['/sitio', siteId(), c.def.id]" routerLinkActive="on" ariaCurrentWhenActive="page">
+              <span class="name">{{ c.def.label }}</span>
+              @if (isDirty(c)) {
+                <span class="dot" title="Cambios sin guardar" aria-label="cambios sin guardar"></span>
+              }
+              @if (issuesBy().get(c.def.id); as n) {
+                <span class="warn" [title]="n + ' avisos'">{{ n }}</span>
+              }
+              <span class="n">{{ c.error ? '!' : c.items.length }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <router-outlet />
+  </div>
+
+  @if (editor.dirty().length || saved() || error()) {
+    <div class="savebar" role="region" aria-label="Guardar cambios">
+      <div class="status" aria-live="polite">
+        @if (error()) {
+          <strong class="bad">{{ error() }}</strong>
+        } @else if (editor.dirty().length) {
+          <strong>Cambios sin guardar</strong>
+          <span>en {{ editor.dirty().length === 1 ? '1 archivo' : editor.dirty().length + ' archivos' }}:
+            @for (c of editor.dirty(); track c.def.id; let last = $last) {
+              {{ c.def.label }}{{ last ? '' : ', ' }}
+            }
+          </span>
+          @if (issueCount()) {
+            <span class="warn-text">· {{ issueCount() }} avisos por revisar</span>
+          }
+        } @else if (saved()) {
+          <strong class="ok">Guardado</strong>
+          <span>{{ saved()?.join(', ') }}. Para publicarlo, haz commit y push del sitio.</span>
+        }
+      </div>
+      <div class="actions">
+        @if (editor.dirty().length) {
+          <button type="button" class="btn ghost" (click)="discard()" [disabled]="editor.saving()">Descartar</button>
+          <button type="button" class="btn primary" (click)="save()" [disabled]="editor.saving()">
+            {{ editor.saving() ? 'Guardando…' : 'Guardar' }}
+          </button>
+        } @else {
+          <button type="button" class="btn ghost" (click)="saved.set(null); error.set('')">Cerrar</button>
+        }
+      </div>
+    </div>
+  }
+} @else {
+  <div class="gate">
+    @if (needsPermission()) {
+      <h1>Permitir acceso a la carpeta</h1>
+      <p>El navegador necesita tu permiso de nuevo para leer y guardar los archivos de este sitio.</p>
+      <button type="button" class="btn primary" (click)="open()">Permitir y abrir</button>
+    } @else if (!error()) {
+      <p>Abriendo…</p>
+    }
+    @if (error()) {
+      <p class="alert" role="alert">{{ error() }}</p>
+      <button type="button" class="btn ghost" (click)="leave()">Volver a los sitios</button>
+    }
+  </div>
+}

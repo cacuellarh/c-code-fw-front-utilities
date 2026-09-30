@@ -1,0 +1,56 @@
+<div class="row">
+  <div class="thumb" [class.icon]="field().kind === 'icon'">
+    @if (preview.value(); as src) {
+      <img [src]="src" alt="" />
+    } @else if (value() && !preview.isLoading()) {
+      <span class="missing">No se encuentra</span>
+    } @else {
+      <span class="empty">Sin imagen</span>
+    }
+  </div>
+  <div class="side">
+    <input
+      class="path"
+      [id]="inputId()"
+      type="text"
+      [value]="value()"
+      placeholder="/assets/images/foto.webp"
+      spellcheck="false"
+      (change)="value.set($any($event.target).value.trim())"
+    />
+    <div class="actions">
+      <label class="btn" [class.busy]="uploading()">
+        <input type="file" accept="image/*" class="file" (change)="upload($any($event.target))" [disabled]="uploading()" />
+        {{ uploading() ? 'Guardando…' : 'Subir imagen' }}
+      </label>
+      <button type="button" class="btn ghost" (click)="picking.set(!picking())" [attr.aria-expanded]="picking()">
+        Elegir del sitio
+      </button>
+    </div>
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+  </div>
+</div>
+
+@if (picking()) {
+  <div class="picker">
+    @if (existing.isLoading()) {
+      <p class="note">Cargando imágenes…</p>
+    } @else if (existing.value()?.length) {
+      <ul class="grid" [class.icons]="field().kind === 'icon'">
+        @for (image of existing.value(); track image.path) {
+          <li>
+            <button type="button" (click)="choose(image.path)" [class.on]="image.path === value()" [title]="image.path">
+              @if (image.url) {
+                <img [src]="image.url" alt="" loading="lazy" />
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="note">No hay imágenes en {{ field().uploadDir }}. Sube una nueva.</p>
+    }
+  </div>
+}

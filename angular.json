@@ -120,6 +120,77 @@
           "defaultConfiguration": "development"
         }
       }
+    },
+    "cms": {
+      "projectType": "application",
+      "root": "projects/cms",
+      "sourceRoot": "projects/cms/src",
+      "prefix": "cms",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist/cms",
+            "index": "projects/cms/src/index.html",
+            "browser": "projects/cms/src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "projects/cms/tsconfig.app.json",
+            "assets": [],
+            "styles": [
+              "projects/core/ui/src/lib/theme/tokens.css",
+              "projects/cms/src/styles.css"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "all",
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "600kB",
+                  "maximumError": "1MB"
+                }
+              ]
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "port": 4300
+          },
+          "configurations": {
+            "development": {
+              "buildTarget": "cms:build:development"
+            },
+            "production": {
+              "buildTarget": "cms:build:production"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "projects/cms/tsconfig.spec.json",
+            "include": [
+              "**/*.spec.ts"
+            ]
+          }
+        }
+      }
     }
   },
   "cli": {

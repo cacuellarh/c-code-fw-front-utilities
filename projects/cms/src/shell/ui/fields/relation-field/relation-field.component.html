@@ -1,0 +1,30 @@
+@if (target(); as t) {
+  <div class="bar">
+    <input
+      class="search"
+      [id]="inputId()"
+      type="search"
+      [value]="query()"
+      (input)="query.set($any($event.target).value)"
+      [placeholder]="'Buscar ' + t.def.label.toLowerCase() + '…'"
+    />
+    <span class="count">{{ value().length }} de {{ options().length }}</span>
+  </div>
+  <ul class="list" role="group" [attr.aria-label]="field().label">
+    @for (option of visible(); track option.id) {
+      <li>
+        <label [class.on]="selected().has(option.id)">
+          <input type="checkbox" [checked]="selected().has(option.id)" (change)="toggle(option.id, $any($event.target).checked)" />
+          @if (icons.value()?.get(option.icon); as src) {
+            <img [src]="src" alt="" width="20" height="20" />
+          }
+          <span>{{ option.label }}</span>
+        </label>
+      </li>
+    } @empty {
+      <li class="none">Nada coincide con "{{ query() }}".</li>
+    }
+  </ul>
+} @else {
+  <p class="none">Este sitio no tiene la colección "{{ field().collection }}".</p>
+}

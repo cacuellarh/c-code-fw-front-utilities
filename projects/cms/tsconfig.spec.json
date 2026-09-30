@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../out-tsc/cms-spec",
+    "types": ["jasmine"],
+    "baseUrl": "../..",
+    "paths": {
+      "@c-code/c-code-fw/ui": ["./projects/core/ui/src/public-api.ts"],
+      "@cc/ui-domain": ["./projects/core/ui/src/domain.ts"]
+    }
+  },
+  "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
+}

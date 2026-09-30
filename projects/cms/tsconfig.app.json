@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../out-tsc/cms",
+    "types": [],
+    "baseUrl": "../..",
+    "paths": {
+      "@c-code/c-code-fw/ui": ["./projects/core/ui/src/public-api.ts"],
+      "@cc/ui-domain": ["./projects/core/ui/src/domain.ts"]
+    }
+  },
+  "files": ["src/main.ts"],
+  "include": ["src/**/*.d.ts"]
+}

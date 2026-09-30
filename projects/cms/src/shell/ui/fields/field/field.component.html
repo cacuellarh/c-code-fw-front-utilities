@@ -1,0 +1,73 @@
+@let f = field();
+<label class="label" [for]="id">
+  {{ f.label }}
+  @if (f.required) {
+    <span class="required" aria-hidden="true">*</span>
+  }
+</label>
+
+@switch (f.type) {
+  @case ('text') {
+    <input
+      class="control"
+      [id]="id"
+      type="text"
+      [value]="text()"
+      [placeholder]="f.placeholder ?? ''"
+      [attr.maxlength]="f.maxLength ?? null"
+      [attr.aria-invalid]="empty() || null"
+      [class.upper]="f.uppercase"
+      (input)="onText($any($event.target).value)"
+    />
+  }
+  @case ('textarea') {
+    <textarea
+      class="control"
+      [id]="id"
+      [rows]="f.rows ?? 4"
+      [value]="text()"
+      [attr.maxlength]="f.maxLength ?? null"
+      [attr.aria-invalid]="empty() || null"
+      (input)="onText($any($event.target).value)"
+    ></textarea>
+    <span class="count">{{ text().length }} caracteres</span>
+  }
+  @case ('number') {
+    <div class="with-hint">
+      <input
+        class="control"
+        [id]="id"
+        type="number"
+        inputmode="numeric"
+        [value]="value() ?? 0"
+        [attr.min]="f.min ?? null"
+        [attr.max]="f.max ?? null"
+        [attr.step]="f.step ?? 1"
+        (input)="onNumber($any($event.target).value)"
+      />
+      @if (price()) {
+        <span class="hint">{{ price() }}</span>
+      }
+    </div>
+  }
+  @case ('select') {
+    <select class="control" [id]="id" (change)="onSelect($any($event.target).value)">
+      @if (selectedIndex() === -1) {
+        <option value="" selected disabled>Elegir…</option>
+      }
+      @for (option of f.options; track option.value; let i = $index) {
+        <option [value]="i" [selected]="i === selectedIndex()">{{ option.label }}</option>
+      }
+    </select>
+  }
+  @case ('image') {
+    <cms-image-field [inputId]="id" [field]="f" [value]="text()" (valueChange)="value.set($event)" />
+  }
+  @case ('relation') {
+    <cms-relation-field [inputId]="id" [field]="f" [value]="asIds(value())" (valueChange)="value.set($event)" />
+  }
+}
+
+@if (f.help) {
+  <p class="help">{{ f.help }}</p>
+}
