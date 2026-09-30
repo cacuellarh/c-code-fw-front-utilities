@@ -119,8 +119,8 @@ export interface GeneratorDef {
 export interface ScopeContext {
   manifest: SiteManifest;
   data: (collectionId: string) => Entry[];
-  /** The collection as it is on disk, before the unsaved changes. */
-  original?: (collectionId: string) => Entry[];
+  /** When the collection was last saved (ISO date), if known. */
+  updatedAt?: (collectionId: string) => string | undefined;
 }
 
 /** `cms.json` at the root of each site. It tells the CMS how the site is organized. */

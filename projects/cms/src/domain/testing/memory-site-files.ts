@@ -24,10 +24,9 @@ export class MemorySiteFiles implements SiteFiles {
     return this.files.has(path);
   }
 
-  async write(path: string, content: string | Blob): Promise<number> {
+  async write(path: string, content: string | Blob): Promise<void> {
     const lastModified = this.clock++;
     this.files.set(path, { content, lastModified });
-    return lastModified;
   }
 
   async list(dir: string): Promise<string[]> {

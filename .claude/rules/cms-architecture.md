@@ -15,11 +15,11 @@ The CMS (`projects/cms`) is split in two layers. `npm run lint:cms` enforces the
 - **Must not import:** `@angular/*`, `shell/`, or any other package.
 - **Must not use browser APIs:** `window`, `document`, `indexedDB`, `localStorage`, `navigator`, file handles, canvas, object URLs. When the domain needs something from outside, declare an interface in `domain/ports.ts` and let the shell implement it.
 - **State is immutable:** functions receive a `SiteContent` and return a new one.
-- **Tests:** specs live next to the code and use `domain/testing/memory-site-files.ts`, so they never touch the DOM. Every rule gets a spec.
+- **Tests:** specs live next to the code and use the fakes in `domain/testing/` (`MemoryContentRepository`, `MemorySiteFiles`), so they never touch the DOM or the network. Every rule gets a spec.
 
 ## `src/shell/`: communication with the outside
 
-- **`adapters/`:** implementations of the ports. They are File System Access (`FsSiteFiles`), IndexedDB (`IdbSiteStore`), canvas to WebP (`CanvasImageEncoder`) and fonts. `app.config.ts` provides them through the tokens in `state/ports.tokens.ts`.
+- **`adapters/`:** implementations of the ports. They are Firestore (`FirestoreContentRepository`), the Vercel Deploy Hook (`VercelDeployHookPublisher`), File System Access for importing sites (`FsSiteFiles`), canvas to WebP (`CanvasImageEncoder`) and fonts. Firebase setup lives in `adapters/firebase.ts` and `firebase.config.ts`; nothing Firebase-specific goes into the domain. `app.config.ts` provides them through the tokens in `state/ports.tokens.ts`.
 - **`state/`:** Angular services with signals. They hold the current snapshot and call the domain. No business rules here: if a service starts deciding something about the content, move that into the domain.
 - **`ui/`:** pages, fields and previews.
   - Each component has its own `.ts`, `.html` and `.css` files, with no inline templates or styles.

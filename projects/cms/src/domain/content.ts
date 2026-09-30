@@ -1,16 +1,17 @@
-import { formatJson, JsonStyle } from './json-format';
 import { CollectionDef, Entry, RelationField, ScopeContext, SiteManifest } from './schema';
 
-/** One JSON file of the open site, with its unsaved changes. Immutable: every change returns a copy. */
+/** One collection of the open site, with its unsaved changes. Immutable: every change returns a copy. */
 export interface CollectionData {
   def: CollectionDef;
+  /** Path of the JSON file inside the site, where the build writes it. */
   path: string;
   items: Entry[];
-  /** Formatted content as it is on disk, to know if there are changes. */
+  /** Items as they are in the repository, serialized, to know if there are changes. */
   baseline: string;
-  style: JsonStyle;
-  lastModified: number;
-  /** Set when the file could not be read; the collection is shown but cannot be edited. */
+  /** Version in the repository, checked on save to detect concurrent edits. */
+  version: number;
+  updatedAt?: string;
+  /** Set when the collection could not be read; it is shown but cannot be edited. */
   error?: string;
 }
 
@@ -31,20 +32,17 @@ export function findCollection(content: SiteContent, id: string): CollectionData
   return content.collections.find((c) => c.def.id === id);
 }
 
-/** What scope callbacks read: the manifest, the current items and the items on disk. */
+/** What scope callbacks read: the manifest and the current items. */
 export function contextOf(content: SiteContent): ScopeContext {
   return {
     manifest: content.manifest,
     data: (id) => findCollection(content, id)?.items ?? [],
-    original: (id) => {
-      const c = findCollection(content, id);
-      return c ? (JSON.parse(c.baseline) as Entry[]) : [];
-    },
+    updatedAt: (id) => findCollection(content, id)?.updatedAt,
   };
 }
 
 export function isDirty(collection: CollectionData): boolean {
-  return !collection.error && formatJson(collection.items, collection.style) !== collection.baseline;
+  return !collection.error && serialize(collection.items) !== collection.baseline;
 }
 
 export function dirtyCollections(content: SiteContent): CollectionData[] {
@@ -169,6 +167,11 @@ function require(content: SiteContent, id: string): CollectionData {
 
 function nextId(items: Entry[], key: string): number {
   return items.reduce((max, item) => Math.max(max, Number(item[key]) || 0), 0) + 1;
+}
+
+/** Canonical text of a collection's items, to compare them. */
+export function serialize(items: Entry[]): string {
+  return JSON.stringify(items);
 }
 
 function asArray(value: unknown): unknown[] {

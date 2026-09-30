@@ -132,3 +132,36 @@ h2 {
   justify-content: center;
   color: var(--cms-text);
 }
+.me {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.email {
+  color: var(--cms-muted);
+  font-size: var(--cms-text-sm);
+}
+.pending {
+  color: var(--cms-warning);
+  font-weight: 600;
+}
+.card .btn {
+  text-decoration: none;
+}
+.import {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 40px;
+  padding: 20px;
+  border: 1px dashed var(--cms-border-strong);
+  border-radius: var(--cms-radius-lg);
+}
+.import h2 {
+  font-size: var(--cms-text-md);
+}
+.import .note {
+  margin-bottom: 0;
+}

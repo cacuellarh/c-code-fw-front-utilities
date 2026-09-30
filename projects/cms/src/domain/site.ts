@@ -1,104 +1,159 @@
-import { CollectionData, contextOf, dirtyCollections, SiteContent } from './content';
-import { detectJsonStyle, formatJson } from './json-format';
-import { SiteFiles } from './ports';
-import { MANIFEST_FILE, ScopeDef, SiteManifest } from './schema';
+import { slugify } from '@cc/ui-domain';
+import { CollectionData, contextOf, dirtyCollections, serialize, SiteContent } from './content';
+import { DEFAULT_JSON_STYLE, detectJsonStyle, formatJson } from './json-format';
+import { suggestManifest } from './manifest';
+import { ContentRepository, NewSite, Publisher, SiteFiles, SiteSummary, StoredSite } from './ports';
+import { CollectionDef, Entry, MANIFEST_FILE, ScopeDef, SiteManifest } from './schema';
 import { findScope } from './scopes';
 import { EMPTY_THEME, extractTheme, SiteTheme } from './theme';
 
 export interface OpenedSite {
+  summary: SiteSummary;
   scope: ScopeDef;
   content: SiteContent;
   theme: SiteTheme;
 }
 
-/** A file changed on disk after the CMS read it (edited by hand or by git). */
+/** Someone else saved these collections after they were opened. */
 export class ConflictError extends Error {
-  constructor(readonly files: string[]) {
-    super(`Estos archivos cambiaron fuera del CMS: ${files.join(', ')}`);
+  constructor(readonly collections: string[]) {
+    super(`Otra persona guardó cambios en: ${collections.join(', ')}`);
     this.name = 'ConflictError';
   }
 }
 
-/** Reads `cms.json`, its scope and every collection file of the site. */
-export async function openSite(files: SiteFiles): Promise<OpenedSite> {
-  const manifestFile = await files.read(MANIFEST_FILE);
-  if (!manifestFile) throw new Error(`La carpeta no tiene ${MANIFEST_FILE}.`);
-  const manifest = JSON.parse(manifestFile.text) as SiteManifest;
-  const scope = findScope(manifest.scope);
-  if (!scope) throw new Error(`El scope "${manifest.scope}" no existe en este CMS.`);
-
-  const collections: CollectionData[] = [];
-  for (const def of scope.collections) {
+/** The collections a site has: the scope's, with the manifest's overrides. */
+export function collectionsOf(scope: ScopeDef, manifest: SiteManifest): { def: CollectionDef; path: string; explicit: boolean }[] {
+  return scope.collections.flatMap((def) => {
     const override = manifest.collections?.[def.id];
-    if (override === false) continue;
-    const path = override || def.file;
-    const file = await files.read(path);
-    if (!file && def.optional && !override) continue;
-    collections.push(readCollection(def, path, file?.text ?? null, file?.lastModified ?? 0));
-  }
-
-  const css = manifest.theme ? await files.read(manifest.theme) : null;
-  return { scope, content: { manifest, collections }, theme: css ? extractTheme(css.text) : EMPTY_THEME };
+    if (override === false) return [];
+    return [{ def, path: override || def.file, explicit: !!override }];
+  });
 }
 
-function readCollection(def: CollectionData['def'], path: string, text: string | null, lastModified: number): CollectionData {
-  const base = { def, path, items: [], baseline: '[]', style: detectJsonStyle(text ?? ''), lastModified };
-  if (text === null) return { ...base, error: `No se encontró ${path}.` };
-  try {
-    const data = JSON.parse(text);
-    if (!Array.isArray(data)) throw new Error('el archivo no es una lista');
-    return { ...base, items: data, baseline: formatJson(data, base.style) };
-  } catch (error) {
-    return { ...base, error: `No se pudo leer ${path}: ${(error as Error).message}.` };
-  }
+export function requireScope(id: string): ScopeDef {
+  const scope = findScope(id);
+  if (!scope) throw new Error(`El scope "${id}" no existe en este CMS.`);
+  return scope;
+}
+
+/** Loads a site from the repository, ready to edit. */
+export async function openSite(repo: ContentRepository, siteId: string): Promise<OpenedSite> {
+  const stored = await repo.loadSite(siteId);
+  if (!stored) throw new Error(`El sitio "${siteId}" no existe.`);
+  return fromStored(stored);
+}
+
+export function fromStored(stored: StoredSite): OpenedSite {
+  const scope = requireScope(stored.manifest.scope);
+  const byId = new Map(stored.collections.map((c) => [c.id, c]));
+  const collections: CollectionData[] = collectionsOf(scope, stored.manifest)
+    .filter(({ def }) => byId.has(def.id) || !def.optional)
+    .map(({ def, path }) => {
+      const saved = byId.get(def.id);
+      const items = saved?.items ?? [];
+      return { def, path, items, baseline: serialize(items), version: saved?.version ?? 0, updatedAt: saved?.updatedAt };
+    });
+  const { manifest, theme, collections: _, ...summary } = stored;
+  return { summary, scope, theme: theme ?? EMPTY_THEME, content: { manifest, collections } };
 }
 
 export interface SaveResult {
   content: SiteContent;
-  written: string[];
+  /** Labels of the saved collections. */
+  saved: string[];
+}
+
+/** Saves the changed collections. The repository throws `ConflictError` if someone saved first. */
+export async function saveSite(repo: ContentRepository, siteId: string, content: SiteContent, author: string): Promise<SaveResult> {
+  const changed = dirtyCollections(content);
+  if (changed.length === 0) return { content, saved: [] };
+  const result = await repo.saveCollections(
+    siteId,
+    changed.map((c) => ({ id: c.def.id, items: c.items, expectedVersion: c.version })),
+    author
+  );
+  const versions = new Map(result.map((r) => [r.id, r]));
+  return {
+    saved: changed.map((c) => c.def.label),
+    content: {
+      ...content,
+      collections: content.collections.map((c) => {
+        const r = versions.get(c.def.id);
+        return r ? { ...c, baseline: serialize(c.items), version: r.version, updatedAt: r.updatedAt } : c;
+      }),
+    },
+  };
 }
 
 /**
- * Writes the changed JSON files and rebuilds the scope's generated files. Refuses to overwrite
- * a file that changed on disk after it was read, unless `force` is set.
+ * Reads a site from its folder, to import it: `cms.json` (or a suggested one), the collection
+ * files and the theme. Missing optional files are skipped.
  */
-export async function saveSite(files: SiteFiles, scope: ScopeDef, content: SiteContent, force = false): Promise<SaveResult> {
-  const changed = dirtyCollections(content);
-  if (changed.length === 0) return { content, written: [] };
-
-  if (!force) {
-    const conflicts: string[] = [];
-    for (const c of changed) {
-      const modified = await files.lastModified(c.path);
-      if (modified !== null && modified !== c.lastModified) conflicts.push(c.path);
+export async function readSiteFolder(files: SiteFiles): Promise<Omit<NewSite, 'id'>> {
+  const manifestFile = await files.read(MANIFEST_FILE);
+  const manifest = manifestFile ? (JSON.parse(manifestFile.text) as SiteManifest) : await suggestManifest(files);
+  const scope = requireScope(manifest.scope);
+  const collections: { id: string; items: Entry[] }[] = [];
+  for (const { def, path, explicit } of collectionsOf(scope, manifest)) {
+    const file = await files.read(path);
+    if (!file) {
+      if (def.optional && !explicit) continue;
+      throw new Error(`No se encontró ${path}.`);
     }
-    if (conflicts.length) throw new ConflictError(conflicts);
+    const items = JSON.parse(file.text);
+    if (!Array.isArray(items)) throw new Error(`${path} no es una lista.`);
+    collections.push({ id: def.id, items });
   }
+  const css = manifest.theme ? await files.read(manifest.theme) : null;
+  return { manifest, theme: css ? extractTheme(css.text) : undefined, collections };
+}
 
-  // Generated files are computed before writing: they compare the content with what is on disk.
+/**
+ * Writes a site's content into its folder: one JSON file per collection (keeping each file's
+ * current formatting) and the scope's generated files. Used by the build. Returns the
+ * paths that changed.
+ */
+export async function writeSiteFolder(files: SiteFiles, stored: StoredSite): Promise<string[]> {
+  const { scope, content } = fromStored(stored);
+  const written: string[] = [];
+  const write = async (path: string, text: string, current: string | null) => {
+    if (text === current) return;
+    await files.write(path, text);
+    written.push(path);
+  };
+  for (const c of content.collections) {
+    const current = (await files.read(c.path))?.text ?? null;
+    const style = current === null ? { ...DEFAULT_JSON_STYLE, indent: '    ' } : detectJsonStyle(current);
+    await write(c.path, formatJson(c.items, style), current);
+  }
   const ctx = contextOf(content);
-  const generated: { path: string; text: string }[] = [];
   for (const generator of scope.generators ?? []) {
     const path = generator.file(ctx);
     const current = (await files.read(path))?.text ?? null;
     const next = generator.generate(current, ctx);
-    if (next !== null && next !== current) generated.push({ path, text: next });
+    if (next !== null) await write(path, next, current);
   }
+  return written;
+}
 
-  const written: string[] = [];
-  const saved = new Map<string, CollectionData>();
-  for (const c of changed) {
-    const text = formatJson(c.items, c.style);
-    const lastModified = await files.write(c.path, text);
-    saved.set(c.def.id, { ...c, baseline: text, lastModified });
-    written.push(c.path);
-  }
-  for (const file of generated) {
-    await files.write(file.path, file.text);
-    written.push(file.path);
-  }
-  return {
-    content: { ...content, collections: content.collections.map((c) => saved.get(c.def.id) ?? c) },
-    written,
-  };
+/** Id for a new site, from its name: "Ixora Spa Bucaramanga" -> "ixora-spa-bucaramanga". */
+export function siteIdFor(name: string, taken: string[] = []): string {
+  const base = slugify(name) || 'sitio';
+  let id = base;
+  for (let n = 2; taken.includes(id); n++) id = `${base}-${n}`;
+  return id;
+}
+
+/** True when the content was saved after the last publish, so the public site is behind. */
+export function needsPublish(site: Pick<SiteSummary, 'updatedAt' | 'publishedAt'>): boolean {
+  return !!site.updatedAt && (!site.publishedAt || site.updatedAt > site.publishedAt);
+}
+
+/** Rebuilds the public site and records when. */
+export async function publishSite(repo: ContentRepository, publisher: Publisher, siteId: string): Promise<string> {
+  await publisher.publish(siteId);
+  const at = new Date().toISOString();
+  await repo.markPublished(siteId, at);
+  return at;
 }

@@ -2,38 +2,33 @@
   <div>
     <p class="eyebrow">C-Code CMS</p>
     <h1>Sitios de clientes</h1>
-    <p class="lead">Edita el contenido de cada sitio directamente en su carpeta. Nada sale de tu computador.</p>
+    <p class="lead">El contenido vive en Firestore; cada sitio lo lee al publicarse.</p>
   </div>
-  @if (supported) {
-    <button type="button" class="btn primary" (click)="add()">Agregar sitio</button>
-  }
+  <div class="me">
+    <span class="email">{{ auth.user()?.email }}</span>
+    <button type="button" class="btn ghost" (click)="signOut()">Salir</button>
+  </div>
 </header>
 
-@if (!supported) {
-  <p class="alert" role="alert">Este navegador no permite abrir carpetas. Usa Chrome o Edge para administrar los sitios.</p>
-}
 @if (error()) {
   <p class="alert" role="alert">{{ error() }}</p>
 }
 
-@if (setup(); as s) {
+@if (pending(); as s) {
   <section class="setup" aria-labelledby="setup-title">
-    <h2 id="setup-title">Configurar «{{ s.handle.name }}»</h2>
+    <h2 id="setup-title">Importar «{{ s.manifest.name }}»</h2>
     <p class="note">
-      La carpeta no tiene <code>{{ manifestFile }}</code>. Se creará con estos datos para que el CMS sepa qué tipo de sitio es.
+      Se leyó la carpeta: {{ countItems(s) }}. Revisa los datos y confirma para guardarlo en Firestore.
     </p>
     <div class="form">
       <label>
-        <span>Tipo de sitio</span>
-        <select (change)="updateSetup({ scope: $any($event.target).value })">
-          @for (scope of scopes; track scope.id) {
-            <option [value]="scope.id" [selected]="scope.id === s.manifest.scope">{{ scope.label }}</option>
-          }
-        </select>
+        <span>Nombre</span>
+        <input type="text" [value]="s.manifest.name" (input)="updatePending({ name: $any($event.target).value })" />
       </label>
       <label>
-        <span>Nombre</span>
-        <input type="text" [value]="s.manifest.name" (input)="updateSetup({ name: $any($event.target).value })" />
+        <span>Id del sitio</span>
+        <input type="text" [value]="s.id" spellcheck="false" (input)="updatePending({ id: $any($event.target).value })" />
+        <small>Lo usa el build del sitio para leer su contenido. No se puede cambiar después.</small>
       </label>
       <label>
         <span>Dirección pública</span>
@@ -41,69 +36,82 @@
           type="url"
           [value]="s.manifest.siteUrl ?? ''"
           placeholder="https://misitio.com"
-          (input)="updateSetup({ siteUrl: $any($event.target).value })"
+          (input)="updatePending({ siteUrl: $any($event.target).value })"
         />
-        <small>Para el sitemap. Déjala vacía si el sitio no tiene uno.</small>
+        <small>Para el sitemap y para mostrar las imágenes en el CMS.</small>
       </label>
     </div>
     <div class="row">
-      <button type="button" class="btn primary" (click)="confirmSetup()" [disabled]="!s.manifest.name.trim()">
-        Crear {{ manifestFile }} y abrir
+      <button type="button" class="btn primary" (click)="confirmImport()" [disabled]="busy() || !s.id.trim() || !s.manifest.name.trim()">
+        {{ busy() ? 'Importando…' : 'Importar' }}
       </button>
-      <button type="button" class="btn ghost" (click)="setup.set(null)">Cancelar</button>
+      <button type="button" class="btn ghost" (click)="pending.set(null)">Cancelar</button>
     </div>
   </section>
 }
 
-@for (group of groups(); track group.scope.id) {
-  <section class="group" [attr.aria-labelledby]="'scope-' + group.scope.id">
-    <h2 [id]="'scope-' + group.scope.id">
-      {{ group.scope.label }}
-      <span class="count">{{ group.sites.length }}</span>
-    </h2>
-    <p class="note">{{ group.scope.description }}</p>
-    <ul class="cards">
-      @for (site of group.sites; track site.id) {
-        <li class="card">
-          <div class="info">
-            <h3>{{ site.name }}</h3>
-            <p class="meta"><span class="folder">{{ site.ref.name }}</span> · abierto {{ date(site.lastOpened) }}</p>
-          </div>
-          <div class="row">
-            <button type="button" class="btn primary" (click)="open(site)" [disabled]="busy() === site.id">
-              {{ busy() === site.id ? 'Abriendo…' : 'Abrir' }}
-            </button>
-            <button type="button" class="btn ghost" (click)="remove(site)" [attr.aria-label]="'Quitar ' + site.name">
-              Quitar
-            </button>
-          </div>
-        </li>
-      }
-    </ul>
-  </section>
-} @empty {
-  @if (!setup()) {
+@if (loading()) {
+  <p class="note">Cargando sitios…</p>
+} @else {
+  @for (group of groups(); track group.scope.id) {
+    <section class="group" [attr.aria-labelledby]="'scope-' + group.scope.id">
+      <h2 [id]="'scope-' + group.scope.id">
+        {{ group.scope.label }}
+        <span class="count">{{ group.sites.length }}</span>
+      </h2>
+      <p class="note">{{ group.scope.description }}</p>
+      <ul class="cards">
+        @for (site of group.sites; track site.id) {
+          <li class="card">
+            <div class="info">
+              <h3>{{ site.name }}</h3>
+              <p class="meta">
+                <span class="folder">{{ site.id }}</span> · guardado {{ date(site.updatedAt) }}
+                @if (needsPublish(site)) {
+                  · <span class="pending">sin publicar</span>
+                }
+              </p>
+            </div>
+            <a class="btn primary" [routerLink]="['/sitio', site.id]">Abrir</a>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (unknown().length) {
+    <section class="group">
+      <h2>Otros</h2>
+      <p class="note">Estos sitios usan un tipo de sitio que esta versión del CMS no conoce.</p>
+      <ul class="cards">
+        @for (site of unknown(); track site.id) {
+          <li class="card">
+            <div class="info">
+              <h3>{{ site.name }}</h3>
+              <p class="meta">Tipo «{{ site.scope }}»</p>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (empty() && !pending()) {
     <section class="empty">
       <h2>Todavía no hay sitios</h2>
-      <p>Pulsa «Agregar sitio» y elige la carpeta del proyecto, por ejemplo <code>C:\dev\xora-spa</code>.</p>
+      <p>Importa uno desde la carpeta de su proyecto, por ejemplo <code>C:\dev\xora-spa</code>.</p>
     </section>
   }
 }
 
-@if (unknown().length) {
-  <section class="group">
-    <h2>Otros</h2>
-    <p class="note">Estos sitios usan un tipo de sitio que este CMS todavía no conoce.</p>
-    <ul class="cards">
-      @for (site of unknown(); track site.id) {
-        <li class="card">
-          <div class="info">
-            <h3>{{ site.name }}</h3>
-            <p class="meta">Tipo «{{ site.scope }}»</p>
-          </div>
-          <button type="button" class="btn ghost" (click)="remove(site)">Quitar</button>
-        </li>
-      }
-    </ul>
+@if (canImport) {
+  <section class="import">
+    <div>
+      <h2>Importar un sitio</h2>
+      <p class="note">Lee los JSON de la carpeta del proyecto y los guarda en Firestore. Solo se hace una vez por sitio.</p>
+    </div>
+    <button type="button" class="btn" (click)="pickFolder()">Elegir carpeta…</button>
   </section>
+} @else {
+  <p class="note">Para importar sitios desde una carpeta usa Chrome o Edge.</p>
 }

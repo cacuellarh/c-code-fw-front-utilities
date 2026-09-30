@@ -1,5 +1,5 @@
 import { planSlug } from '@cc/ui-domain';
-import { Entry, ScopeContext } from '../../schema';
+import { ScopeContext } from '../../schema';
 
 /** Where the site shows a plan's page: `/planes/` + slug. `cms.json` → options.planRoute. */
 export function planRoute(ctx: ScopeContext): string {
@@ -27,8 +27,9 @@ export function generateRoutes(current: string | null, ctx: ScopeContext): strin
 
 /**
  * sitemap.xml: keeps the entries of other pages as they are and rewrites the plan entries.
- * A plan keeps its `lastmod` unless it changed in this session; new or edited plans get today.
- * New entries copy the format of an existing entry (one line or several, with priority).
+ * Plan entries get the date of the last save of the plans (today if it is unknown), unless
+ * they already have a later one. New entries copy the format of an existing entry
+ * (one line or several, with priority).
  */
 export function generateSitemap(current: string | null, ctx: ScopeContext, today = isoToday()): string | null {
   const siteUrl = ctx.manifest.siteUrl?.replace(/\/+$/, '');
@@ -48,28 +49,18 @@ export function generateSitemap(current: string | null, ctx: ScopeContext, today
   const kept = blocks.map((b) => b[0]).filter((b) => !isPlan(b));
   const oldPlans = new Map(blocks.map((b) => b[0]).filter(isPlan).map((b) => [locOf(b), b]));
   const template = oldPlans.values().next().value ?? kept[kept.length - 1];
+  const saved = ctx.updatedAt?.('plans')?.slice(0, 10) ?? today;
 
-  const changed = changedPlanIds(ctx);
   const planBlocks = ctx.data('plans').map((plan) => {
     const loc = planPrefix + planSlug(String(plan['name'] ?? ''));
     const previous = oldPlans.get(loc);
-    if (previous && !changed.has(plan['id'])) return previous;
     const base = (previous ?? template).replace(/<loc>[^<]*<\/loc>/, `<loc>${loc}</loc>`);
-    return /<lastmod>/.test(base) ? base.replace(/<lastmod>[^<]*<\/lastmod>/, `<lastmod>${today}</lastmod>`) : base;
+    const before = /<lastmod>([^<]*)<\/lastmod>/.exec(previous ?? '')?.[1] ?? '';
+    const date = before > saved ? before : saved;
+    return base.replace(/<lastmod>[^<]*<\/lastmod>/, `<lastmod>${date}</lastmod>`);
   });
 
   return head + [...kept, ...planBlocks].join(separator) + tail;
-}
-
-/** Ids of the plans that are new or differ from the file on disk. */
-function changedPlanIds(ctx: ScopeContext): Set<unknown> {
-  const before = new Map((ctx.original?.('plans') ?? []).map((plan: Entry) => [plan['id'], JSON.stringify(plan)]));
-  return new Set(
-    ctx
-      .data('plans')
-      .filter((plan) => before.get(plan['id']) !== JSON.stringify(plan))
-      .map((plan) => plan['id'])
-  );
 }
 
 function isoToday(): string {

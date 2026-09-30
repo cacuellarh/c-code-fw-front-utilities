@@ -3,9 +3,8 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { isDirty } from '../../../../domain/content';
 import { ConflictError } from '../../../../domain/site';
 import { EditorService } from '../../../state/editor.service';
-import { SitesService } from '../../../state/sites.service';
 
-/** Layout of an open site: collections menu, unsaved changes and the save bar. */
+/** Layout of an open site: collections menu, publishing, unsaved changes and the save bar. */
 @Component({
   selector: 'cms-site-page',
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
@@ -15,15 +14,16 @@ import { SitesService } from '../../../state/sites.service';
 })
 export class SitePage implements OnInit {
   protected editor = inject(EditorService);
-  private sites = inject(SitesService);
   private router = inject(Router);
 
   readonly siteId = input.required<string>();
 
-  /** The site is remembered but the browser needs a click to grant access again. */
-  protected readonly needsPermission = signal(false);
   protected readonly error = signal('');
   protected readonly saved = signal<string[] | null>(null);
+  protected readonly published = signal(false);
+  protected readonly settingsOpen = signal(false);
+  protected readonly hook = signal('');
+  protected readonly hookSaved = signal(false);
   protected readonly isDirty = isDirty;
   protected readonly ready = computed(() => this.editor.site()?.id === this.siteId());
   protected readonly issueCount = computed(() => this.editor.issues().length);
@@ -34,45 +34,63 @@ export class SitePage implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    if (this.ready()) return this.openFirst();
-    await this.sites.load();
-    const site = this.sites.get(this.siteId());
-    if (!site) {
-      await this.router.navigate(['/']);
-      return;
+    if (!this.ready()) {
+      try {
+        await this.editor.open(this.siteId());
+      } catch (e) {
+        this.error.set(messageOf(e));
+        return;
+      }
     }
-    if ((await site.ref.queryPermission({ mode: 'readwrite' })) === 'granted') await this.open();
-    else this.needsPermission.set(true);
-  }
-
-  /** Opens the site from a click, so the browser can show its permission prompt. */
-  protected async open(): Promise<void> {
-    const site = this.sites.get(this.siteId());
-    if (!site) return;
-    this.error.set('');
-    try {
-      await this.editor.open(site);
-      this.needsPermission.set(false);
-      this.openFirst();
-    } catch (e) {
-      this.error.set((e as Error).message);
+    const first = this.editor.collections()[0];
+    if (first && !this.router.url.split('?')[0].split('/')[3]) {
+      await this.router.navigate(['/sitio', this.siteId(), first.def.id], { replaceUrl: true });
     }
   }
 
   protected async save(): Promise<void> {
     this.error.set('');
     this.saved.set(null);
+    this.published.set(false);
     try {
       this.saved.set(await this.editor.save());
     } catch (e) {
-      if (e instanceof ConflictError) {
-        const overwrite = confirm(
-          `${e.message}.\n\n¿Guardar de todas formas? Se perderán los cambios hechos fuera del CMS en esos archivos.`
-        );
-        if (overwrite) this.saved.set(await this.editor.save(true));
-      } else {
-        this.error.set(`No se pudo guardar: ${(e as Error).message}`);
-      }
+      this.error.set(
+        e instanceof ConflictError
+          ? `${e.message}. Copia tus cambios, recarga la página y vuelve a aplicarlos.`
+          : `No se pudo guardar: ${messageOf(e)}`
+      );
+    }
+  }
+
+  protected async publish(): Promise<void> {
+    this.error.set('');
+    this.saved.set(null);
+    if (this.editor.dirty().length) {
+      this.error.set('Guarda los cambios antes de publicar: se publica lo que está guardado.');
+      return;
+    }
+    try {
+      await this.editor.publish();
+      this.published.set(true);
+    } catch (e) {
+      this.error.set(`No se pudo publicar: ${messageOf(e)}`);
+      if (/Deploy Hook/.test(messageOf(e))) await this.toggleSettings(true);
+    }
+  }
+
+  protected async toggleSettings(open = !this.settingsOpen()): Promise<void> {
+    this.settingsOpen.set(open);
+    this.hookSaved.set(false);
+    if (open) this.hook.set(await this.editor.getDeployHook().catch(() => ''));
+  }
+
+  protected async saveHook(): Promise<void> {
+    try {
+      await this.editor.setDeployHook(this.hook());
+      this.hookSaved.set(true);
+    } catch (e) {
+      this.error.set(`No se pudo guardar el Deploy Hook: ${messageOf(e)}`);
     }
   }
 
@@ -86,14 +104,24 @@ export class SitePage implements OnInit {
     await this.router.navigate(['/']);
   }
 
+  protected dismiss(): void {
+    this.saved.set(null);
+    this.published.set(false);
+    this.error.set('');
+  }
+
+  protected date(iso?: string): string {
+    return iso ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso)) : 'nunca';
+  }
+
   @HostListener('window:beforeunload', ['$event'])
   protected warnBeforeUnload(event: BeforeUnloadEvent): void {
     if (this.editor.dirty().length) event.preventDefault();
   }
+}
 
-  private openFirst(): void {
-    const first = this.editor.collections()[0];
-    const child = this.router.url.split('/')[3];
-    if (first && !child) this.router.navigate(['/sitio', this.siteId(), first.def.id], { replaceUrl: true });
-  }
+function messageOf(error: unknown): string {
+  const code = (error as { code?: string }).code;
+  if (code === 'permission-denied') return 'tu usuario no tiene permiso para este sitio (reglas de Firestore)';
+  return error instanceof Error ? error.message : String(error);
 }

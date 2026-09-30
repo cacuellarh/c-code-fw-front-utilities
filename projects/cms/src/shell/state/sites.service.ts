@@ -1,47 +1,30 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { SavedSite } from '../../domain/ports';
-import { SITE_STORE } from './ports.tokens';
+import { NewSite, SiteSummary } from '../../domain/ports';
+import { readSiteFolder } from '../../domain/site';
+import { FsSiteFiles } from '../adapters/fs-site-files';
+import { AuthService } from './auth.service';
+import { CONTENT_REPOSITORY } from './ports.tokens';
 
-export type Site = SavedSite<FileSystemDirectoryHandle>;
-
-/**
- * Client sites added to the CMS. Only this browser remembers them; the content always stays
- * in each site's folder.
- */
+/** The client sites stored in Firestore, and importing new ones from their folder. */
 @Injectable({ providedIn: 'root' })
 export class SitesService {
-  private store = inject(SITE_STORE);
-  private readonly _sites = signal<Site[]>([]);
+  private repo = inject(CONTENT_REPOSITORY);
+  private auth = inject(AuthService);
+  private readonly _sites = signal<SiteSummary[]>([]);
   readonly sites = this._sites.asReadonly();
 
   async load(): Promise<void> {
-    const all = await this.store.all();
-    this._sites.set(all.sort((a, b) => b.lastOpened - a.lastOpened));
+    this._sites.set(await this.repo.listSites());
   }
 
-  get(id: string): Site | undefined {
-    return this._sites().find((site) => site.id === id);
+  /** Reads a site's folder (its `cms.json`, JSON files and theme) without saving anything yet. */
+  readFolder(handle: FileSystemDirectoryHandle): Promise<Omit<NewSite, 'id'>> {
+    return readSiteFolder(new FsSiteFiles(handle));
   }
 
-  /** Saves a site, reusing the entry of the same folder if it was already added. */
-  async save(site: Omit<Site, 'id'> & { id?: string }): Promise<Site> {
-    let id = site.id;
-    for (const existing of this._sites()) {
-      if (!id && (await existing.ref.isSameEntry(site.ref))) id = existing.id;
-    }
-    const saved: Site = { ...site, id: id ?? crypto.randomUUID() };
-    await this.store.put(saved);
-    await this.load();
-    return saved;
-  }
-
-  async touch(site: Site): Promise<void> {
-    await this.store.put({ ...site, lastOpened: Date.now() });
-    await this.load();
-  }
-
-  async remove(id: string): Promise<void> {
-    await this.store.remove(id);
+  /** Creates the site in Firestore; the signed-in user becomes its first editor. */
+  async create(site: NewSite): Promise<void> {
+    await this.repo.createSite(site, this.auth.email());
     await this.load();
   }
 }

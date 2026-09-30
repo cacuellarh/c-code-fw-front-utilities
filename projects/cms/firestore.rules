@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// Rules of the Firestore database of the CMS (project c-code-bf1fd).
+// Paste them in Firebase console → Firestore Database → Rules → Publish.
+//
+// - Content (sites and their collections) is public to read: the sites' builds read it
+//   without credentials. It is the same content the public sites already show.
+// - Only admins (ADMINS) and each site's editors (sites/{id}/private/access.editors) can write.
+// - private/ (editors, Deploy Hook) and history/ are only readable by editors.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedInEmail() {
+      return request.auth != null && request.auth.token.email_verified == true
+        ? request.auth.token.email : '';
+    }
+
+    // Accounts that can create sites and edit all of them.
+    function isAdmin() {
+      return signedInEmail() in ['caminathgarcia@gmail.com'];
+    }
+
+    function isEditor(site) {
+      return isAdmin() || (
+        exists(/databases/$(database)/documents/sites/$(site)/private/access) &&
+        signedInEmail() in get(/databases/$(database)/documents/sites/$(site)/private/access).data.editors
+      );
+    }
+
+    match /sites/{site} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isEditor(site);
+
+      match /collections/{collection} {
+        allow read: if true;
+        allow write: if isEditor(site);
+      }
+
+      match /history/{entry} {
+        allow read, create: if isEditor(site);
+      }
+
+      match /private/{doc} {
+        allow read: if isEditor(site);
+        // Editors can change the Deploy Hook; only admins decide who edits.
+        allow write: if doc == 'access' ? isAdmin() : isEditor(site);
+      }
+    }
+  }
+}

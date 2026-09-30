@@ -4,7 +4,7 @@
     <div class="site">
       <p class="scope">{{ editor.scope()?.label }}</p>
       <h1>{{ editor.site()?.name }}</h1>
-      <p class="folder">{{ editor.site()?.ref?.name }}</p>
+      <p class="folder">{{ editor.site()?.id }}</p>
     </div>
     <nav aria-label="Contenido del sitio">
       <ul>
@@ -18,26 +18,64 @@
               @if (issuesBy().get(c.def.id); as n) {
                 <span class="warn" [title]="n + ' avisos'">{{ n }}</span>
               }
-              <span class="n">{{ c.error ? '!' : c.items.length }}</span>
+              <span class="n">{{ c.items.length }}</span>
             </a>
           </li>
         }
       </ul>
     </nav>
+
+    <section class="publish" aria-labelledby="publish-title">
+      <h2 id="publish-title">Sitio público</h2>
+      @if (editor.unpublished()) {
+        <p class="state pending">Hay cambios guardados sin publicar.</p>
+      } @else {
+        <p class="state">Al día. Publicado {{ date(editor.site()?.publishedAt) }}.</p>
+      }
+      <button
+        type="button"
+        class="btn"
+        [class.primary]="editor.unpublished() && !editor.dirty().length"
+        (click)="publish()"
+        [disabled]="editor.publishing()"
+      >
+        {{ editor.publishing() ? 'Publicando…' : 'Publicar' }}
+      </button>
+      <button type="button" class="link" (click)="toggleSettings()" [attr.aria-expanded]="settingsOpen()">
+        Ajustes de publicación
+      </button>
+      @if (settingsOpen()) {
+        <div class="settings">
+          <label for="hook">Deploy Hook de Vercel</label>
+          <input
+            id="hook"
+            type="url"
+            [value]="hook()"
+            (input)="hook.set($any($event.target).value); hookSaved.set(false)"
+            placeholder="https://api.vercel.com/v1/integrations/deploy/…"
+            spellcheck="false"
+          />
+          <p class="hint">Vercel → proyecto → Settings → Git → Deploy Hooks. Solo lo ven los editores.</p>
+          <button type="button" class="btn" (click)="saveHook()" [disabled]="!hook().trim()">
+            {{ hookSaved() ? 'Guardado' : 'Guardar' }}
+          </button>
+        </div>
+      }
+    </section>
   </aside>
 
   <div class="main">
     <router-outlet />
   </div>
 
-  @if (editor.dirty().length || saved() || error()) {
+  @if (editor.dirty().length || saved() || published() || error()) {
     <div class="savebar" role="region" aria-label="Guardar cambios">
       <div class="status" aria-live="polite">
         @if (error()) {
           <strong class="bad">{{ error() }}</strong>
         } @else if (editor.dirty().length) {
           <strong>Cambios sin guardar</strong>
-          <span>en {{ editor.dirty().length === 1 ? '1 archivo' : editor.dirty().length + ' archivos' }}:
+          <span>en
             @for (c of editor.dirty(); track c.def.id; let last = $last) {
               {{ c.def.label }}{{ last ? '' : ', ' }}
             }
@@ -45,9 +83,12 @@
           @if (issueCount()) {
             <span class="warn-text">· {{ issueCount() }} avisos por revisar</span>
           }
+        } @else if (published()) {
+          <strong class="ok">Publicando</strong>
+          <span>Vercel está construyendo el sitio; estará al aire en uno o dos minutos.</span>
         } @else if (saved()) {
           <strong class="ok">Guardado</strong>
-          <span>{{ saved()?.join(', ') }}. Para publicarlo, haz commit y push del sitio.</span>
+          <span>{{ saved()?.join(', ') }}. Pulsa «Publicar» cuando quieras que se vea en el sitio.</span>
         }
       </div>
       <div class="actions">
@@ -56,24 +97,22 @@
           <button type="button" class="btn primary" (click)="save()" [disabled]="editor.saving()">
             {{ editor.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
+        } @else if (saved()) {
+          <button type="button" class="btn ghost" (click)="dismiss()">Cerrar</button>
+          <button type="button" class="btn primary" (click)="publish()" [disabled]="editor.publishing()">Publicar ahora</button>
         } @else {
-          <button type="button" class="btn ghost" (click)="saved.set(null); error.set('')">Cerrar</button>
+          <button type="button" class="btn ghost" (click)="dismiss()">Cerrar</button>
         }
       </div>
     </div>
   }
 } @else {
   <div class="gate">
-    @if (needsPermission()) {
-      <h1>Permitir acceso a la carpeta</h1>
-      <p>El navegador necesita tu permiso de nuevo para leer y guardar los archivos de este sitio.</p>
-      <button type="button" class="btn primary" (click)="open()">Permitir y abrir</button>
-    } @else if (!error()) {
-      <p>Abriendo…</p>
-    }
     @if (error()) {
       <p class="alert" role="alert">{{ error() }}</p>
       <button type="button" class="btn ghost" (click)="leave()">Volver a los sitios</button>
+    } @else {
+      <p>Abriendo…</p>
     }
   </div>
 }

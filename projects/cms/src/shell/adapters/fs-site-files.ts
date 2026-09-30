@@ -32,12 +32,11 @@ export class FsSiteFiles implements SiteFiles {
     }
   }
 
-  async write(path: string, content: string | Blob): Promise<number> {
+  async write(path: string, content: string | Blob): Promise<void> {
     const handle = await this.fileHandle(path, true);
     const writable = await handle.createWritable();
     await writable.write(content);
     await writable.close();
-    return (await handle.getFile()).lastModified;
   }
 
   async list(dir: string): Promise<string[]> {

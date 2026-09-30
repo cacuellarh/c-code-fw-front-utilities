@@ -5,7 +5,8 @@ import { suggestManifest } from './manifest';
 import { diskPath } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
-import { ConflictError, openSite, saveSite } from './site';
+import { ConflictError, needsPublish, openSite, readSiteFolder, saveSite, siteIdFor, writeSiteFolder } from './site';
+import { MemoryContentRepository } from './testing/memory-content-repository';
 import { MemorySiteFiles } from './testing/memory-site-files';
 import { extractTheme } from './theme';
 
@@ -34,35 +35,42 @@ const plan = (id: number, name: string, services: number[] = [101]) => ({
   additionalServicesId: services,
 });
 
-function spaSite(): MemorySiteFiles {
+function spaFolder(): MemorySiteFiles {
   return new MemorySiteFiles('spa', {
     [MANIFEST_FILE]: JSON.stringify(manifest),
     [PLANS]: formatJson([plan(1, 'PLAN ROSA', [101, 102]), plan(2, 'PLAN LIRIO', [102])], detectJsonStyle('[\n    1\n]\n')),
-    [ADDITIONALS]: JSON.stringify([
+    [ADDITIONALS]: formatJson([
       { id: 101, iconPath: '/assets/icons/a.png', name: 'Jacuzzi' },
       { id: 102, iconPath: '/assets/icons/b.png', name: 'Masaje' },
-    ]),
+    ], detectJsonStyle('[\n    1\n]\n')),
     [ROUTES]: '/\r\n/planes\r\n/galeria\r\n/planes/plan-rosa\r\n/planes/plan-lirio\r\n',
     [SITEMAP]: [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<urlset>',
       '  <url>',
       '    <loc>https://spa.test/</loc>',
-      '    <lastmod>2026-01-01</lastmod>',
+      '    <lastmod>2025-06-01</lastmod>',
       '  </url>',
       '  <url>',
       '    <loc>https://spa.test/planes/plan-rosa</loc>',
-      '    <lastmod>2026-01-01</lastmod>',
+      '    <lastmod>2025-06-01</lastmod>',
       '  </url>',
       '  <url>',
       '    <loc>https://spa.test/planes/plan-lirio</loc>',
-      '    <lastmod>2026-01-01</lastmod>',
+      '    <lastmod>2025-06-01</lastmod>',
       '  </url>',
       '</urlset>',
       '',
     ].join('\n'),
     'src/styles.css': "@import url('https://fonts.googleapis.com/css2?family=Quicksand');\n:root { --cc-accent: #dda0a0; /* rosa */ --x: 1rem; }\nbody { color: red; }",
   });
+}
+
+/** A repository with the test site imported from its folder, as the CMS import does. */
+async function importedRepo(): Promise<MemoryContentRepository> {
+  const repo = new MemoryContentRepository();
+  await repo.createSite({ id: 'spa', ...(await readSiteFolder(spaFolder())) }, 'yo@test');
+  return repo;
 }
 
 describe('json-format', () => {
@@ -72,77 +80,118 @@ describe('json-format', () => {
     expect(formatJson([{ a: [1, 2], b: 'x' }], style)).toBe('[\r\n    {\r\n        "a": [1, 2],\r\n        "b": "x"\r\n    }\r\n]');
   });
 
-  it('formats back to the same text, so an unchanged file is not dirty', () => {
+  it('formats back to the same text', () => {
     const text = formatJson([plan(1, 'PLAN ROSA')]);
     expect(formatJson(JSON.parse(text), detectJsonStyle(text))).toBe(text);
   });
 });
 
-describe('site: open and save', () => {
-  it('opens the collections of the scope and hides optional files that do not exist', async () => {
-    const { content: site, scope, theme } = await openSite(spaSite());
-    expect(scope.id).toBe('spa');
-    expect(site.collections.map((c) => c.def.id)).toEqual(['plans', 'additionals']);
-    expect(content.dirtyCollections(site)).toEqual([]);
-    expect(theme.style).toBe('--cc-accent: #dda0a0; --x: 1rem');
-    expect(theme.fontUrls).toEqual(['https://fonts.googleapis.com/css2?family=Quicksand']);
+describe('import from a folder', () => {
+  it('reads the manifest, the collections that exist and the theme', async () => {
+    const site = await readSiteFolder(spaFolder());
+    expect(site.manifest.name).toBe('Spa de prueba');
+    expect(site.collections.map((c) => c.id)).toEqual(['plans', 'additionals']);
+    expect(site.theme?.style).toBe('--cc-accent: #dda0a0; --x: 1rem');
+    expect(site.theme?.fontUrls).toEqual(['https://fonts.googleapis.com/css2?family=Quicksand']);
   });
 
-  it('writes only changed files and rebuilds routes and sitemap for a new plan', async () => {
-    const files = spaSite();
-    const opened = await openSite(files);
-    const added = content.addItem(opened.content, 'plans');
-    let site = content.updateItem(added.content, 'plans', added.index, { ...plan(0, 'PLAN JAZMÍN'), id: 3 });
+  it('suggests a manifest when the folder has no cms.json', async () => {
+    const folder = spaFolder();
+    folder.files.delete(MANIFEST_FILE);
+    expect(await suggestManifest(folder)).toEqual(
+      jasmine.objectContaining({ scope: 'spa', name: 'spa', siteUrl: 'https://spa.test', theme: 'src/styles.css' })
+    );
+    expect((await readSiteFolder(folder)).manifest.scope).toBe('spa');
+  });
+});
 
-    const result = await saveSite(files, opened.scope, site);
-    expect(result.written).toEqual([PLANS, ROUTES, SITEMAP]);
-    expect(files.text(PLANS)).toContain('    {\n        "id": 3,');
-    expect(files.text(ROUTES)).toBe('/\r\n/planes\r\n/galeria\r\n/planes/plan-rosa\r\n/planes/plan-lirio\r\n/planes/plan-jazmin\r\n');
-    const sitemap = files.text(SITEMAP);
-    expect(sitemap).toContain('<loc>https://spa.test/planes/plan-jazmin</loc>');
-    expect(sitemap.match(/2026-01-01/g)?.length).toBe(3); // untouched entries keep their date
-    expect(sitemap).toMatch(/plan-jazmin<\/loc>\n    <lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
+describe('open and save in the repository', () => {
+  it('opens the site with its versions and saves only the changed collections', async () => {
+    const repo = await importedRepo();
+    const opened = await openSite(repo, 'spa');
+    expect(opened.content.collections.map((c) => [c.def.id, c.version])).toEqual([['plans', 1], ['additionals', 1]]);
+    expect(content.dirtyCollections(opened.content)).toEqual([]);
+
+    const edited = content.updateItem(opened.content, 'plans', 0, { ...plan(1, 'PLAN ROSA'), price: 1 });
+    const result = await saveSite(repo, 'spa', edited, 'yo@test');
+    expect(result.saved).toEqual(['Planes']);
     expect(content.dirtyCollections(result.content)).toEqual([]);
-
-    site = result.content;
-    expect((await saveSite(files, opened.scope, site)).written).toEqual([]);
+    expect(content.findCollection(result.content, 'plans')!.version).toBe(2);
+    expect(repo.history).toEqual([{ siteId: 'spa', author: 'yo@test', collections: ['plans'] }]);
+    expect(needsPublish((await repo.listSites())[0])).toBeTrue();
   });
 
-  it('refuses to overwrite a file that changed on disk after opening', async () => {
-    const files = spaSite();
-    const opened = await openSite(files);
-    const site = content.updateItem(opened.content, 'plans', 0, { ...plan(1, 'PLAN ROSA'), price: 1 });
-    await files.write(PLANS, '[]');
-    await expectAsync(saveSite(files, opened.scope, site)).toBeRejectedWithError(ConflictError);
-    expect((await saveSite(files, opened.scope, site, true)).written).toContain(PLANS);
+  it('refuses to save over changes someone else saved after opening', async () => {
+    const repo = await importedRepo();
+    const mine = await openSite(repo, 'spa');
+    const theirs = await openSite(repo, 'spa');
+    await saveSite(repo, 'spa', content.updateItem(theirs.content, 'plans', 0, { ...plan(1, 'PLAN A') }), 'otro');
+    const edit = content.updateItem(mine.content, 'plans', 0, { ...plan(1, 'PLAN B') });
+    await expectAsync(saveSite(repo, 'spa', edit, 'yo')).toBeRejectedWithError(ConflictError);
+  });
+});
+
+describe('write the site folder (build)', () => {
+  it('writes the JSON with the file format and rebuilds routes and sitemap', async () => {
+    const repo = await importedRepo();
+    const opened = await openSite(repo, 'spa');
+    const added = content.addItem(opened.content, 'plans');
+    const edited = content.updateItem(added.content, 'plans', added.index, { ...plan(3, 'PLAN JAZMÍN') });
+    await saveSite(repo, 'spa', edited, 'yo');
+
+    const folder = spaFolder();
+    const written = await writeSiteFolder(folder, (await repo.loadSite('spa'))!);
+    expect(written).toEqual([PLANS, ROUTES, SITEMAP]);
+    expect(folder.text(PLANS)).toContain('    {\n        "id": 3,');
+    expect(folder.text(ROUTES)).toBe('/\r\n/planes\r\n/galeria\r\n/planes/plan-rosa\r\n/planes/plan-lirio\r\n/planes/plan-jazmin\r\n');
+    const sitemap = folder.text(SITEMAP);
+    expect(sitemap).toContain('<loc>https://spa.test/planes/plan-jazmin</loc>\n    <lastmod>2026-01-01</lastmod>');
+    expect(sitemap).toContain('<loc>https://spa.test/</loc>\n    <lastmod>2025-06-01</lastmod>');
+    expect(await writeSiteFolder(folder, (await repo.loadSite('spa'))!)).toEqual([]);
+  });
+
+  it('writes the same content it imported, so the first build changes no data', async () => {
+    const folder = spaFolder();
+    const repo = new MemoryContentRepository();
+    await repo.createSite({ id: 'spa', ...(await readSiteFolder(folder)) }, 'yo@test');
+    const written = await writeSiteFolder(folder, (await repo.loadSite('spa'))!);
+    expect(written).not.toContain(PLANS);
+    expect(written).not.toContain(ADDITIONALS);
   });
 });
 
 describe('content rules', () => {
   it('gives new entries the next id and removes deleted ids from the plans', async () => {
-    const { content: site } = await openSite(spaSite());
+    const { content: site } = await openSite(await importedRepo(), 'spa');
     const added = content.addItem(site, 'additionals');
     expect(content.findCollection(added.content, 'additionals')!.items[added.index]['id']).toBe(103);
 
     expect(content.referencesTo(site, 'additionals', 1).map((r) => r.title)).toEqual(['PLAN ROSA', 'PLAN LIRIO']);
     const next = content.removeItem(site, 'additionals', 1);
-    const plans = content.findCollection(next, 'plans')!.items;
-    expect(plans.map((p) => p['additionalServicesId'])).toEqual([[101], []]);
+    expect(content.findCollection(next, 'plans')!.items.map((p) => p['additionalServicesId'])).toEqual([[101], []]);
   });
 
   it('reports required fields, missing references and the spa rules', async () => {
-    const { content: site } = await openSite(spaSite());
-    let broken = content.updateItem(site, 'plans', 1, { ...plan(2, 'PLAN ROSA', [999]), duration: '' });
+    const { content: site } = await openSite(await importedRepo(), 'spa');
+    const broken = content.updateItem(site, 'plans', 1, { ...plan(2, 'PLAN ROSA', [999]), duration: '' });
     const messages = content.validateContent(broken).map((i) => i.message);
     expect(messages).toContain('Falta "Duración".');
     expect(messages).toContain('"Servicios incluidos" tiene ids que no existen: 999.');
     expect(messages).toContain('Otro plan ya usa la dirección /planes/plan-rosa.');
-    broken = content.discardChanges(broken);
-    expect(content.validateContent(broken)).toEqual([]);
+    expect(content.validateContent(content.discardChanges(broken))).toEqual([]);
   });
 
   it('knows the spa scope collections', () => {
     expect(SPA_SCOPE.collections.map((c) => c.id)).toEqual(['plans', 'additionals', 'priceRanges', 'services']);
+  });
+});
+
+describe('site helpers', () => {
+  it('makes free site ids and knows when a site needs publishing', () => {
+    expect(siteIdFor('Ixora Spa Bucaramanga')).toBe('ixora-spa-bucaramanga');
+    expect(siteIdFor('Laurel Spa', ['laurel-spa'])).toBe('laurel-spa-2');
+    expect(needsPublish({ updatedAt: '2026-01-02', publishedAt: '2026-01-01' })).toBeTrue();
+    expect(needsPublish({ updatedAt: '2026-01-01', publishedAt: '2026-01-02' })).toBeFalse();
   });
 });
 
@@ -162,15 +211,6 @@ describe('images and paths', () => {
     expect(path).toBe('/assets/images/planes/foto-spa-2.webp');
     expect(await files.exists('src/assets/images/planes/foto-spa-2.webp')).toBeTrue();
     expect(freeFileName('Ícono.PNG', 'png', [])).toBe('icono.png');
-  });
-});
-
-describe('manifest', () => {
-  it('suggests the scope, address and theme of a folder without cms.json', async () => {
-    const files = spaSite();
-    files.files.delete(MANIFEST_FILE);
-    const suggested = await suggestManifest(files);
-    expect(suggested).toEqual(jasmine.objectContaining({ scope: 'spa', name: 'spa', siteUrl: 'https://spa.test', theme: 'src/styles.css' }));
   });
 });
 

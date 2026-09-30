@@ -1,0 +1,60 @@
+import { CollectionChange, ContentRepository, NewSite, SavedCollection, SiteSummary, StoredSite } from '../ports';
+import { ConflictError } from '../site';
+
+/** `ContentRepository` in memory, for tests. Behaves like Firestore: versions and conflicts. */
+export class MemoryContentRepository implements ContentRepository {
+  readonly sites = new Map<string, StoredSite>();
+  readonly history: { siteId: string; author: string; collections: string[] }[] = [];
+  private tick = 0;
+
+  async listSites(): Promise<SiteSummary[]> {
+    return [...this.sites.values()].map(({ id, name, scope, updatedAt, publishedAt }) => ({ id, name, scope, updatedAt, publishedAt }));
+  }
+
+  async loadSite(siteId: string): Promise<StoredSite | null> {
+    const site = this.sites.get(siteId);
+    return site ? structuredClone(site) : null;
+  }
+
+  async saveCollections(siteId: string, changes: CollectionChange[], author: string): Promise<SavedCollection[]> {
+    const site = this.sites.get(siteId);
+    if (!site) throw new Error(`El sitio "${siteId}" no existe.`);
+    const current = (id: string) => site.collections.find((c) => c.id === id);
+    const conflicts = changes.filter((c) => (current(c.id)?.version ?? 0) !== c.expectedVersion).map((c) => c.id);
+    if (conflicts.length) throw new ConflictError(conflicts);
+
+    const updatedAt = this.now();
+    const saved = changes.map((change) => {
+      const version = change.expectedVersion + 1;
+      const next = { id: change.id, items: structuredClone(change.items), version, updatedAt };
+      site.collections = [...site.collections.filter((c) => c.id !== change.id), next];
+      return { id: change.id, version, updatedAt };
+    });
+    site.updatedAt = updatedAt;
+    this.history.push({ siteId, author, collections: changes.map((c) => c.id) });
+    return saved;
+  }
+
+  async createSite(site: NewSite, _author: string): Promise<void> {
+    if (this.sites.has(site.id)) throw new Error(`Ya existe un sitio con el id "${site.id}".`);
+    const updatedAt = this.now();
+    this.sites.set(site.id, {
+      id: site.id,
+      name: site.manifest.name,
+      scope: site.manifest.scope,
+      manifest: site.manifest,
+      theme: site.theme,
+      updatedAt,
+      collections: site.collections.map((c) => ({ ...c, version: 1, updatedAt })),
+    });
+  }
+
+  async markPublished(siteId: string, at: string): Promise<void> {
+    const site = this.sites.get(siteId);
+    if (site) site.publishedAt = at;
+  }
+
+  private now(): string {
+    return new Date(Date.UTC(2026, 0, 1, 0, 0, this.tick++)).toISOString();
+  }
+}
