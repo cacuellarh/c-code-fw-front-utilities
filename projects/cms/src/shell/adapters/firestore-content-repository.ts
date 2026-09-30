@@ -114,6 +114,10 @@ export class FirestoreContentRepository implements ContentRepository {
     await updateDoc(doc(this.db, 'sites', siteId), { publishedAt: at });
   }
 
+  async renameSite(siteId: string, name: string): Promise<void> {
+    await updateDoc(doc(this.db, 'sites', siteId), { name, 'manifest.name': name });
+  }
+
   /** Deploy Hook of the site, kept where only editors can read it. */
   async getDeployHook(siteId: string): Promise<string> {
     const config = await getDoc(doc(this.db, 'sites', siteId, 'private', 'config'));

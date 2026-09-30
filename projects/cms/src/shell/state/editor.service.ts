@@ -3,7 +3,7 @@ import * as content from '../../domain/content';
 import { SiteContent } from '../../domain/content';
 import { SiteSummary } from '../../domain/ports';
 import { Entry, ScopeDef } from '../../domain/schema';
-import { needsPublish, openSite, publishSite, saveSite } from '../../domain/site';
+import { needsPublish, openSite, publishSite, renameSite, saveSite } from '../../domain/site';
 import { EMPTY_THEME, SiteTheme } from '../../domain/theme';
 import { loadFonts } from '../adapters/fonts';
 import { AuthService } from './auth.service';
@@ -116,6 +116,13 @@ export class EditorService {
     } finally {
       this.publishing.set(false);
     }
+  }
+
+  async rename(name: string): Promise<void> {
+    const site = this.requireSite();
+    const clean = await renameSite(this.repo, site.id, name);
+    this.site.set({ ...site, name: clean });
+    this.content.update((c) => (c ? { ...c, manifest: { ...c.manifest, name: clean } } : c));
   }
 
   getDeployHook(): Promise<string> {

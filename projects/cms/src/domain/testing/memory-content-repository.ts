@@ -54,6 +54,11 @@ export class MemoryContentRepository implements ContentRepository {
     if (site) site.publishedAt = at;
   }
 
+  async renameSite(siteId: string, name: string): Promise<void> {
+    const site = this.sites.get(siteId);
+    if (site) this.sites.set(siteId, { ...site, name, manifest: { ...site.manifest, name } });
+  }
+
   private now(): string {
     return new Date(Date.UTC(2026, 0, 1, 0, 0, this.tick++)).toISOString();
   }

@@ -5,7 +5,7 @@ import { suggestManifest } from './manifest';
 import { diskPath } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
-import { ConflictError, needsPublish, openSite, readSiteFolder, saveSite, siteIdFor, writeSiteFolder } from './site';
+import { ConflictError, needsPublish, openSite, readSiteFolder, renameSite, saveSite, siteIdFor, writeSiteFolder } from './site';
 import { MemoryContentRepository } from './testing/memory-content-repository';
 import { MemorySiteFiles } from './testing/memory-site-files';
 import { extractTheme } from './theme';
@@ -192,6 +192,16 @@ describe('site helpers', () => {
     expect(siteIdFor('Laurel Spa', ['laurel-spa'])).toBe('laurel-spa-2');
     expect(needsPublish({ updatedAt: '2026-01-02', publishedAt: '2026-01-01' })).toBeTrue();
     expect(needsPublish({ updatedAt: '2026-01-01', publishedAt: '2026-01-02' })).toBeFalse();
+  });
+});
+
+describe('rename', () => {
+  it('cleans the name, keeps the id and refuses an empty name', async () => {
+    const repo = await importedRepo();
+    expect(await renameSite(repo, 'spa', '  Laurel   Spa Medellín ')).toBe('Laurel Spa Medellín');
+    const site = (await repo.loadSite('spa'))!;
+    expect([site.id, site.name, site.manifest.name]).toEqual(['spa', 'Laurel Spa Medellín', 'Laurel Spa Medellín']);
+    await expectAsync(renameSite(repo, 'spa', '   ')).toBeRejectedWithError('El nombre no puede quedar vacío.');
   });
 });
 

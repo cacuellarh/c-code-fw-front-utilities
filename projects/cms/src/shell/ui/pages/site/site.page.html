@@ -42,10 +42,16 @@
         {{ editor.publishing() ? 'Publicando…' : 'Publicar' }}
       </button>
       <button type="button" class="link" (click)="toggleSettings()" [attr.aria-expanded]="settingsOpen()">
-        Ajustes de publicación
+        Ajustes del sitio
       </button>
       @if (settingsOpen()) {
         <div class="settings">
+          <label for="site-name">Nombre en el CMS</label>
+          <input id="site-name" type="text" [value]="name()" (input)="name.set($any($event.target).value); nameSaved.set(false)" />
+          <button type="button" class="btn" (click)="saveName()" [disabled]="!name().trim() || name().trim() === editor.site()?.name">
+            {{ nameSaved() ? 'Guardado' : 'Cambiar nombre' }}
+          </button>
+          <hr />
           <label for="hook">Deploy Hook de Vercel</label>
           <input
             id="hook"

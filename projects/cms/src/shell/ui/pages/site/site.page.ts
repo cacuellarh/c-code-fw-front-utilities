@@ -24,6 +24,8 @@ export class SitePage implements OnInit {
   protected readonly settingsOpen = signal(false);
   protected readonly hook = signal('');
   protected readonly hookSaved = signal(false);
+  protected readonly name = signal('');
+  protected readonly nameSaved = signal(false);
   protected readonly isDirty = isDirty;
   protected readonly ready = computed(() => this.editor.site()?.id === this.siteId());
   protected readonly issueCount = computed(() => this.editor.issues().length);
@@ -82,6 +84,8 @@ export class SitePage implements OnInit {
   protected async toggleSettings(open = !this.settingsOpen()): Promise<void> {
     this.settingsOpen.set(open);
     this.hookSaved.set(false);
+    this.nameSaved.set(false);
+    this.name.set(this.editor.site()?.name ?? '');
     if (open) this.hook.set(await this.editor.getDeployHook().catch(() => ''));
   }
 
@@ -91,6 +95,15 @@ export class SitePage implements OnInit {
       this.hookSaved.set(true);
     } catch (e) {
       this.error.set(`No se pudo guardar el Deploy Hook: ${messageOf(e)}`);
+    }
+  }
+
+  protected async saveName(): Promise<void> {
+    try {
+      await this.editor.rename(this.name());
+      this.nameSaved.set(true);
+    } catch (e) {
+      this.error.set(`No se pudo cambiar el nombre: ${messageOf(e)}`);
     }
   }
 

@@ -157,3 +157,11 @@ export async function publishSite(repo: ContentRepository, publisher: Publisher,
   await repo.markPublished(siteId, at);
   return at;
 }
+
+/** Renames a site. The name only shows in the CMS; the id and the public site do not change. */
+export async function renameSite(repo: ContentRepository, siteId: string, name: string): Promise<string> {
+  const clean = name.trim().replace(/\s+/g, ' ');
+  if (!clean) throw new Error('El nombre no puede quedar vacío.');
+  await repo.renameSite(siteId, clean);
+  return clean;
+}
