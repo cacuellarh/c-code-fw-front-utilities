@@ -212,16 +212,19 @@ export async function addEmptyCollection(repo: ContentRepository, siteId: string
 
 /**
  * Imports, from the site's folder, the collections the site does not have in the repository
- * yet. Returns the labels of the imported ones (none if the folder has none of them).
+ * yet (all of them, or only the ids in `only`). Returns the labels of the imported ones (none
+ * if the folder has none of them).
  */
 export async function importMissingCollections(
   repo: ContentRepository,
   stored: StoredSite,
   folder: Omit<NewSite, 'id'>,
-  author: string
+  author: string,
+  only?: string[]
 ): Promise<string[]> {
   const scope = requireScope(stored.manifest.scope);
-  const missing = new Map(missingCollections(scope, stored).map((def) => [def.id, def]));
+  const wanted = (def: CollectionDef) => !only || only.includes(def.id);
+  const missing = new Map(missingCollections(scope, stored).filter(wanted).map((def) => [def.id, def]));
   const found = folder.collections.filter((c) => missing.has(c.id));
   if (found.length) await repo.addCollections(stored.id, found, author);
   return found.map((c) => missing.get(c.id)!.label);

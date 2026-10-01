@@ -1,21 +1,40 @@
 @if (item(); as entry) {
   <header class="head">
-    <div>
-      <p class="kind">{{ collection().def.singular }} @if (idLabel()) { · {{ idLabel() }} }</p>
-      <h2>{{ title() }}</h2>
+    <div class="titles">
+      @if (!single()) {
+        <p class="kind">
+          {{ kind() }}
+          @if (auth.isAdmin() && idLabel()) {
+            <span class="mono">· {{ idLabel() }}</span>
+          }
+        </p>
+      }
+      <h2 [attr.id]="headingId()">{{ title() }}</h2>
     </div>
     @if (!single()) {
       <div class="actions">
-        <button type="button" class="btn ghost" (click)="duplicate()">Duplicar</button>
-        <button type="button" class="btn danger" (click)="remove()">Eliminar</button>
+        <button type="button" class="btn ghost small" (click)="duplicate()">
+          <cms-icon name="copy" [size]="18" />
+          Duplicar
+        </button>
+        <button type="button" class="btn danger small" (click)="remove()">
+          <cms-icon name="trash-2" [size]="18" />
+          Eliminar
+        </button>
       </div>
     }
   </header>
 
-  @if (issues().length) {
-    <ul class="issues" aria-label="Avisos">
-      @for (issue of issues(); track $index) {
-        <li>{{ issue.message }}</li>
+  @if (generalIssues().length) {
+    <ul class="issues" aria-label="Por revisar">
+      @for (issue of generalIssues(); track $index) {
+        <li>
+          <cms-icon name="triangle-alert" [size]="16" />
+          <span>{{ issue.message }}</span>
+          @if (issue.code === 'duplicate-id' && auth.isAdmin()) {
+            <button type="button" class="fix" (click)="editor.giveNewId(collection().def.id, index())">Darle un id nuevo</button>
+          }
+        </li>
       }
     </ul>
   }
@@ -26,6 +45,8 @@
         <cms-field
           [field]="field"
           [value]="entry[field.key]"
+          [issues]="fieldIssues().get(field.key) ?? []"
+          [changed]="changed(field.key)"
           (valueChange)="set(field.key, $event)"
           (imagePicked)="setImage(field, $event)"
         />
@@ -34,7 +55,7 @@
 
     @if (preview(); as component) {
       <aside class="preview" aria-label="Vista previa">
-        <p class="preview-title">Así se ve en el sitio</p>
+        <p class="preview-title">Vista previa</p>
         <div class="site-theme" [attr.style]="editor.theme().style">
           <ng-container *ngComponentOutlet="component; inputs: previewInputs()" />
         </div>

@@ -3,7 +3,7 @@ import * as content from '../../domain/content';
 import { SiteContent } from '../../domain/content';
 import { SiteSummary } from '../../domain/ports';
 import { Entry, ScopeDef } from '../../domain/schema';
-import { addEmptyCollection, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, publishSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite } from '../../domain/site';
+import { addEmptyCollection, folderMismatch, hideCollection, importMissingCollections, needsPublish, offerCollection, openSite, publishSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite, sectionStates } from '../../domain/site';
 import { CollectionDef } from '../../domain/schema';
 import { NewSite } from '../../domain/ports';
 import { FsSiteFiles } from '../adapters/fs-site-files';
@@ -84,6 +84,10 @@ export class EditorService {
     this.change((c) => content.moveItem(c, collection, from, to));
   }
 
+  giveNewId(collection: string, index: number): void {
+    this.change((c) => content.giveNewId(c, collection, index));
+  }
+
   referencesTo(collection: string, index: number) {
     return content.referencesTo(this.requireContent(), collection, index);
   }
@@ -135,11 +139,16 @@ export class EditorService {
     this.content.update((c) => (c ? { ...c, manifest: { ...c.manifest, name: clean } } : c));
   }
 
-  /** Optional sections (gallery, popup…) the open site does not have yet. */
-  async missingSections(): Promise<CollectionDef[]> {
+  /** Every section of the scope with its state in the open site (active, not used, available). */
+  async sectionStates(): Promise<ReturnType<typeof sectionStates>> {
     const stored = await this.repo.loadSite(this.requireSite().id);
     const scope = this.scope();
-    return stored && scope ? missingCollections(scope, stored) : [];
+    return stored && scope ? sectionStates(scope, stored) : [];
+  }
+
+  /** Offers again a section marked as not used. */
+  async offerSection(def: CollectionDef): Promise<void> {
+    await offerCollection(this.repo, this.requireSite().id, def);
   }
 
   /** Adds an empty section and reopens the site to show it. */
@@ -185,12 +194,12 @@ export class EditorService {
     return { before: result.before, after: result.after };
   }
 
-  /** Imports, from the site's folder, the sections it does not have yet. Returns their labels. */
-  async importSections(folder: Omit<NewSite, 'id'>): Promise<string[]> {
+  /** Imports, from the site's folder, sections it does not have yet (all, or `only` these). Returns their labels. */
+  async importSections(folder: Omit<NewSite, 'id'>, only?: string[]): Promise<string[]> {
     const site = this.requireSite();
     const stored = await this.repo.loadSite(site.id);
     if (!stored) throw new Error('El sitio no existe.');
-    const imported = await importMissingCollections(this.repo, stored, folder, this.auth.email());
+    const imported = await importMissingCollections(this.repo, stored, folder, this.auth.email(), only);
     if (imported.length) await this.open(site.id);
     return imported;
   }

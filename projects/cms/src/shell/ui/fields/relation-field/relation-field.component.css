@@ -9,10 +9,10 @@
 }
 .search {
   flex: 1;
-  min-height: 36px;
-  padding: 6px 10px;
+  min-height: var(--cms-control-h);
+  padding: 6px 12px;
   border: 1px solid var(--cms-border-strong);
-  border-radius: var(--cms-radius);
+  border-radius: var(--cms-radius-sm);
   font: inherit;
   color: inherit;
   background: var(--cms-panel);
@@ -38,7 +38,7 @@ label {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 36px;
+  min-height: 40px;
   padding: 4px 8px;
   border-radius: calc(var(--cms-radius) - 2px);
   cursor: pointer;

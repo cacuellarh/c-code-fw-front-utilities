@@ -3,32 +3,36 @@
     type="button"
     class="thumb"
     [class.icon]="field().kind === 'icon'"
+    [class.invalid]="invalid()"
     (click)="pickerOpen.set(true)"
     [attr.aria-label]="(value() ? 'Cambiar ' : 'Elegir ') + field().label.toLowerCase()"
   >
     @if (preview.value(); as src) {
       <img [src]="src" alt="" (error)="broken.set(true)" (load)="broken.set(false)" [hidden]="broken()" />
       @if (broken()) {
-        <span class="missing">No se encuentra</span>
+        <span class="missing">Imagen no disponible</span>
       }
     } @else if (preview.isLoading()) {
       <span class="empty">Cargando…</span>
     } @else {
-      <span class="empty">Sin imagen</span>
+      <span class="empty">
+        <cms-icon name="image" [size]="24" />
+        Sin imagen
+      </span>
     }
   </button>
   <div class="side">
     @if (name()) {
       <span class="name">{{ name() }}</span>
-    } @else if (legacy()) {
-      <span class="note">Imagen anterior del sitio. Elige una de la biblioteca para reemplazarla.</span>
+    } @else if (legacy() && auth.isAdmin()) {
+      <span class="pill warning" title="Está fuera de la biblioteca. Impórtala desde Configuración.">Imagen antigua</span>
     }
     <div class="actions">
-      <button type="button" class="btn" [id]="inputId()" (click)="pickerOpen.set(true)">
-        {{ value() ? 'Cambiar imagen' : 'Elegir imagen' }}
+      <button type="button" class="btn small" [id]="inputId()" (click)="pickerOpen.set(true)">
+        {{ value() ? 'Cambiar' : 'Elegir imagen' }}
       </button>
       @if (value() && !field().required) {
-        <button type="button" class="btn ghost" (click)="picked.emit(null)">Quitar</button>
+        <button type="button" class="btn ghost small" (click)="picked.emit(null)">Quitar</button>
       }
     </div>
   </div>

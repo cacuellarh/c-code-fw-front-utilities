@@ -1,0 +1,6 @@
+<span class="badge"><cms-icon [name]="icon()" [size]="28" /></span>
+<p class="title">{{ heading() }}</p>
+@if (text()) {
+  <p class="text">{{ text() }}</p>
+}
+<div class="action"><ng-content /></div>

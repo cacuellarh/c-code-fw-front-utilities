@@ -1,144 +1,140 @@
 @if (ready()) {
-  <aside class="side">
-    <button type="button" class="back" (click)="leave()">← Sitios</button>
-    <div class="site">
-      <p class="scope">{{ editor.scope()?.label }}</p>
-      <h1>{{ editor.site()?.name }}</h1>
-      <p class="folder">{{ editor.site()?.id }}</p>
+  <aside class="side" id="site-menu" aria-label="Menú del sitio">
+    <div class="brand">
+      <cms-logo />
     </div>
-    <nav aria-label="Contenido del sitio">
-      <ul>
+    @if (canGoBack()) {
+      <button type="button" class="back" (click)="leave()">
+        <cms-icon name="arrow-left" [size]="18" />
+        Sitios
+      </button>
+    }
+
+    <nav aria-label="Secciones del sitio">
+      <p class="group-label" id="content-label">Contenido</p>
+      <ul aria-labelledby="content-label">
         @for (c of editor.collections(); track c.def.id) {
           <li>
-            <a [routerLink]="['/sitio', siteId(), c.def.id]" routerLinkActive="on" ariaCurrentWhenActive="page">
+            <a
+              [routerLink]="['/sitio', siteId(), c.def.id]"
+              routerLinkActive="on"
+              ariaCurrentWhenActive="page"
+              (click)="menuOpen.set(false)"
+            >
+              <cms-icon [name]="c.def.icon ?? 'layout-list'" />
               <span class="name">{{ c.def.label }}</span>
               @if (isDirty(c)) {
-                <span class="dot" title="Cambios sin guardar" aria-label="cambios sin guardar"></span>
+                <span class="dot" title="Cambios sin guardar"></span>
+                <span class="sr-only">, cambios sin guardar</span>
               }
               @if (issuesBy().get(c.def.id); as n) {
-                <span class="warn" [title]="n + ' avisos'">{{ n }}</span>
+                <span class="warn" [title]="n + ' por revisar'">
+                  <cms-icon name="triangle-alert" [size]="14" />
+                  <span class="sr-only">, {{ n }} por revisar</span>
+                </span>
               }
-              <span class="n">{{ c.items.length }}</span>
+              @if (!c.def.single) {
+                <span class="n" aria-hidden="true">{{ c.items.length }}</span>
+              }
             </a>
           </li>
         }
       </ul>
-      @if (missing().length) {
-        <ul class="add-list" aria-label="Secciones que se pueden agregar">
-          @for (def of missing(); track def.id) {
-            <li>
-              <button
-                type="button"
-                class="add"
-                (click)="offer.set(offer() === def.id ? null : def.id)"
-                [attr.aria-expanded]="offer() === def.id"
-              >
-                <span aria-hidden="true">＋</span> {{ def.label }}
-              </button>
-              @if (offer() === def.id) {
-                <div class="offer">
-                  <p>{{ def.description }}</p>
-                  <button type="button" class="btn primary" (click)="importSections()" [disabled]="sectionBusy()">
-                    Importar desde la carpeta…
-                  </button>
-                  <button type="button" class="btn ghost" (click)="addSection(def)" [disabled]="sectionBusy()">Crear vacía</button>
-                  <button type="button" class="link" (click)="hideSection(def)" [disabled]="sectionBusy()">No usar en este sitio</button>
-                </div>
-              }
-            </li>
-          }
-        </ul>
-      }
       <ul class="extra">
         <li>
-          <a [routerLink]="['/sitio', siteId(), 'imagenes']" routerLinkActive="on" ariaCurrentWhenActive="page">
+          <a [routerLink]="['/sitio', siteId(), 'imagenes']" routerLinkActive="on" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
+            <cms-icon name="image" />
             <span class="name">Imágenes</span>
           </a>
         </li>
+        @if (auth.isAdmin()) {
+          <li>
+            <a
+              [routerLink]="['/sitio', siteId(), 'configuracion']"
+              routerLinkActive="on"
+              ariaCurrentWhenActive="page"
+              (click)="menuOpen.set(false)"
+            >
+              <cms-icon name="settings" />
+              <span class="name">Configuración</span>
+            </a>
+          </li>
+        }
       </ul>
     </nav>
 
-    <section class="publish" aria-labelledby="publish-title">
-      <h2 id="publish-title">Sitio público</h2>
-      @if (editor.unpublished()) {
-        <p class="state pending">Hay cambios guardados sin publicar.</p>
-      } @else {
-        <p class="state">Al día. Publicado {{ date(editor.site()?.publishedAt) }}.</p>
-      }
+    <div class="me">
+      <span class="email" [title]="auth.email()">{{ auth.email() }}</span>
+      <button type="button" class="icon-btn" (click)="signOut()" aria-label="Salir" title="Salir">
+        <cms-icon name="log-out" [size]="18" />
+      </button>
+    </div>
+  </aside>
+  <div class="scrim" (click)="menuOpen.set(false)" aria-hidden="true"></div>
+
+  <div class="main">
+    <header class="top">
+      <button
+        type="button"
+        class="icon-btn menu"
+        (click)="menuOpen.set(!menuOpen())"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="site-menu"
+        aria-label="Menú"
+      >
+        <cms-icon name="menu" />
+      </button>
+      <div class="title">
+        <p class="site-name">{{ editor.site()?.name }}</p>
+        <span class="pill" [class]="status().tone" [title]="status().title" aria-live="polite">{{ status().label }}</span>
+      </div>
       <button
         type="button"
         class="btn"
-        [class.primary]="editor.unpublished() && !editor.dirty().length"
+        [class.primary]="editor.unpublished() || editor.dirty().length"
+        [class.outline]="!editor.unpublished() && !editor.dirty().length"
         (click)="publish()"
-        [disabled]="editor.publishing()"
+        [disabled]="editor.publishing() || editor.saving()"
       >
-        {{ editor.publishing() ? 'Publicando…' : 'Publicar' }}
+        <cms-icon name="cloud-upload" [size]="18" />
+        {{ editor.publishing() ? 'Publicando…' : editor.dirty().length ? 'Guardar y publicar' : 'Publicar' }}
       </button>
-      <button type="button" class="link" (click)="toggleSettings()" [attr.aria-expanded]="settingsOpen()">
-        Ajustes del sitio
-      </button>
-      @if (settingsOpen()) {
-        <div class="settings">
-          <label for="site-name">Nombre en el CMS</label>
-          <input id="site-name" type="text" [value]="name()" (input)="name.set($any($event.target).value); nameSaved.set(false)" />
-          <button type="button" class="btn" (click)="saveName()" [disabled]="!name().trim() || name().trim() === editor.site()?.name">
-            {{ nameSaved() ? 'Guardado' : 'Cambiar nombre' }}
-          </button>
-          <hr />
-          <label for="hook">Deploy Hook de Vercel</label>
-          <input
-            id="hook"
-            type="url"
-            [value]="hook()"
-            (input)="hook.set($any($event.target).value); hookSaved.set(false)"
-            placeholder="https://api.vercel.com/v1/integrations/deploy/…"
-            spellcheck="false"
-          />
-          <p class="hint">Vercel → proyecto → Settings → Git → Deploy Hooks. Solo lo ven los editores.</p>
-          <button type="button" class="btn" (click)="saveHook()" [disabled]="!hook().trim()">
-            {{ hookSaved() ? 'Guardado' : 'Guardar' }}
-          </button>
-        </div>
-      }
-    </section>
-  </aside>
-
-  <div class="main">
+    </header>
     <router-outlet />
   </div>
 
-  @if (editor.dirty().length || saved() || published() || error()) {
-    <div class="savebar" role="region" aria-label="Guardar cambios">
+  @if (editor.dirty().length || error()) {
+    <div class="savebar" role="region" aria-label="Cambios">
       <div class="status" aria-live="polite">
         @if (error()) {
+          <cms-icon class="bad" name="triangle-alert" [size]="18" />
           <strong class="bad">{{ error() }}</strong>
-        } @else if (editor.dirty().length) {
+        } @else {
           <strong>Cambios sin guardar</strong>
-          <span>en
+          <span class="where">
+            en
             @for (c of editor.dirty(); track c.def.id; let last = $last) {
               {{ c.def.label }}{{ last ? '' : ', ' }}
             }
           </span>
           @if (issueCount()) {
-            <span class="warn-text">· {{ issueCount() }} avisos por revisar</span>
+            <span class="warn-text">· {{ issueCount() }} por revisar</span>
           }
-        } @else if (published()) {
-          <strong class="ok">Publicando</strong>
-          <span>Vercel está construyendo el sitio; estará al aire en uno o dos minutos.</span>
-        } @else if (saved()) {
-          <strong class="ok">Guardado</strong>
-          <span>{{ saved()?.join(', ') }}. Pulsa «Publicar» cuando quieras que se vea en el sitio.</span>
         }
       </div>
       <div class="actions">
+        @if (conflict()) {
+          <button type="button" class="btn ghost" (click)="reload()">Cargar lo último</button>
+        }
         @if (editor.dirty().length) {
-          <button type="button" class="btn ghost" (click)="discard()" [disabled]="editor.saving()">Descartar</button>
+          <button type="button" class="btn ghost" (click)="discard()" [disabled]="editor.saving()">
+            <cms-icon name="undo-2" [size]="18" />
+            Descartar
+          </button>
           <button type="button" class="btn primary" (click)="save()" [disabled]="editor.saving()">
+            <cms-icon name="save" [size]="18" />
             {{ editor.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
-        } @else if (saved()) {
-          <button type="button" class="btn ghost" (click)="dismiss()">Cerrar</button>
-          <button type="button" class="btn primary" (click)="publish()" [disabled]="editor.publishing()">Publicar ahora</button>
         } @else {
           <button type="button" class="btn ghost" (click)="dismiss()">Cerrar</button>
         }
@@ -149,9 +145,9 @@
   <div class="gate">
     @if (error()) {
       <p class="alert" role="alert">{{ error() }}</p>
-      <button type="button" class="btn ghost" (click)="leave()">Volver a los sitios</button>
+      <button type="button" class="btn" (click)="leave()">Volver</button>
     } @else {
-      <p>Abriendo…</p>
+      <p aria-live="polite">Abriendo…</p>
     }
   </div>
 }

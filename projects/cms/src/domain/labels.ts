@@ -39,3 +39,8 @@ export function emptyTitle(def: Named): string {
 export function pickPrompt(def: Named): string {
   return `Elige ${withArticle(def)} para ${def.feminine ? 'editarla' : 'editarlo'}.`;
 }
+
+/** Line under the empty title: "Crea el primero…" / "Crea la primera…". */
+export function emptyText(def: Named): string {
+  return `Crea ${def.feminine ? 'la primera' : 'el primero'} y aparecerá en tu sitio al publicar.`;
+}

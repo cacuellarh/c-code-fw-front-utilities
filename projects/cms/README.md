@@ -1,6 +1,8 @@
 # C-Code CMS
 
-Local editor for the content of client sites (plans, services, prices…). It runs in the browser, opens the site's folder on your computer and writes its JSON files directly. There is no server, database or login, and nothing leaves the computer: to publish, commit and push the site as usual.
+Editor for the content of client sites (plans, services, gallery, popup…). The content lives in
+Firestore (project `c-code-bf1fd`). Each site's build reads it with `c-code-content pull` (see
+`src/cli/`), so the CMS and the sites share one source of truth.
 
 ## Use
 
@@ -8,43 +10,40 @@ Local editor for the content of client sites (plans, services, prices…). It ru
 npm run cms          # http://localhost:4300 (Chrome or Edge)
 ```
 
-1. **Agregar sitio** → choose the site's folder, for example `C:\dev\xora-spa`.
-   - The first time, the CMS creates `cms.json` in that folder.
-   - The file records the kind of site (scope), its name and its public address.
-   - Commit it with the site.
-2. Edit. The list shows warnings: missing fields, duplicate addresses, services that don't exist…
-3. **Guardar** writes the changed JSON files and rebuilds the generated files (in spa: `prerender-routes.txt` and `sitemap.xml`).
-   - If a file changed outside the CMS after it was opened, it asks before overwriting.
-4. Review the changes with `git diff` in the site, then commit and push. Vercel deploys.
+Sign in with Google. What each person sees depends on their role:
 
-Uploaded photos are resized to at most 1600 px and saved as WebP in the site's assets. Icons keep their format.
+| | Client (editor) | C-Code (admin) |
+|---|---|---|
+| Sites | Only theirs; with one site it opens directly | All, grouped by kind, and **Nuevo sitio** |
+| Content and images | Edit, **Guardar**, **Publicar** | Same |
+| **Configuración** of a site | — | Name, Deploy Hook, sections, importing from the project folder |
+| Technical detail (ids, old images, error detail) | Hidden | Shown |
 
-The first save of an existing file normalizes its indentation. After that, each save only changes the edited lines.
+1. Edit a section. Problems show next to their field ("por revisar").
+2. **Guardar** stores the changes in Firestore. If someone else saved first, the CMS says so.
+3. **Publicar** (top bar) starts the site's build through its Vercel Deploy Hook. With unsaved
+   changes it reads **Guardar y publicar**.
 
-## `cms.json`
+Images are uploaded to the site's library and converted in the browser: photos to WebP (1600 px,
+plus a thumbnail and a JPEG for link previews), icons to WebP (256 px).
 
-```json
-{
-  "scope": "spa",
-  "name": "Ixora Spa Bucaramanga",
-  "siteUrl": "https://ixoraspabucaramanga.com",
-  "assets": { "url": "/assets/", "dir": "src/assets/" },
-  "theme": "src/styles.css",
-  "collections": { "priceRanges": false },
-  "options": { "planRoute": "/planes/" }
-}
-```
+## Roles
 
-- `theme`: stylesheet with the site's colors and fonts. The previews use them.
-- `collections`: another path for a collection, or `false` to hide it.
-- `options`: settings specific to the scope.
+- **Admins** are the documents `admins/{email}` in Firestore (created in the Firebase console;
+  the document can be empty).
+- **Editors** of a site are listed in `sites/{id}/private/access` → `editors: [emails]`.
+- `firestore.rules` enforces it: editors can only save existing sections, upload images and
+  publish. Renaming, sections, Deploy Hook and access are for admins. Publish the rules in Firebase
+  console → Firestore Database → Rules.
 
 ## Architecture
 
 - `src/domain/`: framework-free rules and scopes, with ports for everything external.
-- `src/shell/`: Angular UI and the adapters (File System Access, IndexedDB, canvas).
+- `src/shell/`: Angular UI and the adapters (Firestore, Vercel Deploy Hook, File System Access, canvas).
+- `src/cli/`: `c-code-content`, the Node command the sites' builds run.
 
-The rules are in `.claude/rules/cms-architecture.md`, and adding a kind of site is described in `src/domain/scopes/README.md`.
+The rules are in `.claude/rules/cms-architecture.md`, and adding a kind of site is described in
+`src/domain/scopes/README.md`.
 
 ```bash
 npm run lint:cms                                   # architecture rules

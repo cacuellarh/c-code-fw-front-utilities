@@ -1,55 +1,6 @@
 <header class="head">
-  <h2>Imágenes</h2>
-  <p class="desc">
-    Fotos de planes y galería, e íconos de servicios. Todo se guarda en WebP liviano; las fotos llevan además una copia
-    JPEG para las vistas previas de WhatsApp. Las imágenes llegan al sitio público al pulsar «Publicar».
-  </p>
+  <h1>Imágenes</h1>
+  <p class="desc">Fotos e íconos de tu sitio.</p>
 </header>
-
-@if (media.importing(); as progress) {
-  <section class="import working" aria-live="polite">
-    <strong>Importando imágenes del sitio… {{ progress.done }} de {{ progress.total }}</strong>
-    <progress [value]="progress.done" [max]="progress.total || 1"></progress>
-    <span class="path">{{ progress.path }}</span>
-  </section>
-} @else if (report()) {
-  @let r = report()!;
-  <section class="import done" role="status">
-    <strong>
-      {{ r.imported }} {{ r.imported === 1 ? 'imagen importada' : 'imágenes importadas' }}
-      @if (r.reused) {
-        · {{ r.reused }} ya estaban en la biblioteca
-      }
-    </strong>
-    <p>
-      Se actualizaron {{ r.updatedEntries }} {{ r.updatedEntries === 1 ? 'entrada' : 'entradas' }} para usar la biblioteca.
-      Todavía no está guardado: revisa y pulsa <b>Guardar</b> abajo; luego <b>Publicar</b>.
-    </p>
-    @if (r.failed.length) {
-      <p class="bad">No se pudieron importar:</p>
-      <ul>
-        @for (f of r.failed; track f.path) {
-          <li><code>{{ f.path }}</code>: {{ f.reason }}</li>
-        }
-      </ul>
-    }
-    <button type="button" class="btn ghost" (click)="report.set(null)">Cerrar</button>
-  </section>
-} @else if (legacy() && canImport) {
-  <section class="import">
-    <div>
-      <strong>Este sitio todavía usa {{ legacy() }} {{ legacy() === 1 ? 'imagen propia' : 'imágenes propias' }} fuera de la biblioteca.</strong>
-      <p>
-        Son las fotos e íconos que ya tenía (planes, servicios, galería, popup). Impórtalas una vez para poder elegirlas desde
-        la biblioteca. Se convierten a WebP y los planes y servicios pasan a usarlas.
-      </p>
-    </div>
-    <button type="button" class="btn primary" (click)="importFromSite()">Importar imágenes del sitio…</button>
-  </section>
-}
-
-@if (error()) {
-  <p class="alert" role="alert">{{ error() }}</p>
-}
 
 <cms-media-library mode="manage" />

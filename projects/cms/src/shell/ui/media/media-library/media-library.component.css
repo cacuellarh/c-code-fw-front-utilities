@@ -1,35 +1,35 @@
 :host {
   display: grid;
-  gap: 16px;
+  gap: var(--cms-space-4);
 }
-.tabs {
+.segmented {
   display: inline-flex;
   justify-self: start;
   padding: 3px;
   border-radius: var(--cms-radius);
   background: var(--cms-subtle);
 }
-.tabs button {
-  min-height: 34px;
-  padding: 0 16px;
+.segmented button {
+  min-height: 38px;
+  padding: 0 var(--cms-space-5);
   border: 0;
-  border-radius: calc(var(--cms-radius) - 2px);
+  border-radius: calc(var(--cms-radius) - 3px);
   background: none;
   color: var(--cms-muted);
   font: 600 var(--cms-text-sm) / 1 var(--cms-font);
   cursor: pointer;
 }
-.tabs button.on {
+.segmented button[aria-pressed='true'] {
   background: var(--cms-panel);
   color: var(--cms-text);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  box-shadow: var(--cms-shadow-1);
 }
 .drop {
   position: relative;
   display: grid;
-  gap: 4px;
+  gap: var(--cms-space-1);
   place-items: center;
-  padding: 24px 16px;
+  padding: var(--cms-space-5) var(--cms-space-4);
   border: 2px dashed var(--cms-border-strong);
   border-radius: var(--cms-radius-lg);
   background: var(--cms-panel);
@@ -38,8 +38,11 @@
   text-align: center;
   cursor: pointer;
 }
-.drop strong {
+.drop cms-icon {
   color: var(--cms-accent);
+}
+.drop strong {
+  color: var(--cms-accent-strong);
   font-size: var(--cms-text-md);
 }
 .drop.over,
@@ -59,9 +62,9 @@
 }
 .uploads {
   display: grid;
-  gap: 4px;
+  gap: var(--cms-space-1);
   margin: 0;
-  padding: 12px 16px;
+  padding: var(--cms-space-3) var(--cms-space-4);
   border-radius: var(--cms-radius);
   background: var(--cms-subtle);
   font-size: var(--cms-text-sm);
@@ -70,7 +73,7 @@
 .uploads li {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--cms-space-3);
 }
 .uploads .name {
   overflow: hidden;
@@ -84,7 +87,7 @@
   text-align: right;
 }
 .uploads .done .state {
-  color: var(--cms-accent);
+  color: var(--cms-success);
   font-weight: 600;
 }
 .uploads .error .state {
@@ -94,33 +97,35 @@
   justify-content: flex-end;
 }
 .link {
-  padding: 0;
+  min-height: 32px;
+  padding: 0 var(--cms-space-2);
   border: 0;
+  border-radius: var(--cms-radius-sm);
   background: none;
-  color: var(--cms-muted);
-  font: inherit;
-  text-decoration: underline;
+  color: var(--cms-accent);
+  font: 600 var(--cms-text-sm) / 1 var(--cms-font);
   cursor: pointer;
 }
-.bar {
+.search {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--cms-space-3);
 }
-.search {
+.search cms-icon {
+  position: absolute;
+  left: var(--cms-space-3);
+  color: var(--cms-muted);
+}
+.search .input {
   flex: 1;
-  min-height: 38px;
-  padding: 6px 12px;
-  border: 1px solid var(--cms-border-strong);
-  border-radius: var(--cms-radius);
-  background: var(--cms-panel);
-  color: inherit;
-  font: inherit;
+  padding-left: 38px;
 }
 .count,
 .note {
   color: var(--cms-muted);
   font-size: var(--cms-text-sm);
+  white-space: nowrap;
 }
 .note {
   margin: 0;
@@ -128,7 +133,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
+  gap: var(--cms-space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -144,6 +149,7 @@
   border: 2px solid transparent;
   border-radius: var(--cms-radius-lg);
   background: var(--cms-panel);
+  box-shadow: var(--cms-shadow-1);
 }
 .tile.on {
   border-color: var(--cms-accent);
@@ -178,37 +184,42 @@
   padding: 14px;
 }
 .meta {
-  display: grid;
-  padding: 0 2px;
+  display: flex;
+  align-items: center;
+  gap: var(--cms-space-1);
   min-width: 0;
+  min-height: 32px;
+  padding: 0 2px 0 4px;
 }
 .title {
+  flex: 1;
+  min-width: 0;
   font-size: var(--cms-text-sm);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.dims {
-  color: var(--cms-muted);
-  font-size: var(--cms-text-xs);
-}
 .delete {
-  justify-self: start;
-  padding: 2px 4px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--cms-radius-sm);
   background: none;
-  color: var(--cms-danger);
-  font: 600 var(--cms-text-xs) / 1.4 var(--cms-font);
+  color: var(--cms-muted);
   cursor: pointer;
 }
 .delete:hover {
   background: var(--cms-danger-soft);
+  color: var(--cms-danger);
 }
 .none {
   grid-column: 1 / -1;
-  padding: 24px 0;
+  padding: var(--cms-space-5) 0;
   color: var(--cms-muted);
   font-size: var(--cms-text-sm);
   text-align: center;

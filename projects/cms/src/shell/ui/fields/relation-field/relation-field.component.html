@@ -6,12 +6,12 @@
       type="search"
       [value]="query()"
       (input)="query.set($any($event.target).value)"
-      [placeholder]="'Buscar ' + t.def.label.toLowerCase() + '…'"
+      [placeholder]="'Buscar ' + t.def.label.toLowerCase()"
     />
     <span class="count">{{ value().length }} de {{ options().length }}</span>
   </div>
   <ul class="list" role="group" [attr.aria-label]="field().label">
-    @for (option of visible(); track option.id) {
+    @for (option of visible(); track $index) {
       <li>
         <label [class.on]="selected().has(option.id)">
           <input type="checkbox" [checked]="selected().has(option.id)" (change)="toggle(option.id, $any($event.target).checked)" />
@@ -22,9 +22,9 @@
         </label>
       </li>
     } @empty {
-      <li class="none">Nada coincide con "{{ query() }}".</li>
+      <li class="none">Nada coincide con «{{ query() }}».</li>
     }
   </ul>
 } @else {
-  <p class="none">Este sitio no tiene la colección "{{ field().collection }}".</p>
+  <p class="none">Este sitio todavía no tiene esta sección.</p>
 }

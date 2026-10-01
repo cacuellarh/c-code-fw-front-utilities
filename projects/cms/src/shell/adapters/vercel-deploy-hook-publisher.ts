@@ -1,4 +1,5 @@
 import { Publisher } from '../../domain/ports';
+import { PublishNotConfiguredError } from '../../domain/site';
 import { FirestoreContentRepository } from './firestore-content-repository';
 
 /**
@@ -10,7 +11,7 @@ export class VercelDeployHookPublisher implements Publisher {
 
   async publish(siteId: string): Promise<void> {
     const url = await this.repo.getDeployHook(siteId);
-    if (!url) throw new Error('Este sitio no tiene configurado el Deploy Hook de Vercel.');
+    if (!url) throw new PublishNotConfiguredError('Este sitio no tiene configurado el Deploy Hook de Vercel.');
     // Vercel does not send CORS headers; the request still reaches it, the answer is just not readable.
     await fetch(url, { method: 'POST', mode: 'no-cors' });
   }

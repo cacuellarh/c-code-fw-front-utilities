@@ -1,119 +1,118 @@
 @if (state(); as s) {
+  @let l = labels()!;
   @if (s.def.single) {
     <section class="single" [attr.aria-labelledby]="'title-' + s.def.id">
-      <header class="head">
-        <div>
-          <h2 [id]="'title-' + s.def.id">{{ s.def.label }}</h2>
-          @if (s.def.description) {
-            <p class="desc">{{ s.def.description }}</p>
-          }
-          @if (canPickFolders && !s.error) {
-            <button type="button" class="reload" (click)="reloadFromFolder()">Reemplazar desde carpeta…</button>
-            @if (s.def.optional) {
-              <button type="button" class="reload danger" (click)="removeSection()">Quitar esta sección del sitio</button>
-            }
-          }
-          @if (notice()) {
-            <p class="notice" role="status">{{ notice() }}</p>
-          }
-        </div>
-      </header>
       @if (s.error) {
+        <h1 class="page-title" [id]="'title-' + s.def.id">{{ s.def.label }}</h1>
         <p class="alert" role="alert">{{ s.error }}</p>
       } @else if (s.items.length) {
-        <cms-entry-editor [collection]="s" [index]="0" [single]="true" />
+        <cms-entry-editor [collection]="s" [index]="0" [single]="true" [headingId]="'title-' + s.def.id" />
       }
     </section>
   } @else {
-  <section class="list" [attr.aria-labelledby]="'title-' + s.def.id">
-    <header class="head">
-      <div>
-        <h2 [id]="'title-' + s.def.id">{{ s.def.label }}</h2>
-        @if (s.def.description) {
-          <p class="desc">{{ s.def.description }}</p>
+    <section class="list" [attr.aria-labelledby]="'title-' + s.def.id">
+      <header class="head">
+        <h1 [id]="'title-' + s.def.id">{{ s.def.label }}</h1>
+        @if (!s.error) {
+          <button type="button" class="btn primary small" (click)="add()">
+            <cms-icon name="plus" [size]="18" />
+            {{ l.add }}
+          </button>
         }
-        @if (canPickFolders && !s.error) {
-          <button type="button" class="reload" (click)="reloadFromFolder()">Reemplazar desde carpeta…</button>
-            @if (s.def.optional) {
-              <button type="button" class="reload danger" (click)="removeSection()">Quitar esta sección del sitio</button>
-            }
-        }
-        @if (notice()) {
-          <p class="notice" role="status">{{ notice() }}</p>
-        }
-      </div>
-      @if (!s.error) {
-        <button type="button" class="btn primary" (click)="add()">Nuevo {{ s.def.singular }}</button>
-      }
-    </header>
+      </header>
 
-    @if (s.error) {
-      <p class="alert" role="alert">{{ s.error }}</p>
-    } @else {
-      <input
-        class="search"
-        type="search"
-        [value]="query()"
-        (input)="query.set($any($event.target).value)"
-        [placeholder]="'Buscar en ' + s.def.label.toLowerCase() + '…'"
-        [attr.aria-label]="'Buscar en ' + s.def.label"
-      />
-      <ul class="rows">
-        @for (row of rows(); track row.index) {
-          <li>
-            <button
-              type="button"
-              class="row"
-              [class.on]="row.index === selected()"
-              [attr.aria-current]="row.index === selected() || null"
-              (click)="select(row.index)"
-            >
-              @if (s.def.imageKey) {
-                <span class="thumb" [class.icon]="thumbIsIcon()">
-                  @if (thumbs.value()?.get(row.image); as src) {
-                    <img [src]="src" alt="" loading="lazy" />
+      @if (s.error) {
+        <p class="alert" role="alert">{{ s.error }}</p>
+      } @else if (!s.items.length) {
+        <cms-empty-state [icon]="s.def.icon ?? 'layout-list'" [heading]="l.empty" [text]="l.emptyText">
+          <button type="button" class="btn primary" (click)="add()">{{ l.add }}</button>
+        </cms-empty-state>
+      } @else {
+        <div class="search">
+          <cms-icon name="search" [size]="18" />
+          <input
+            class="input"
+            type="search"
+            [value]="query()"
+            (input)="query.set($any($event.target).value)"
+            [placeholder]="'Buscar en ' + s.def.label.toLowerCase()"
+            [attr.aria-label]="'Buscar en ' + s.def.label"
+          />
+        </div>
+        <ul class="rows">
+          @for (row of rows(); track row.index) {
+            <li [class.on]="row.index === selected()">
+              <button
+                type="button"
+                class="row"
+                [attr.aria-current]="row.index === selected() || null"
+                (click)="select(row.index)"
+              >
+                @if (s.def.imageKey) {
+                  <span class="thumb" [class.icon]="thumbIsIcon()">
+                    @if (thumbs.value()?.get(row.image); as src) {
+                      <img [src]="src" alt="" loading="lazy" />
+                    }
+                  </span>
+                }
+                <span class="text">
+                  <span class="title">{{ row.title }}</span>
+                  @if (row.subtitle) {
+                    <span class="sub">{{ row.subtitle }}</span>
                   }
                 </span>
-              }
-              <span class="text">
-                <span class="title">{{ row.title }}</span>
-                @if (row.subtitle) {
-                  <span class="sub">{{ row.subtitle }}</span>
+                @if (issuesByIndex().get(row.index); as n) {
+                  <span class="warn" [title]="n + ' por revisar'">
+                    <cms-icon name="triangle-alert" [size]="16" />
+                    <span class="sr-only">{{ n }} por revisar</span>
+                  </span>
                 }
-              </span>
-              @if (issuesByIndex().get(row.index); as n) {
-                <span class="warn" [title]="n + ' avisos'">{{ n }}</span>
+              </button>
+              @if (!query()) {
+                <span class="order">
+                  <button
+                    type="button"
+                    (click)="move(row.index, -1, $event)"
+                    [disabled]="row.index === 0"
+                    [attr.aria-label]="'Subir ' + row.title"
+                    title="Subir"
+                  >
+                    <cms-icon name="chevron-up" [size]="16" />
+                  </button>
+                  <button
+                    type="button"
+                    (click)="move(row.index, 1, $event)"
+                    [disabled]="row.index === s.items.length - 1"
+                    [attr.aria-label]="'Bajar ' + row.title"
+                    title="Bajar"
+                  >
+                    <cms-icon name="chevron-down" [size]="16" />
+                  </button>
+                </span>
               }
-            </button>
-            @if (!query()) {
-              <span class="order">
-                <button type="button" (click)="move(row.index, -1, $event)" [disabled]="row.index === 0" aria-label="Subir">↑</button>
-                <button
-                  type="button"
-                  (click)="move(row.index, 1, $event)"
-                  [disabled]="row.index === s.items.length - 1"
-                  aria-label="Bajar"
-                >↓</button>
-              </span>
-            }
-          </li>
-        } @empty {
-          <li class="none">{{ query() ? 'Nada coincide con la búsqueda.' : 'Todavía no hay entradas.' }}</li>
-        }
-      </ul>
-    }
-  </section>
+            </li>
+          } @empty {
+            <li class="none">Nada coincide con «{{ query() }}».</li>
+          }
+        </ul>
+      }
+    </section>
 
-  <section class="detail">
-    @if (selected() >= 0) {
-      <cms-entry-editor [collection]="s" [index]="selected()" (removed)="select(-1)" (duplicated)="select($event)" />
-    } @else if (!s.error) {
-      <div class="placeholder">
-        <p>Elige un {{ s.def.singular }} de la lista o crea uno nuevo.</p>
-      </div>
-    }
-  </section>
+    <section class="detail">
+      @if (selected() >= 0) {
+        <button type="button" class="back" (click)="select(-1)">
+          <cms-icon name="arrow-left" [size]="18" />
+          {{ s.def.label }}
+        </button>
+        <cms-entry-editor [collection]="s" [index]="selected()" (removed)="select(-1)" (duplicated)="select($event)" />
+      } @else if (!s.error && s.items.length) {
+        <div class="placeholder">
+          <cms-icon [name]="s.def.icon ?? 'layout-list'" [size]="32" />
+          <p>{{ l.pick }}</p>
+        </div>
+      }
+    </section>
   }
 } @else {
-  <p class="alert">Esta colección no existe en el sitio.</p>
+  <cms-empty-state class="missing" icon="eye-off" heading="Esta sección no existe" text="Elige otra en el menú." />
 }

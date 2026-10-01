@@ -1,11 +1,7 @@
 @if (!kind()) {
-  <div class="tabs" role="tablist" aria-label="Tipo de imagen">
-    <button type="button" role="tab" [attr.aria-selected]="tab() === 'photo'" [class.on]="tab() === 'photo'" (click)="tab.set('photo')">
-      Fotos
-    </button>
-    <button type="button" role="tab" [attr.aria-selected]="tab() === 'icon'" [class.on]="tab() === 'icon'" (click)="tab.set('icon')">
-      Íconos
-    </button>
+  <div class="segmented" role="group" aria-label="Tipo de imagen">
+    <button type="button" [attr.aria-pressed]="tab() === 'photo'" (click)="tab.set('photo')">Fotos</button>
+    <button type="button" [attr.aria-pressed]="tab() === 'icon'" (click)="tab.set('icon')">Íconos</button>
   </div>
 }
 
@@ -17,8 +13,9 @@
   (drop)="onDrop($event)"
 >
   <input type="file" class="file" [accept]="accept" multiple (change)="onFiles($any($event.target).files); $any($event.target).value = ''" />
+  <cms-icon name="cloud-upload" [size]="28" />
   <strong>{{ activeKind() === 'photo' ? 'Subir fotos' : 'Subir íconos' }}</strong>
-  <span>Arrástralas aquí o haz clic para elegirlas. Se convierten a WebP de máximo {{ limits() }} px.</span>
+  <span>Arrastra aquí o haz clic · JPG, PNG o WebP</span>
 </label>
 
 @if (media.uploads().length) {
@@ -29,7 +26,7 @@
         <span class="state">
           @switch (u.state) {
             @case ('waiting') { En espera }
-            @case ('working') { Convirtiendo… }
+            @case ('working') { Preparando… }
             @case ('done') { Lista }
             @case ('error') { {{ u.message }} }
           }
@@ -46,20 +43,29 @@
   <p class="alert" role="alert">{{ error() }}</p>
 }
 
-<div class="bar">
-  <input
-    class="search"
-    type="search"
-    [value]="query()"
-    (input)="query.set($any($event.target).value)"
-    placeholder="Buscar por nombre…"
-    aria-label="Buscar imágenes"
-  />
-  <span class="count">{{ visible().length }} {{ activeKind() === 'photo' ? 'fotos' : 'íconos' }}</span>
-</div>
+@if (media.items().length) {
+  <div class="search">
+    <cms-icon name="search" [size]="18" />
+    <input
+      class="input"
+      type="search"
+      [value]="query()"
+      (input)="query.set($any($event.target).value)"
+      placeholder="Buscar por nombre"
+      aria-label="Buscar imágenes"
+    />
+    <span class="count" aria-live="polite">{{ visible().length }} {{ activeKind() === 'photo' ? 'fotos' : 'íconos' }}</span>
+  </div>
+}
 
 @if (media.loading()) {
   <p class="note">Cargando imágenes…</p>
+} @else if (!visible().length && !query()) {
+  <cms-empty-state
+    [icon]="activeKind() === 'photo' ? 'images' : 'sparkles'"
+    [heading]="activeKind() === 'photo' ? 'Aún no hay fotos' : 'Aún no hay íconos'"
+    text="Súbelas arriba y podrás elegirlas en cada sección."
+  />
 } @else {
   <ul class="grid" [class.icons]="activeKind() === 'icon'">
     @for (item of visible(); track item.id) {
@@ -75,17 +81,16 @@
           <img [src]="media.previewUrl(item)" [alt]="item.name" loading="lazy" />
         </button>
         <div class="meta">
-          <span class="title" [title]="item.name">{{ item.name }}</span>
-          <span class="dims">{{ item.width }}×{{ item.height }} · {{ kb(item.bytes) }}</span>
+          <span class="title" [title]="item.name + ' · ' + item.width + '×' + item.height + ' · ' + kb(item.bytes)">{{ item.name }}</span>
+          @if (mode() === 'manage') {
+            <button type="button" class="delete" (click)="remove(item)" [attr.aria-label]="'Borrar ' + item.name" title="Borrar">
+              <cms-icon name="trash-2" [size]="16" />
+            </button>
+          }
         </div>
-        @if (mode() === 'manage') {
-          <button type="button" class="delete" (click)="remove(item)" [attr.aria-label]="'Borrar ' + item.name">Borrar</button>
-        }
       </li>
     } @empty {
-      <li class="none">
-        {{ query() ? 'Ninguna imagen coincide con la búsqueda.' : 'Todavía no hay imágenes. Sube la primera.' }}
-      </li>
+      <li class="none">Ninguna imagen coincide con «{{ query() }}».</li>
     }
   </ul>
 }

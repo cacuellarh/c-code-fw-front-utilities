@@ -35,7 +35,7 @@ export function promoCollection(options: { file?: string } = {}): CollectionDef 
         key: 'imageAlt',
         label: 'Descripción de la imagen',
         type: 'textarea',
-        rows: 2,
+        rows: 3,
         required: true,
         maxLength: 250,
         placeholder: 'Promoción Amor y Amistad: Plan Chocolate por $149.900',

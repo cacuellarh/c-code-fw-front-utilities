@@ -1,18 +1,24 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
-import { FIREBASE } from './ports.tokens';
+import { ACCESS, FIREBASE } from './ports.tokens';
 
-/** The signed-in user (Google). Firestore rules decide what each user can edit. */
+/**
+ * The signed-in user (Google) and whether they are an admin. Admins see the configuration of
+ * the sites; Firestore rules enforce what each user can change.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private auth = inject(FIREBASE).auth;
+  private access = inject(ACCESS);
   readonly user = signal<User | null>(null);
-  /** Resolves once Firebase knows whether there is a session from before. */
+  readonly isAdmin = signal(false);
+  /** Resolves once Firebase knows whether there is a session from before, and its role. */
   readonly ready: Promise<void>;
 
   constructor() {
     this.ready = new Promise((resolve) =>
-      onAuthStateChanged(this.auth, (user) => {
+      onAuthStateChanged(this.auth, async (user) => {
+        this.isAdmin.set(user ? await this.access.isAdmin() : false);
         this.user.set(user);
         resolve();
       })
@@ -21,6 +27,7 @@ export class AuthService {
 
   async signIn(): Promise<void> {
     await signInWithPopup(this.auth, new GoogleAuthProvider());
+    this.isAdmin.set(await this.access.isAdmin());
   }
 
   signOut(): Promise<void> {

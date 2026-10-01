@@ -1,0 +1,22 @@
+<dialog
+  #dialog
+  class="dialog"
+  aria-labelledby="dialog-title"
+  [attr.aria-describedby]="dialogs.current()?.body ? 'dialog-body' : null"
+  (cancel)="$event.preventDefault(); dialogs.close(false)"
+>
+  @if (dialogs.current(); as d) {
+    <h2 id="dialog-title">{{ d.title }}</h2>
+    @if (d.body) {
+      <p id="dialog-body" class="body">{{ d.body }}</p>
+    }
+    <div class="actions">
+      @if (d.cancel !== null) {
+        <button type="button" class="btn ghost cancel" (click)="dialogs.close(false)">{{ d.cancel ?? 'Cancelar' }}</button>
+      }
+      <button type="button" class="btn main" [class.primary]="d.tone !== 'danger'" [class.destructive]="d.tone === 'danger'" (click)="dialogs.close(true)">
+        {{ d.confirm ?? 'Aceptar' }}
+      </button>
+    </div>
+  }
+</dialog>

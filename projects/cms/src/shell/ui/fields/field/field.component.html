@@ -1,10 +1,15 @@
 @let f = field();
-<label class="label" [for]="id">
-  {{ f.label }}
-  @if (f.required) {
-    <span class="required" aria-hidden="true">*</span>
-  }
-</label>
+@let bad = issues().length > 0;
+@if (f.type === 'boolean') {
+  <span class="label" [id]="id + '-label'">{{ f.label }}</span>
+} @else {
+  <label class="label" [for]="id">
+    {{ f.label }}
+    @if (f.required) {
+      <span class="required" aria-hidden="true">*</span>
+    }
+  </label>
+}
 
 @switch (f.type) {
   @case ('text') {
@@ -15,7 +20,9 @@
       [value]="text()"
       [placeholder]="f.placeholder ?? ''"
       [attr.maxlength]="f.maxLength ?? null"
-      [attr.aria-invalid]="empty() || null"
+      [attr.aria-required]="f.required || null"
+      [attr.aria-invalid]="bad || null"
+      [attr.aria-describedby]="describedBy()"
       [class.upper]="f.uppercase"
       (input)="onText($any($event.target).value)"
     />
@@ -26,16 +33,18 @@
       [id]="id"
       [rows]="f.rows ?? 4"
       [value]="text()"
+      [placeholder]="f.placeholder ?? ''"
       [attr.maxlength]="f.maxLength ?? null"
-      [attr.aria-invalid]="empty() || null"
+      [attr.aria-required]="f.required || null"
+      [attr.aria-invalid]="bad || null"
+      [attr.aria-describedby]="describedBy()"
       (input)="onText($any($event.target).value)"
     ></textarea>
-    <span class="count">{{ text().length }} caracteres</span>
   }
   @case ('number') {
-    <div class="with-hint">
+    <div class="inline">
       <input
-        class="control"
+        class="control number"
         [id]="id"
         type="number"
         inputmode="numeric"
@@ -43,10 +52,13 @@
         [attr.min]="f.min ?? null"
         [attr.max]="f.max ?? null"
         [attr.step]="f.step ?? 1"
+        [attr.aria-required]="f.required || null"
+        [attr.aria-invalid]="bad || null"
+        [attr.aria-describedby]="describedBy()"
         (input)="onNumber($any($event.target).value)"
       />
       @if (price()) {
-        <span class="hint">{{ price() }}</span>
+        <span class="price" aria-hidden="true">{{ price() }}</span>
       }
       @if (f.unit) {
         <span class="unit">{{ f.unit }}</span>
@@ -55,21 +67,45 @@
   }
   @case ('boolean') {
     <label class="switch">
-      <input type="checkbox" role="switch" [id]="id" [checked]="!!value()" (change)="value.set($any($event.target).checked)" />
+      <input
+        type="checkbox"
+        role="switch"
+        [id]="id"
+        [checked]="!!value()"
+        [attr.aria-labelledby]="id + '-label'"
+        [attr.aria-describedby]="describedBy()"
+        (change)="value.set($any($event.target).checked)"
+      />
       <span class="track" aria-hidden="true"></span>
-      <span>{{ value() ? (f.onLabel ?? 'Sí') : 'Apagado' }}</span>
+      <span class="state" aria-hidden="true">{{ value() ? (f.onLabel ?? 'Encendido') : (f.offLabel ?? 'Apagado') }}</span>
     </label>
   }
   @case ('date') {
-    <div class="with-hint">
-      <input class="control date" [id]="id" type="date" [value]="text()" (input)="value.set($any($event.target).value)" />
+    <div class="inline">
+      <input
+        class="control date"
+        [id]="id"
+        type="date"
+        [value]="text()"
+        [attr.aria-invalid]="bad || null"
+        [attr.aria-describedby]="describedBy()"
+        (input)="value.set($any($event.target).value)"
+      />
       @if (text()) {
         <button type="button" class="clear" (click)="value.set('')">Quitar fecha</button>
+      } @else if (f.emptyLabel) {
+        <span class="unit">{{ f.emptyLabel }}</span>
       }
     </div>
   }
   @case ('select') {
-    <select class="control" [id]="id" (change)="onSelect($any($event.target).value)">
+    <select
+      class="control"
+      [id]="id"
+      [attr.aria-invalid]="bad || null"
+      [attr.aria-describedby]="describedBy()"
+      (change)="onSelect($any($event.target).value)"
+    >
       @if (selectedIndex() === -1) {
         <option value="" selected disabled>Elegir…</option>
       }
@@ -79,13 +115,32 @@
     </select>
   }
   @case ('image') {
-    <cms-image-field [inputId]="id" [field]="f" [value]="text()" (picked)="imagePicked.emit($event)" />
+    <cms-image-field [inputId]="id" [field]="f" [value]="text()" [invalid]="bad" (picked)="imagePicked.emit($event)" />
   }
   @case ('relation') {
     <cms-relation-field [inputId]="id" [field]="f" [value]="asIds(value())" (valueChange)="value.set($event)" />
   }
 }
 
-@if (f.help) {
-  <p class="help">{{ f.help }}</p>
+@if (bad || helpText() || counter()) {
+  <div class="foot">
+    <div class="notes">
+      @if (bad) {
+        <div class="notes" [id]="id + '-issue'">
+          @for (message of issues(); track $index) {
+            <p class="issue">
+              <cms-icon name="triangle-alert" [size]="14" />
+              {{ message }}
+            </p>
+          }
+        </div>
+      }
+      @if (helpText(); as help) {
+        <p class="help" [class.changed]="changed() && f.changedHelp" [id]="id + '-help'">{{ help }}</p>
+      }
+    </div>
+    @if (counter(); as c) {
+      <span class="count" [class.near]="c.near" aria-hidden="true">{{ c.text }}</span>
+    }
+  </div>
 }

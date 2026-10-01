@@ -1,0 +1,11 @@
+<ol class="list" aria-live="polite" aria-label="Avisos">
+  @for (t of toast.toasts(); track t.id) {
+    <li class="toast" [class]="t.tone">
+      <cms-icon [name]="t.tone === 'error' ? 'triangle-alert' : t.tone === 'ok' ? 'circle-check' : 'info'" />
+      <span class="text">{{ t.message }}</span>
+      <button type="button" class="close" (click)="toast.dismiss(t.id)" aria-label="Cerrar aviso">
+        <cms-icon name="x" [size]="16" />
+      </button>
+    </li>
+  }
+</ol>

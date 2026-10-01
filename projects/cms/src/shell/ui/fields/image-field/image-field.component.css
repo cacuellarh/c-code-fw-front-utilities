@@ -13,7 +13,7 @@
   width: 144px;
   aspect-ratio: 4 / 3;
   padding: 0;
-  border: 1px solid var(--cms-border);
+  border: 1px dashed var(--cms-border-strong);
   border-radius: var(--cms-radius);
   background: var(--cms-subtle);
   overflow: hidden;
@@ -23,7 +23,7 @@
   text-align: center;
   cursor: pointer;
 }
-.thumb:hover {
+.thumb:hover:not(.invalid) {
   border-color: var(--cms-accent);
 }
 .thumb.icon {
@@ -41,8 +41,17 @@
 }
 .missing {
   padding: 4px;
-  color: var(--cms-danger);
+  color: var(--cms-muted);
   font-weight: 600;
+}
+.thumb.invalid {
+  border-color: var(--cms-warning);
+  box-shadow: 0 0 0 1px var(--cms-warning);
+}
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
 }
 .side {
   display: grid;

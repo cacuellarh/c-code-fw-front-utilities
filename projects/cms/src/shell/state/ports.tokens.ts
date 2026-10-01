@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import { ImageEncoder, MediaStore, PublicSite, Publisher } from '../../domain/ports';
+import { Access, ImageEncoder, MediaStore, PublicSite, Publisher } from '../../domain/ports';
 import { FirebaseServices } from '../adapters/firebase';
 import { FirestoreContentRepository } from '../adapters/firestore-content-repository';
 
@@ -10,3 +10,5 @@ export const PUBLISHER = new InjectionToken<Publisher>('PUBLISHER');
 export const IMAGE_ENCODER = new InjectionToken<ImageEncoder>('IMAGE_ENCODER');
 export const MEDIA_STORE = new InjectionToken<MediaStore>('MEDIA_STORE');
 export const PUBLIC_SITE = new InjectionToken<PublicSite>('PUBLIC_SITE');
+export const ACCESS = new InjectionToken<Access>('ACCESS');
+

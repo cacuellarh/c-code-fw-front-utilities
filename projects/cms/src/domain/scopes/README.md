@@ -47,10 +47,12 @@ A site joins the scope through its `cms.json`, which the CMS creates the first t
 ## What a scope can declare
 
 - **Field types:**
-  - `text`, `textarea`, `number` (with `format: 'price'`), `select`.
+  - `text`, `textarea`, `number` (with `format: 'price'` or a `unit`), `select`, `boolean`, `date`.
   - `relation`: ids of another collection.
   - `image`: chosen from the site's image library (`kind`: `photo` or `icon`; `thumbKey` also stores the thumbnail, for galleries). Everything is converted to WebP when uploaded.
-- **`validate(item, all, ctx)`:** warnings shown in the list and the form. They don't block saving.
+- **`validate(item, all, ctx)`:** warnings ("por revisar") shown in the list and the form. They don't block saving. Return `{ field, message }` to show one next to its field, or a plain string for the whole entry.
+- **Names:** `label` (menu), `singular`, `feminine` ("Nueva foto", "Elige una foto"), `plural` when it is not regular, and `icon` (a Lucide name the shell draws, such as `images`). `description` only shows in Configuración.
+- **Field texts:** `help` under the field; `changedHelp` instead of it when the value differs from the saved one ("the address will change"); `emptyLabel` for an empty date ("Desde hoy"); `onLabel`/`offLabel` for switches. Keep them short: the client reads them on every visit.
 - **`generators`:** files rebuilt from the content every time the site is saved, for example routes or a sitemap. Each one receives the file's current text, so it can keep what it doesn't own.
 - **`preview`:** the key of a preview component in the shell (`shell/ui/previews/previews.ts`).
 - **`cms.json` → `options`:** per-site settings that only the scope reads, such as `planRoute`.

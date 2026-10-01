@@ -27,7 +27,7 @@ export class CanvasImageEncoder implements ImageEncoder {
     const type = options.format === 'webp' ? 'image/webp' : 'image/jpeg';
     const blob = await canvas.convertToBlob({ type, quality: options.quality });
     // Browsers without a WebP encoder silently return PNG.
-    if (blob.type !== type) throw new Error(`Este navegador no puede generar ${options.format.toUpperCase()}. Usa Chrome o Edge.`);
+    if (blob.type !== type) throw new Error('Tu navegador no puede procesar esta imagen. Usa Chrome o Edge.');
     return { data: new Uint8Array(await blob.arrayBuffer()), width, height };
   }
 }

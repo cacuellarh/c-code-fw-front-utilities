@@ -28,6 +28,8 @@ export interface EntryIssue {
   message: string;
   /** Key of the field the problem is about, to show it next to that field. */
   field?: string;
+  /** Kind of problem the CMS can offer a fix for. */
+  code?: 'duplicate-id';
 }
 
 export function findCollection(content: SiteContent, id: string): CollectionData | undefined {
@@ -62,8 +64,8 @@ export function validateContent(content: SiteContent): EntryIssue[] {
   for (const collection of content.collections) {
     if (collection.error) continue;
     collection.items.forEach((item, index) => {
-      const add = (message: string, field?: string) =>
-        issues.push({ collection: collection.def.id, index, title: titleOf(collection, item), message, ...(field ? { field } : {}) });
+      const add = (message: string, field?: string, code?: EntryIssue['code']) =>
+        issues.push({ collection: collection.def.id, index, title: titleOf(collection, item), message, ...(field ? { field } : {}), ...(code ? { code } : {}) });
       for (const field of collection.def.fields) {
         const value = item[field.key];
         if (field.required && (value === '' || value === null || value === undefined)) add(`Falta «${field.label}».`, field.key);
@@ -75,6 +77,11 @@ export function validateContent(content: SiteContent): EntryIssue[] {
           const missing = asArray(value).filter((id) => !ids.has(id)).length;
           if (missing) add(`${missing === 1 ? 'Uno ya no existe' : `${missing} ya no existen`}: quítalos o vuelve a elegirlos.`, field.key);
         }
+      }
+      const { idKey } = collection.def;
+      if (idKey) {
+        const twin = collection.items.find((other, i) => i !== index && other[idKey] === item[idKey]);
+        if (twin) add(`Tiene el mismo id (${item[idKey]}) que «${titleOf(collection, twin)}»: lo que lo incluya puede mostrar el equivocado.`, undefined, 'duplicate-id');
       }
       for (const problem of collection.def.validate?.(item, collection.items, ctx) ?? []) {
         if (typeof problem === 'string') add(problem);
@@ -183,6 +190,17 @@ function require(content: SiteContent, id: string): CollectionData {
   const collection = findCollection(content, id);
   if (!collection) throw new Error(`Colección desconocida: ${id}`);
   return collection;
+}
+
+/**
+ * Gives an entry the next free id (to fix two entries that share one). Whatever pointed to the
+ * old id keeps pointing to the other entry; the person then reviews which should include this one.
+ */
+export function giveNewId(content: SiteContent, id: string, index: number): SiteContent {
+  const collection = require(content, id);
+  const { idKey } = collection.def;
+  if (!idKey) return content;
+  return updateItem(content, id, index, { ...collection.items[index], [idKey]: nextId(collection.items, idKey) });
 }
 
 function nextId(items: Entry[], key: string): number {

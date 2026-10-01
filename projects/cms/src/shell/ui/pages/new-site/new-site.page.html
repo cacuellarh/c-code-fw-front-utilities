@@ -1,0 +1,69 @@
+<header class="bar">
+  <cms-logo />
+</header>
+
+<main class="page">
+  <a class="back" routerLink="/">
+    <cms-icon name="arrow-left" [size]="18" />
+    Sitios
+  </a>
+  <h1>Nuevo sitio</h1>
+
+  @if (error()) {
+    <p class="alert" role="alert">{{ error() }}</p>
+  }
+
+  @if (pending(); as s) {
+    <section class="panel" aria-labelledby="found-title">
+      <h2 id="found-title">{{ s.manifest.name }}</h2>
+      <p class="note">
+        <span class="pill">{{ scopeLabel(s.manifest.scope) }}</span>
+        Encontramos {{ found(s) }}.
+      </p>
+      <div class="form">
+        <label>
+          <span>Nombre</span>
+          <input class="input" type="text" [value]="s.manifest.name" (input)="update({ name: $any($event.target).value })" />
+        </label>
+        <label>
+          <span>Id del sitio</span>
+          <input class="input mono-input" type="text" [value]="s.id" spellcheck="false" (input)="update({ id: $any($event.target).value })" />
+          <small>No se puede cambiar después.</small>
+        </label>
+        <label>
+          <span>Dirección pública</span>
+          <input
+            class="input"
+            type="url"
+            [value]="s.manifest.siteUrl ?? ''"
+            placeholder="https://misitio.com"
+            (input)="update({ siteUrl: $any($event.target).value })"
+          />
+        </label>
+      </div>
+      <div class="row">
+        <button type="button" class="btn primary" (click)="create()" [disabled]="busy() || !s.id.trim() || !s.manifest.name.trim()">
+          {{ busy() ? 'Creando…' : 'Crear sitio' }}
+        </button>
+        <button type="button" class="btn ghost" (click)="pending.set(null)">Elegir otra carpeta</button>
+      </div>
+    </section>
+  } @else {
+    <section class="panel pick">
+      <p>Crea un sitio a partir de la carpeta de su proyecto.</p>
+      <button
+        type="button"
+        class="btn primary"
+        (click)="pickFolder()"
+        [disabled]="!canPick"
+        [title]="canPick ? '' : 'Elegir carpetas solo funciona en Chrome o Edge'"
+      >
+        <cms-icon name="folder-open" [size]="18" />
+        Elegir carpeta del proyecto
+      </button>
+      @if (!canPick) {
+        <p class="note">Abre el CMS en Chrome o Edge para elegir carpetas.</p>
+      }
+    </section>
+  }
+</main>

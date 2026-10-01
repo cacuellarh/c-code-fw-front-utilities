@@ -2,16 +2,18 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, numberAttr
 import { Router } from '@angular/router';
 import { slugify } from '@c-code/c-code-fw/ui';
 import { titleOf } from '../../../../domain/content';
-import { canPickFolders } from '../../../adapters/fs-site-files';
+import { emptyText, emptyTitle, newLabel, pickPrompt } from '../../../../domain/labels';
 import { EditorService } from '../../../state/editor.service';
 import { MediaService } from '../../../state/media.service';
+import { EmptyStateComponent } from '../../empty-state/empty-state.component';
 import { EntryEditorComponent } from '../../entry-editor/entry-editor.component';
+import { IconComponent } from '../../icon/icon.component';
 
-/** One collection of the site: the list of entries and the editor of the selected one (`?i=`). */
+/** One section of the site: the list of entries and the editor of the selected one (`?i=`). */
 @Component({
   selector: 'cms-collection-page',
-  host: { '[class.is-single]': 'state()?.def?.single' },
-  imports: [EntryEditorComponent],
+  host: { '[class.is-single]': 'state()?.def?.single', '[class.has-selection]': 'selected() >= 0' },
+  imports: [EntryEditorComponent, IconComponent, EmptyStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './collection.page.html',
   styleUrl: './collection.page.css',
@@ -25,9 +27,11 @@ export class CollectionPage {
   readonly i = input(-1, { transform: (v: unknown) => (v === undefined || v === '' ? -1 : numberAttribute(v, -1)) });
 
   protected readonly query = signal('');
-  protected readonly canPickFolders = canPickFolders();
-  protected readonly notice = signal('');
   protected readonly state = computed(() => this.editor.collection(this.collection()));
+  protected readonly labels = computed(() => {
+    const def = this.state()?.def;
+    return def ? { add: newLabel(def), empty: emptyTitle(def), emptyText: emptyText(def), pick: pickPrompt(def) } : null;
+  });
   protected readonly selected = computed(() => {
     const items = this.state()?.items ?? [];
     return this.i() >= 0 && this.i() < items.length ? this.i() : -1;
@@ -65,50 +69,6 @@ export class CollectionPage {
       return new Map(request.map((path, i) => [path, urls[i]]));
     },
   });
-
-  /** Loads this section from a site folder as unsaved changes, to fix a wrong import. */
-  protected async reloadFromFolder(): Promise<void> {
-    const state = this.state();
-    if (!state) return;
-    let handle: FileSystemDirectoryHandle;
-    try {
-      handle = await window.showDirectoryPicker({ id: 'cms-site', mode: 'read' });
-    } catch {
-      return; // The user closed the picker.
-    }
-    this.notice.set('');
-    try {
-      const folder = await this.editor.readFolder(handle);
-      const warning = this.editor.folderWarning(folder);
-      if (warning && !confirm(`${warning}\n\n¿Usar esta carpeta de todas formas?`)) return;
-      const { before, after } = this.editor.replaceFromFolder(state.def.id, folder);
-      this.select(-1);
-      this.notice.set(
-        `Cargado de «${handle.name}»: ${after} en lugar de ${before}. Todavía no está guardado: ` +
-          'revísalo y pulsa Guardar, o Descartar para volver atrás.'
-      );
-    } catch (e) {
-      this.notice.set((e as Error).message);
-    }
-  }
-
-  /** Removes this optional section from the site, after confirming. */
-  protected async removeSection(): Promise<void> {
-    const state = this.state();
-    if (!state) return;
-    const count = state.def.single ? 'su contenido' : state.items.length + ' ' + (state.items.length === 1 ? 'elemento' : 'elementos');
-    const question =
-      '¿Quitar «' + state.def.label + '» de este sitio? Se borra ' + count + ' (queda una copia en el historial) ' +
-      'y el CMS deja de ofrecer esta sección. Si el sitio la muestra, quedará vacía en la próxima publicación.';
-    if (!confirm(question)) return;
-    try {
-      await this.editor.removeSection(state.def);
-      const first = this.editor.collections()[0];
-      await this.router.navigate(first ? ['/sitio', this.editor.site()?.id, first.def.id] : ['/']);
-    } catch (e) {
-      this.notice.set((e as Error).message);
-    }
-  }
 
   protected select(index: number): void {
     this.router.navigate([], { queryParams: { i: index >= 0 ? index : null }, queryParamsHandling: 'merge' });

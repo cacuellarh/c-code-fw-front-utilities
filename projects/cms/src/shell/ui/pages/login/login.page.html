@@ -1,7 +1,7 @@
 <main class="box">
-  <p class="eyebrow">C-Code CMS</p>
-  <h1>Entrar</h1>
-  <p class="lead">Administra el contenido de los sitios de tus clientes.</p>
+  <cms-logo />
+  <h1>Entra a tu sitio</h1>
+  <p class="lead">Edita los planes, fotos y promociones de tu sitio web.</p>
   <button type="button" class="btn primary" (click)="signIn()" [disabled]="busy()">
     {{ busy() ? 'Abriendo Google…' : 'Entrar con Google' }}
   </button>

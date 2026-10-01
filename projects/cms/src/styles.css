@@ -1,40 +1,71 @@
 /*
- * CMS interface. Its own tokens (--cms-*) are kept apart from the site's roles (--cc-*),
+ * CMS interface ("mesa de trabajo"): cool, neutral greys so the preview of the client's site
+ * is what carries color. Indigo for actions, a coral signature used sparingly (logo, the
+ * "sin publicar" dot). Its tokens (--cms-*) are kept apart from the site's roles (--cc-*),
  * which only apply inside the previews (.site-theme) with the colors of the open site.
  */
 :root {
-  --cms-bg: #f6f5f2;
+  --cms-bg: #f5f6f8;
   --cms-panel: #ffffff;
-  --cms-subtle: #efede8;
-  --cms-text: #1f1d1a;
-  --cms-muted: #6b655e;
-  --cms-border: #e4e0d9;
-  --cms-border-strong: #c9c3b9;
-  --cms-accent: #2f5d50;
-  --cms-accent-strong: #1f4238;
-  --cms-accent-soft: #e6efeb;
+  --cms-subtle: #edeff3;
+  --cms-text: #171b26;
+  --cms-muted: #5b6275;
+  --cms-border: #e1e4ea;
+  /* Inputs and controls: at least 3:1 against white (WCAG 1.4.11). */
+  --cms-border-strong: #8a91a3;
+  --cms-accent: #3b4cca;
+  --cms-accent-strong: #2a379b;
+  --cms-accent-soft: #eceefc;
   --cms-on-accent: #ffffff;
-  --cms-inverse: #1f1d1a;
-  --cms-on-inverse: #f6f5f2;
-  --cms-on-inverse-ok: #9be3b8;
+  --cms-inverse: #171b26;
+  --cms-on-inverse: #f5f6f8;
+  --cms-on-inverse-ok: #7ee2a8;
   --cms-on-inverse-bad: #ffb4a8;
   --cms-on-inverse-warn: #fcd68a;
-  --cms-danger: #b42318;
-  --cms-danger-soft: #fdecea;
-  --cms-warning: #93370d;
-  --cms-warning-soft: #fef4e6;
-  --cms-focus: #2f5d50;
+  --cms-on-inverse-focus: #a5b0ff;
+  --cms-danger: #c0262d;
+  --cms-danger-strong: #9b1c22;
+  --cms-danger-soft: #fdecec;
+  --cms-warning: #8a4b00;
+  --cms-warning-soft: #fff4e0;
+  --cms-success: #157f4f;
+  --cms-success-soft: #e7f6ee;
+  --cms-focus: #3b4cca;
+  /* Coral signature: logo and dots. Never for small text (3.6:1); use --cms-brand-text. */
+  --cms-brand: #e8553d;
+  --cms-brand-text: #b8381f;
 
-  --cms-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --cms-font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --cms-font: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --cms-font-display: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+  --cms-font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
   --cms-text-xs: 0.75rem;
   --cms-text-sm: 0.875rem;
+  --cms-text-base: 0.9375rem;
   --cms-text-md: 1rem;
   --cms-text-lg: 1.125rem;
   --cms-text-xl: 1.375rem;
   --cms-text-2xl: 1.875rem;
-  --cms-radius: 8px;
-  --cms-radius-lg: 12px;
+
+  --cms-radius-sm: 6px;
+  --cms-radius: 10px;
+  --cms-radius-lg: 16px;
+  --cms-shadow-1: 0 1px 2px rgb(23 27 38 / 0.06);
+  --cms-shadow-2: 0 4px 16px rgb(23 27 38 / 0.08);
+  --cms-shadow-3: 0 16px 40px rgb(23 27 38 / 0.18);
+
+  --cms-space-1: 4px;
+  --cms-space-2: 8px;
+  --cms-space-3: 12px;
+  --cms-space-4: 16px;
+  --cms-space-5: 24px;
+  --cms-space-6: 32px;
+  --cms-space-7: 48px;
+  --cms-space-8: 64px;
+
+  --cms-sidebar-w: 248px;
+  --cms-topbar-h: 64px;
+  /* Comfortable controls for clients. */
+  --cms-control-h: 44px;
 }
 
 *,
@@ -52,6 +83,14 @@ html {
 body {
   margin: 0;
   background: var(--cms-bg);
+  font-size: var(--cms-text-base);
+}
+h1,
+h2,
+h3 {
+  font-family: var(--cms-font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 :focus-visible {
   outline: 2px solid var(--cms-focus);
@@ -61,23 +100,39 @@ code {
   font-family: var(--cms-font-mono);
   font-size: 0.9em;
 }
+.mono {
+  font-family: var(--cms-font-mono);
+  font-size: var(--cms-text-xs);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 .btn {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 16px;
+  gap: var(--cms-space-2);
+  min-height: var(--cms-control-h);
+  padding: 0 var(--cms-space-4);
   border: 1px solid var(--cms-border-strong);
   border-radius: var(--cms-radius);
   background: var(--cms-panel);
   color: var(--cms-text);
   font: 600 var(--cms-text-sm) / 1 var(--cms-font);
+  text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
 .btn:hover:not(:disabled) {
   background: var(--cms-subtle);
@@ -96,6 +151,10 @@ code {
   background: var(--cms-accent-strong);
 }
 .btn.ghost {
+  border-color: transparent;
+  background: transparent;
+}
+.btn.outline {
   background: transparent;
 }
 .btn.danger {
@@ -106,10 +165,70 @@ code {
 .btn.danger:hover:not(:disabled) {
   background: var(--cms-danger-soft);
 }
+.btn.destructive {
+  border-color: var(--cms-danger);
+  background: var(--cms-danger);
+  color: #ffffff;
+}
+.btn.destructive:hover:not(:disabled) {
+  border-color: var(--cms-danger-strong);
+  background: var(--cms-danger-strong);
+}
+.btn.small {
+  min-height: 36px;
+  padding: 0 var(--cms-space-3);
+}
+
+/* Text inputs share one look. */
+.input {
+  width: 100%;
+  min-height: var(--cms-control-h);
+  padding: var(--cms-space-2) var(--cms-space-3);
+  border: 1px solid var(--cms-border-strong);
+  border-radius: var(--cms-radius-sm);
+  background: var(--cms-panel);
+  color: inherit;
+  font: inherit;
+}
+.input:hover {
+  border-color: var(--cms-muted);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 var(--cms-space-2);
+  border-radius: var(--cms-radius-sm);
+  background: var(--cms-subtle);
+  color: var(--cms-muted);
+  font: 600 var(--cms-text-xs) / 1 var(--cms-font);
+  white-space: nowrap;
+}
+.pill.success {
+  background: var(--cms-success-soft);
+  color: var(--cms-success);
+}
+.pill.warning {
+  background: var(--cms-warning-soft);
+  color: var(--cms-warning);
+}
+.pill.warning::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cms-brand);
+}
+.pill.danger {
+  background: var(--cms-danger-soft);
+  color: var(--cms-danger);
+}
 
 .alert {
-  margin: 16px 0;
-  padding: 12px 16px;
+  margin: var(--cms-space-4) 0;
+  padding: var(--cms-space-3) var(--cms-space-4);
   border-radius: var(--cms-radius);
   background: var(--cms-danger-soft);
   color: var(--cms-danger);
@@ -117,7 +236,10 @@ code {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     transition: none !important;
+    animation: none !important;
   }
 }

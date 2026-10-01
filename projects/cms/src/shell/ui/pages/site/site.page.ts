@@ -1,43 +1,54 @@
 import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, OnInit, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { isDirty } from '../../../../domain/content';
-import { CollectionDef } from '../../../../domain/schema';
-import { ConflictError } from '../../../../domain/site';
+import { ConflictError, PublishNotConfiguredError } from '../../../../domain/site';
+import { AuthService } from '../../../state/auth.service';
+import { DialogService } from '../../../state/dialog.service';
 import { EditorService } from '../../../state/editor.service';
+import { SitesService } from '../../../state/sites.service';
+import { ToastService } from '../../../state/toast.service';
+import { IconComponent } from '../../icon/icon.component';
+import { LogoComponent } from '../../logo/logo.component';
+import { errorMessage, fullDate, relativeDate } from '../../messages';
 
-/** Layout of an open site: collections menu, publishing, unsaved changes and the save bar. */
+/** Layout of an open site: sections menu, the top bar with its state and Publicar, and the save bar. */
 @Component({
   selector: 'cms-site-page',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, IconComponent, LogoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.menu-open]': 'menuOpen()' },
   templateUrl: './site.page.html',
   styleUrl: './site.page.css',
 })
 export class SitePage implements OnInit {
   protected editor = inject(EditorService);
+  protected auth = inject(AuthService);
+  private sites = inject(SitesService);
+  private dialogs = inject(DialogService);
+  private toast = inject(ToastService);
   private router = inject(Router);
 
   readonly siteId = input.required<string>();
 
   protected readonly error = signal('');
-  protected readonly saved = signal<string[] | null>(null);
-  protected readonly published = signal(false);
-  protected readonly settingsOpen = signal(false);
-  protected readonly hook = signal('');
-  protected readonly hookSaved = signal(false);
-  protected readonly name = signal('');
-  protected readonly nameSaved = signal(false);
-  protected readonly missing = signal<CollectionDef[]>([]);
-  protected readonly sectionBusy = signal(false);
-  /** Missing section whose options (import / create) are open in the menu. */
-  protected readonly offer = signal<string | null>(null);
+  protected readonly conflict = signal(false);
+  /** Mobile: the sections menu is open over the content. */
+  protected readonly menuOpen = signal(false);
   protected readonly isDirty = isDirty;
   protected readonly ready = computed(() => this.editor.site()?.id === this.siteId());
+  /** Clients with one site have nowhere to go back to (the list would bring them here again). */
+  protected readonly canGoBack = computed(() => this.auth.isAdmin() || this.sites.sites().length > 1);
   protected readonly issueCount = computed(() => this.editor.issues().length);
   protected readonly issuesBy = computed(() => {
     const counts = new Map<string, number>();
     for (const issue of this.editor.issues()) counts.set(issue.collection, (counts.get(issue.collection) ?? 0) + 1);
     return counts;
+  });
+  protected readonly status = computed(() => {
+    const site = this.editor.site();
+    if (this.editor.unpublished()) return { label: 'Sin publicar', tone: 'warning', title: '' };
+    if (site?.publishedAt) return { label: `Publicado ${relativeDate(site.publishedAt)}`, tone: 'success', title: fullDate(site.publishedAt) };
+    return { label: 'Aún sin publicar', tone: '', title: '' };
   });
 
   async ngOnInit(): Promise<void> {
@@ -45,146 +56,131 @@ export class SitePage implements OnInit {
       try {
         await this.editor.open(this.siteId());
       } catch (e) {
-        this.error.set(messageOf(e));
+        this.error.set(errorMessage(e, this.auth.isAdmin()));
         return;
       }
     }
-    this.editor.missingSections().then((defs) => this.missing.set(defs), () => undefined);
     const first = this.editor.collections()[0];
     if (first && !this.router.url.split('?')[0].split('/')[3]) {
       await this.router.navigate(['/sitio', this.siteId(), first.def.id], { replaceUrl: true });
     }
   }
 
-  protected async save(): Promise<void> {
+  /** Saves; returns false (and shows why) if it could not. */
+  protected async save(): Promise<boolean> {
     this.error.set('');
-    this.saved.set(null);
-    this.published.set(false);
+    this.conflict.set(false);
     try {
-      this.saved.set(await this.editor.save());
+      const saved = await this.editor.save();
+      if (saved.length) this.toast.show('Guardado. Publica cuando quieras que se vea en tu sitio.');
+      return true;
     } catch (e) {
-      this.error.set(
-        e instanceof ConflictError
-          ? `${e.message}. Copia tus cambios, recarga la página y vuelve a aplicarlos.`
-          : `No se pudo guardar: ${messageOf(e)}`
-      );
+      this.conflict.set(e instanceof ConflictError);
+      this.error.set(e instanceof ConflictError ? e.message : `No se pudo guardar. ${errorMessage(e, this.auth.isAdmin())}`);
+      return false;
     }
   }
 
+  /** Publishes what is saved; with unsaved changes it saves them first. */
   protected async publish(): Promise<void> {
+    if (this.editor.dirty().length && !(await this.save())) return;
     this.error.set('');
-    this.saved.set(null);
-    if (this.editor.dirty().length) {
-      this.error.set('Guarda los cambios antes de publicar: se publica lo que está guardado.');
-      return;
-    }
     try {
       const warning = await this.editor.publishWarning();
-      if (warning && !confirm(`${warning}\n\n¿Publicar de todas formas?`)) return;
+      if (warning) {
+        if (!this.auth.isAdmin()) {
+          await this.dialogs.alert({
+            title: 'Tu sitio necesita una actualización',
+            body: 'Antes de publicar imágenes nuevas hay que actualizar tu sitio. Escríbenos y lo resolvemos.',
+          });
+          return;
+        }
+        const go = await this.dialogs.confirm({ title: '¿Publicar de todas formas?', body: warning, confirm: 'Publicar', tone: 'danger' });
+        if (!go) return;
+      }
       await this.editor.publish();
-      this.published.set(true);
+      this.toast.show('Publicando… tu sitio se actualiza en 1–2 minutos.', 'info');
     } catch (e) {
-      this.error.set(`No se pudo publicar: ${messageOf(e)}`);
-      if (/Deploy Hook/.test(messageOf(e))) await this.toggleSettings(true);
+      if (e instanceof PublishNotConfiguredError && this.auth.isAdmin()) {
+        const go = await this.dialogs.confirm({
+          title: 'Falta el enlace de publicación',
+          body: 'Guarda el Deploy Hook de Vercel en Configuración › Publicación.',
+          confirm: 'Ir a Configuración',
+        });
+        if (go) await this.router.navigate(['/sitio', this.siteId(), 'configuracion']);
+        return;
+      }
+      if (e instanceof PublishNotConfiguredError) {
+        await this.dialogs.alert({ title: 'No se pudo publicar', body: errorMessage(e, false) });
+        return;
+      }
+      this.error.set(`No se pudo publicar. ${errorMessage(e, this.auth.isAdmin())}`);
     }
   }
 
-  protected async toggleSettings(open = !this.settingsOpen()): Promise<void> {
-    this.settingsOpen.set(open);
-    this.hookSaved.set(false);
-    this.nameSaved.set(false);
-    this.name.set(this.editor.site()?.name ?? '');
-    if (open) this.hook.set(await this.editor.getDeployHook().catch(() => ''));
-  }
-
-  protected async saveHook(): Promise<void> {
-    try {
-      await this.editor.setDeployHook(this.hook());
-      this.hookSaved.set(true);
-    } catch (e) {
-      this.error.set(`No se pudo guardar el Deploy Hook: ${messageOf(e)}`);
-    }
-  }
-
-  protected async saveName(): Promise<void> {
-    try {
-      await this.editor.rename(this.name());
-      this.nameSaved.set(true);
-    } catch (e) {
-      this.error.set(`No se pudo cambiar el nombre: ${messageOf(e)}`);
-    }
-  }
-
-  protected async addSection(def: CollectionDef): Promise<void> {
-    await this.sectionTask(async () => {
-      await this.editor.addSection(def);
-      await this.router.navigate(['/sitio', this.siteId(), def.id]);
+  protected async discard(): Promise<void> {
+    const ok = await this.dialogs.confirm({
+      title: '¿Descartar los cambios?',
+      body: 'Vuelves a lo que está guardado.',
+      confirm: 'Descartar',
+      tone: 'danger',
     });
+    if (ok) this.editor.discard();
   }
 
-  protected async hideSection(def: CollectionDef): Promise<void> {
-    await this.sectionTask(() => this.editor.hideSection(def));
-  }
-
-  protected async importSections(): Promise<void> {
-    let handle: FileSystemDirectoryHandle;
-    try {
-      handle = await window.showDirectoryPicker({ id: 'cms-site', mode: 'read' });
-    } catch {
-      return; // The user closed the picker.
-    }
-    await this.sectionTask(async () => {
-      const folder = await this.editor.readFolder(handle);
-      const warning = this.editor.folderWarning(folder);
-      if (warning && !confirm(`${warning}\n\n¿Importar de todas formas?`)) return;
-      const imported = await this.editor.importSections(folder);
-      if (!imported.length) this.error.set(`La carpeta «${handle.name}» no tiene archivos de las secciones que faltan.`);
-      else alert(`Importado: ${imported.join(', ')}.`);
+  /** After a conflict: loads what the other person saved (losing the changes here). */
+  protected async reload(): Promise<void> {
+    const ok = await this.dialogs.confirm({
+      title: '¿Cargar lo último guardado?',
+      body: 'Se perderán tus cambios sin guardar. Si los necesitas, cópialos antes.',
+      confirm: 'Cargar',
+      tone: 'danger',
     });
-  }
-
-  private async sectionTask(run: () => Promise<void>): Promise<void> {
-    this.sectionBusy.set(true);
-    this.error.set('');
+    if (!ok) return;
     try {
-      await run();
-      this.offer.set(null);
-      this.missing.set(await this.editor.missingSections());
+      await this.editor.open(this.siteId());
+      this.dismiss();
     } catch (e) {
-      this.error.set(`No se pudo agregar la sección: ${messageOf(e)}`);
-    } finally {
-      this.sectionBusy.set(false);
+      this.error.set(errorMessage(e, this.auth.isAdmin()));
     }
-  }
-
-  protected discard(): void {
-    if (confirm('¿Descartar todos los cambios sin guardar?')) this.editor.discard();
   }
 
   protected async leave(): Promise<void> {
-    if (this.editor.dirty().length && !confirm('Hay cambios sin guardar. ¿Salir y perderlos?')) return;
+    if (this.editor.dirty().length) {
+      const ok = await this.dialogs.confirm({
+        title: '¿Salir sin guardar?',
+        body: 'Perderás los cambios sin guardar.',
+        confirm: 'Salir',
+        tone: 'danger',
+      });
+      if (!ok) return;
+    }
     this.editor.close();
     await this.router.navigate(['/']);
   }
 
-  protected dismiss(): void {
-    this.saved.set(null);
-    this.published.set(false);
-    this.error.set('');
+  protected async signOut(): Promise<void> {
+    if (this.editor.dirty().length) {
+      const ok = await this.dialogs.confirm({ title: '¿Salir sin guardar?', body: 'Perderás los cambios sin guardar.', confirm: 'Salir', tone: 'danger' });
+      if (!ok) return;
+    }
+    this.editor.close();
+    await this.auth.signOut();
+    await this.router.navigate(['/entrar']);
   }
 
-  protected date(iso?: string): string {
-    return iso ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso)) : 'nunca';
+  protected dismiss(): void {
+    this.error.set('');
+    this.conflict.set(false);
   }
 
   @HostListener('window:beforeunload', ['$event'])
   protected warnBeforeUnload(event: BeforeUnloadEvent): void {
     if (this.editor.dirty().length) event.preventDefault();
   }
-}
 
-function messageOf(error: unknown): string {
-  const code = (error as { code?: string }).code;
-  if (code === 'permission-denied') return 'tu usuario no tiene permiso para este sitio (reglas de Firestore)';
-  return error instanceof Error ? error.message : String(error);
+  @HostListener('document:keydown.escape')
+  protected closeMenu(): void {
+    this.menuOpen.set(false);
+  }
 }

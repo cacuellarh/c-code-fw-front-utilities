@@ -1,0 +1,189 @@
+<header class="head">
+  <h1>Configuración</h1>
+  <p class="desc">Solo la ve C-Code.</p>
+</header>
+
+@if (error()) {
+  <p class="alert" role="alert">{{ error() }}</p>
+}
+
+<section class="block" aria-labelledby="general-title">
+  <h2 id="general-title">General</h2>
+  <div class="grid">
+    <label class="field">
+      <span class="label">Nombre del sitio</span>
+      <span class="inline">
+        <input class="input" type="text" [value]="name()" (input)="name.set($any($event.target).value)" />
+        <button type="button" class="btn small" (click)="saveName()" [disabled]="busy() || !name().trim() || name().trim() === editor.site()?.name">
+          Guardar
+        </button>
+      </span>
+    </label>
+    <dl class="facts">
+      <div>
+        <dt>Dirección pública</dt>
+        <dd>
+          @if (editor.content()?.manifest?.siteUrl; as url) {
+            <a [href]="url" target="_blank" rel="noopener">{{ url }} <cms-icon name="external-link" [size]="14" /></a>
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Id</dt>
+        <dd class="mono">{{ editor.site()?.id }}</dd>
+      </div>
+      <div>
+        <dt>Tipo</dt>
+        <dd>{{ editor.scope()?.label }}</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<section class="block" aria-labelledby="publish-title">
+  <h2 id="publish-title">Publicación</h2>
+  <label class="field">
+    <span class="label">Enlace de publicación (Deploy Hook)</span>
+    <span class="inline">
+      <input
+        class="input mono-input"
+        type="url"
+        [value]="hook()"
+        (input)="hook.set($any($event.target).value)"
+        placeholder="https://api.vercel.com/v1/integrations/deploy/…"
+        spellcheck="false"
+      />
+      <button type="button" class="btn small" (click)="saveHook()" [disabled]="busy() || !hook().trim() || hook().trim() === savedHook()">
+        Guardar
+      </button>
+    </span>
+  </label>
+  @if (!savedHook()) {
+    <p class="pill warning">Sin enlace: el cliente no puede publicar</p>
+  }
+  <details class="where">
+    <summary>¿Dónde lo encuentro?</summary>
+    <p>En Vercel: proyecto del sitio → Settings → Git → Deploy Hooks. Crea uno para la rama principal y pega aquí su URL.</p>
+  </details>
+</section>
+
+<section class="block" aria-labelledby="sections-title">
+  <h2 id="sections-title">Secciones</h2>
+  <ul class="sections">
+    @for (s of sections(); track s.def.id) {
+      @let st = stateLabels[s.state];
+      <li class="section">
+        <cms-icon [name]="s.def.icon ?? 'layout-list'" />
+        <div class="info">
+          <span class="name">
+            {{ s.def.label }}
+            <span class="pill" [class]="st.tone">{{ st.label }}</span>
+          </span>
+          @if (s.def.description) {
+            <span class="sub">{{ s.def.description }}</span>
+          }
+        </div>
+        <div class="row-actions">
+          @switch (s.state) {
+            @case ('active') {
+              @if (count(s.def)) {
+                <span class="meta">{{ count(s.def) }}</span>
+              }
+              @if (s.def.optional) {
+                <button type="button" class="btn danger small" (click)="remove(s.def)" [disabled]="busy()">Quitar…</button>
+              } @else {
+                <span class="meta">Necesaria</span>
+              }
+            }
+            @case ('available') {
+              @if (canPick) {
+                <button type="button" class="btn small" (click)="importSection(s.def)" [disabled]="busy()">Importar…</button>
+              }
+              <button type="button" class="btn small" (click)="addEmpty(s.def)" [disabled]="busy()">Crear vacía</button>
+              <button type="button" class="btn ghost small" (click)="hide(s.def)" [disabled]="busy()">No usar</button>
+            }
+            @case ('hidden') {
+              <button type="button" class="btn ghost small" (click)="offer(s.def)" [disabled]="busy()">Volver a ofrecer</button>
+            }
+          }
+        </div>
+      </li>
+    } @empty {
+      <li class="meta">Cargando…</li>
+    }
+  </ul>
+</section>
+
+<section class="block" aria-labelledby="import-title">
+  <h2 id="import-title">Importación</h2>
+  @if (!canPick) {
+    <p class="note">Abre el CMS en Chrome o Edge para importar desde una carpeta.</p>
+  } @else {
+    <div class="import">
+      <div class="info">
+        <span class="name">Imágenes antiguas</span>
+        <span class="sub">
+          @if (legacy()) {
+            {{ legacy() }} {{ legacy() === 1 ? 'imagen fuera de la biblioteca' : 'imágenes fuera de la biblioteca' }}.
+          } @else {
+            Todas las imágenes están en la biblioteca.
+          }
+        </span>
+      </div>
+      <button type="button" class="btn small" (click)="importImages()" [disabled]="busy() || !legacy()">
+        <cms-icon name="folder-open" [size]="18" />
+        Importar…
+      </button>
+    </div>
+
+    @if (media.importing(); as progress) {
+      <div class="progress" aria-live="polite">
+        <strong>Importando… {{ progress.done }} de {{ progress.total }}</strong>
+        <progress [value]="progress.done" [max]="progress.total || 1"></progress>
+        <span class="mono path">{{ progress.path }}</span>
+      </div>
+    } @else if (report()) {
+      @let r = report()!;
+      <div class="progress done" role="status">
+        <strong>
+          {{ r.imported }} {{ r.imported === 1 ? 'importada' : 'importadas' }}
+          @if (r.reused) {
+            · {{ r.reused }} ya estaban
+          }
+          · {{ r.updatedEntries }} {{ r.updatedEntries === 1 ? 'elemento actualizado' : 'elementos actualizados' }}. Sin guardar.
+        </strong>
+        @if (r.failed.length) {
+          <ul class="failed">
+            @for (f of r.failed; track f.path) {
+              <li><code>{{ f.path }}</code>: {{ f.reason }}</li>
+            }
+          </ul>
+        }
+        <button type="button" class="btn ghost small" (click)="report.set(null)">Cerrar</button>
+      </div>
+    }
+
+    <div class="import">
+      <div class="info">
+        <label class="name" for="replace-target">Reemplazar sección desde carpeta</label>
+        <span class="sub">Para corregir una importación equivocada. Queda sin guardar hasta que lo revises.</span>
+      </div>
+      <span class="inline">
+        <select id="replace-target" class="input select" (change)="replaceTarget.set($any($event.target).value)">
+          @for (c of editor.collections(); track c.def.id) {
+            <option [value]="c.def.id" [selected]="c.def.id === replaceTarget()">{{ c.def.label }}</option>
+          }
+        </select>
+        <button type="button" class="btn small" (click)="replaceSection()" [disabled]="busy()">Elegir carpeta…</button>
+      </span>
+    </div>
+    @if (replaceNotice()) {
+      <p class="notice" role="status">
+        {{ replaceNotice() }}
+        <button type="button" class="link" (click)="openSection(replaceTarget())">Revisar</button>
+      </p>
+    }
+  }
+</section>

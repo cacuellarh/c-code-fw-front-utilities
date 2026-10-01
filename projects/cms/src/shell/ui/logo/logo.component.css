@@ -1,0 +1,21 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cms-space-2);
+}
+.mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--cms-radius);
+  background: var(--cms-brand);
+  color: #ffffff;
+  font: 700 15px / 1 var(--cms-font-display);
+  letter-spacing: -0.04em;
+}
+.word {
+  font: 700 var(--cms-text-lg) / 1 var(--cms-font-display);
+  letter-spacing: -0.02em;
+  color: var(--cms-text);
+}

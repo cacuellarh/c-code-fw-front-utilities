@@ -6,7 +6,7 @@ import { diskPath } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
 import { addEmptyCollection, ConflictError, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, offerCollection, openSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite, sectionStates, siteIdFor, writeSiteFolder } from './site';
-import { countOf, emptyTitle, newLabel, pickPrompt, pluralOf } from './labels';
+import { countOf, emptyText, emptyTitle, newLabel, pickPrompt, pluralOf } from './labels';
 import { galleryCollection } from './scopes/shared/gallery.collection';
 import { DEFAULT_PROMO, describePromoSchedule, promoCollection } from './scopes/shared/promo.collection';
 import { MemoryContentRepository } from './testing/memory-content-repository';
@@ -200,6 +200,16 @@ describe('content rules', () => {
     expect(content.validateContent(content.discardChanges(broken))).toEqual([]);
   });
 
+  it('reports entries that share an id', async () => {
+    const { content: site } = await openSite(await importedRepo(), 'spa');
+    const services = content.findCollection(site, 'additionals')!;
+    const twin = content.updateItem(site, 'additionals', 1, { ...services.items[1], id: services.items[0]['id'] });
+    expect(content.validateContent(twin).filter((i) => i.code === 'duplicate-id').map((i) => i.index)).toEqual([0, 1]);
+    const fixed = content.giveNewId(twin, 'additionals', 1);
+    expect(content.findCollection(fixed, 'additionals')!.items[1]['id']).toBe(102);
+    expect(content.validateContent(fixed).filter((i) => i.code === 'duplicate-id')).toEqual([]);
+  });
+
   it('finds the saved version of an entry, to tell what changed', async () => {
     const { content: site } = await openSite(await importedRepo(), 'spa');
     const renamed = content.updateItem(site, 'plans', 0, { ...plan(1, 'PLAN NUEVO') });
@@ -367,6 +377,16 @@ describe('gallery and popup (shared blocks)', () => {
     expect(JSON.parse(out.text(GALLERY))[0].caption).toBe('Jacuzzi');
   });
 
+  it('can import only one of the sections the folder has', async () => {
+    const repo = await importedRepo();
+    const folder = spaFolder();
+    await folder.write(GALLERY, JSON.stringify([{ src: '/a.webp', thumb: '/a.webp', caption: 'Sauna' }]));
+    await folder.write(PROMO, JSON.stringify(promoFile));
+    const imported = await importMissingCollections(repo, (await repo.loadSite('spa'))!, await readSiteFolder(folder), 'yo', ['promo']);
+    expect(imported).toEqual(['Popup de promoción']);
+    expect((await repo.loadSite('spa'))!.collections.map((c) => c.id)).not.toContain('gallery');
+  });
+
   it('refuses a popup file that is a list, and validates dates', async () => {
     const folder = spaFolder();
     await folder.write(PROMO, '[]');
@@ -461,6 +481,7 @@ describe('labels', () => {
     expect(pickPrompt(gallery)).toBe('Elige una foto para editarla.');
     expect(pickPrompt(plans)).toBe('Elige un plan para editarlo.');
     expect(emptyTitle(plans)).toBe('Aún no hay planes');
+    expect(emptyText(gallery)).toBe('Crea la primera y aparecerá en tu sitio al publicar.');
     expect(pluralOf(promo)).toBe('popups');
     expect(countOf(gallery, 1)).toBe('1 foto');
     expect(countOf(gallery, 12)).toBe('12 fotos');

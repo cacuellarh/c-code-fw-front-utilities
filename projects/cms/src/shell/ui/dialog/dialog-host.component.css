@@ -1,0 +1,29 @@
+.dialog {
+  width: min(440px, calc(100vw - 32px));
+  padding: var(--cms-space-5);
+  border: 0;
+  border-radius: var(--cms-radius-lg);
+  background: var(--cms-panel);
+  color: var(--cms-text);
+  box-shadow: var(--cms-shadow-3);
+}
+.dialog::backdrop {
+  background: rgb(23 27 38 / 0.45);
+}
+h2 {
+  margin: 0;
+  font: 600 var(--cms-text-lg) / 1.3 var(--cms-font-display);
+}
+.body {
+  margin: var(--cms-space-2) 0 0;
+  color: var(--cms-muted);
+  font-size: var(--cms-text-sm);
+  white-space: pre-line;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--cms-space-2);
+  margin-top: var(--cms-space-5);
+}

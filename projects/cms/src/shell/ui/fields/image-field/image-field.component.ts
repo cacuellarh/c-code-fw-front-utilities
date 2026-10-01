@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output, re
 import { mediaIdOf } from '../../../../domain/media';
 import { ImageField } from '../../../../domain/schema';
 import { MediaItem } from '../../../../domain/ports';
+import { AuthService } from '../../../state/auth.service';
 import { MediaService } from '../../../state/media.service';
+import { IconComponent } from '../../icon/icon.component';
 import { MediaPickerComponent } from '../../media/media-picker/media-picker.component';
 
 /**
@@ -11,16 +13,19 @@ import { MediaPickerComponent } from '../../media/media-picker/media-picker.comp
  */
 @Component({
   selector: 'cms-image-field',
-  imports: [MediaPickerComponent],
+  imports: [MediaPickerComponent, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './image-field.component.html',
   styleUrl: './image-field.component.css',
 })
 export class ImageFieldComponent {
   private media = inject(MediaService);
+  protected auth = inject(AuthService);
   readonly field = input.required<ImageField>();
   readonly inputId = input<string>('');
   readonly value = input<string>('');
+  /** The field has a problem (for example, it is required and empty). */
+  readonly invalid = input(false);
   readonly picked = output<MediaItem | null>();
 
   protected readonly pickerOpen = signal(false);

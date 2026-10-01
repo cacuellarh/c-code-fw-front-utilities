@@ -5,7 +5,10 @@ rules_version = '2';
 //
 // - Content (sites and their collections) is public to read: the sites' builds read it
 //   without credentials. It is the same content the public sites already show.
-// - Only admins (ADMINS) and each site's editors (sites/{id}/private/access.editors) can write.
+// - Admins (a document admins/{email}) create and configure sites: name, sections, Deploy Hook
+//   and who edits each one.
+// - Editors (sites/{id}/private/access.editors) only edit the content of their sites, upload
+//   images and publish.
 // - private/ (editors, Deploy Hook) and history/ are only readable by editors.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -15,9 +18,8 @@ service cloud.firestore {
         ? request.auth.token.email : '';
     }
 
-    // Accounts that can create sites and edit all of them.
     function isAdmin() {
-      return signedInEmail() in ['caminathgarcia@gmail.com'];
+      return signedInEmail() != '' && exists(/databases/$(database)/documents/admins/$(signedInEmail()));
     }
 
     function isEditor(site) {
@@ -27,14 +29,25 @@ service cloud.firestore {
       );
     }
 
+    // Each person can only check whether they are an admin. The list is edited in the console.
+    match /admins/{email} {
+      allow get: if signedInEmail() == email;
+    }
+
     match /sites/{site} {
       allow read: if true;
       allow create, delete: if isAdmin();
-      allow update: if isEditor(site);
+      // Editors only touch the dates of saving and publishing; renaming and hiding sections is for admins.
+      allow update: if isAdmin() || (
+        isEditor(site) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt', 'publishedAt'])
+      );
 
       match /collections/{collection} {
         allow read: if true;
-        allow write: if isEditor(site);
+        // Editors save existing sections; adding and removing sections is for admins.
+        allow update: if isEditor(site);
+        allow create, delete: if isAdmin();
       }
 
       // Image library: public like the rest of the site's content (the build downloads it).
@@ -53,9 +66,9 @@ service cloud.firestore {
       }
 
       match /private/{doc} {
+        // Editors read the Deploy Hook to publish, and their own access to know they can edit.
         allow read: if isEditor(site);
-        // Editors can change the Deploy Hook; only admins decide who edits.
-        allow write: if doc == 'access' ? isAdmin() : isEditor(site);
+        allow write: if isAdmin();
       }
     }
   }
