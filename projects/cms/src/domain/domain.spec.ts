@@ -1,5 +1,5 @@
 import * as content from './content';
-import { applyImage, checkBeforePublish, deleteMedia, MAX_VARIANT_BYTES, MediaError, mediaId, mediaIdOf, mediaPath, MediaSource, prepareMedia, uploadMedia, writeMediaFolder } from './media';
+import { applyImage, checkBeforePublish, deleteMedia, importSiteImages, legacyImages, MAX_VARIANT_BYTES, MediaError, mediaId, mediaIdOf, mediaPath, MediaSource, prepareMedia, uploadMedia, writeMediaFolder } from './media';
 import { detectJsonStyle, formatJson } from './json-format';
 import { suggestManifest } from './manifest';
 import { diskPath } from './paths';
@@ -426,6 +426,67 @@ describe('removing a section the site does not use', () => {
     const out = spaFolder();
     expect(await writeSiteFolder(out, stored)).not.toContain('src/assets/data/priceRanges.json');
     await expectAsync(removeCollection(repo, 'spa', SPA_SCOPE.collections[0], 'yo')).toBeRejectedWithError(/no se puede quitar/);
+  });
+});
+
+describe('importing the site images into the library', () => {
+  async function siteWithGallery() {
+    const repo = await importedRepo();
+    const folder = spaFolder();
+    await folder.write('src/assets/data/gallery.json', JSON.stringify([{ src: '/assets/images/galery/1.webp', thumb: '/assets/images/galery/thumbs/1.webp', caption: 'Sala de masajes' }]));
+    await importMissingCollections(repo, (await repo.loadSite('spa'))!, await readSiteFolder(folder), 'yo');
+    // The image files the content points to (plans 1 and 2, two icons, one gallery photo).
+    for (const path of ['images/1.jpeg', 'images/2.jpeg', 'icons/a.png', 'icons/b.png', 'images/galery/1.webp']) {
+      await folder.write(`src/assets/${path}`, new Blob(['img']));
+    }
+    return { repo, folder, site: (await openSite(repo, 'spa')).content };
+  }
+
+  it('finds the images the content uses outside the library, photos and icons', async () => {
+    const { site } = await siteWithGallery();
+    expect(legacyImages(site).map((i) => [i.path, i.kind])).toEqual([
+      ['/assets/images/1.jpeg', 'photo'],
+      ['/assets/images/2.jpeg', 'photo'],
+      ['/assets/icons/a.png', 'icon'],
+      ['/assets/icons/b.png', 'icon'],
+      ['/assets/images/galery/1.webp', 'photo'],
+    ]);
+  });
+
+  it('uploads them, names them and points the entries to the library as unsaved changes', async () => {
+    const { folder, site } = await siteWithGallery();
+    const store = new MemoryMediaStore();
+    const { content: next, added, report } = await importSiteImages(folder, store, new FakeImageEncoder(), 'spa', site, []);
+    expect(report).toEqual({ imported: 5, reused: 0, failed: [], updatedEntries: 5 });
+    expect(added.map((m) => [m.name, m.kind])).toEqual([
+      ['PLAN ROSA', 'photo'],
+      ['PLAN LIRIO', 'photo'],
+      ['A', 'icon'],
+      ['B', 'icon'],
+      ['Sala de masajes', 'photo'],
+    ]);
+    expect(added[0].source).toBe('/assets/images/1.jpeg');
+    const plans = content.findCollection(next, 'plans')!.items;
+    expect(plans[0]['imgPath']).toBe(mediaPath(added[0].id));
+    const photo = content.findCollection(next, 'gallery')!.items[0];
+    expect([photo['src'], photo['thumb']]).toEqual([mediaPath(added[4].id), mediaPath(added[4].id, 'thumb')]);
+    expect(content.dirtyCollections(next).map((c) => c.def.id).sort()).toEqual(['additionals', 'gallery', 'plans']);
+    expect(legacyImages(next)).toEqual([]);
+  });
+
+  it('does not upload duplicates when run again, and reports missing files', async () => {
+    const { folder, site } = await siteWithGallery();
+    const store = new MemoryMediaStore();
+    const first = await importSiteImages(folder, store, new FakeImageEncoder(), 'spa', site, []);
+    const again = await importSiteImages(folder, store, new FakeImageEncoder(), 'spa', site, await store.list('spa'));
+    expect([again.report.imported, again.report.reused, again.added.length]).toEqual([0, 5, 0]);
+    expect((await store.list('spa')).length).toBe(first.added.length);
+
+    folder.files.delete('src/assets/icons/b.png');
+    const fresh = new MemoryMediaStore();
+    const partial = await importSiteImages(folder, fresh, new FakeImageEncoder(), 'spa', site, []);
+    expect(partial.report.failed).toEqual([{ path: '/assets/icons/b.png', reason: 'no está en la carpeta del sitio' }]);
+    expect(legacyImages(partial.content).map((i) => i.path)).toEqual(['/assets/icons/b.png']);
   });
 });
 

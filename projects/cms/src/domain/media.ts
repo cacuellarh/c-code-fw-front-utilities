@@ -1,6 +1,7 @@
 import { slugify } from '@cc/ui-domain';
 import { CollectionData, SiteContent, titleOf } from './content';
 import { EncodedImage, ImageEncoder, MediaItem, MediaKind, MediaStore, MediaUpload, MediaVariant, PublicSite, SiteFiles } from './ports';
+import { diskPath } from './paths';
 import { Entry, ImageField } from './schema';
 
 /*
@@ -264,4 +265,135 @@ export async function checkBeforePublish(content: SiteContent, site: PublicSite)
   const siteUrl = content.manifest.siteUrl;
   const supported = siteUrl ? await site.downloadsMedia(siteUrl) : false;
   return publishWarning(content, supported);
+}
+
+/** An image the site uses that is not in the library yet. */
+export interface LegacyImage {
+  /** Path in the JSON: "/assets/images/8.jpeg". */
+  path: string;
+  kind: MediaKind;
+  /** Title of the first entry that uses it, to name photos in the library. */
+  title: string;
+}
+
+/**
+ * Images the content uses from the site's own files (not from the library). An image used
+ * both as a photo and as an icon is imported as a photo.
+ */
+export function legacyImages(content: SiteContent): LegacyImage[] {
+  const found = new Map<string, LegacyImage>();
+  for (const collection of content.collections) {
+    for (const field of collection.def.fields) {
+      if (field.type !== 'image') continue;
+      for (const item of collection.items) {
+        const path = String(item[field.key] ?? '').trim();
+        if (!path || mediaIdOf(path)) continue;
+        const kind = field.kind ?? 'photo';
+        const previous = found.get(path);
+        if (!previous) found.set(path, { path, kind, title: titleOf(collection, item) });
+        else if (previous.kind === 'icon' && kind === 'photo') previous.kind = 'photo';
+      }
+    }
+  }
+  return [...found.values()];
+}
+
+export interface ImportReport {
+  /** Images uploaded now. */
+  imported: number;
+  /** Images that were already in the library from an earlier import. */
+  reused: number;
+  /** Paths that could not be imported, with the reason. */
+  failed: { path: string; reason: string }[];
+  /** Entries whose images now point to the library. */
+  updatedEntries: number;
+}
+
+/**
+ * Brings the site's own images into the library: reads each file from the site folder,
+ * converts it (WebP, sizes, thumbnail…) and uploads it, then points the entries to the
+ * library. The entries change as unsaved changes, to review and save. Running it again does
+ * not upload duplicates: each image remembers its original path (`source`).
+ */
+export async function importSiteImages(
+  files: SiteFiles,
+  store: MediaStore,
+  encoder: ImageEncoder,
+  siteId: string,
+  content: SiteContent,
+  existing: MediaItem[],
+  onProgress: (done: number, total: number, path: string) => void = () => undefined
+): Promise<{ content: SiteContent; added: MediaItem[]; report: ImportReport }> {
+  const images = legacyImages(content);
+  const bySource = new Map(existing.filter((m) => m.source).map((m) => [m.source!, m]));
+  const library = [...existing];
+  const added: MediaItem[] = [];
+  const mapping = new Map<string, MediaItem>();
+  const report: ImportReport = { imported: 0, reused: 0, failed: [], updatedEntries: 0 };
+
+  for (const [i, image] of images.entries()) {
+    onProgress(i, images.length, image.path);
+    const already = bySource.get(image.path);
+    if (already) {
+      mapping.set(image.path, already);
+      report.reused++;
+      continue;
+    }
+    try {
+      const data = await files.readBytes(diskPath(content.manifest, image.path));
+      if (!data) throw new MediaError('no está en la carpeta del sitio');
+      const fileName = fileNameOf(image.path);
+      const upload = await prepareMedia(encoder, { name: fileName, type: typeOf(fileName), data }, image.kind, library.map((m) => m.id));
+      // Icons are shared by several entries: they keep their file name. Photos take the entry's name.
+      const label = image.kind === 'icon' || !image.title ? upload.item.name : image.title;
+      const item: MediaItem = { ...upload.item, id: mediaId(label, library.map((m) => m.id)), name: label, source: image.path };
+      await store.save(siteId, { ...upload, item });
+      library.push(item);
+      added.push(item);
+      mapping.set(image.path, item);
+      report.imported++;
+    } catch (e) {
+      report.failed.push({ path: image.path, reason: (e as Error).message });
+    }
+  }
+  onProgress(images.length, images.length, '');
+
+  const result = pointToLibrary(content, mapping);
+  report.updatedEntries = result.updated;
+  return { content: result.content, added, report };
+}
+
+/** Points every entry that uses one of the mapped paths to its library image. */
+export function pointToLibrary(content: SiteContent, mapping: Map<string, MediaItem>): { content: SiteContent; updated: number } {
+  let updated = 0;
+  const collections = content.collections.map((collection) => {
+    const fields = collection.def.fields.filter((f): f is ImageField => f.type === 'image');
+    if (!fields.length) return collection;
+    let changed = false;
+    const items = collection.items.map((item) => {
+      let next = item;
+      for (const field of fields) {
+        const media = mapping.get(String(next[field.key] ?? '').trim());
+        if (media) next = applyImage(field, next, media);
+      }
+      if (next !== item) {
+        changed = true;
+        updated++;
+      }
+      return next;
+    });
+    return changed ? { ...collection, items } : collection;
+  });
+  return { content: { ...content, collections }, updated };
+}
+
+/** "/assets/images/galery/1.webp" -> "1.webp". */
+function fileNameOf(path: string): string {
+  return path.split(/[?#]/)[0].split('/').pop() || 'imagen';
+}
+
+function typeOf(fileName: string): string {
+  const ext = /\.([a-z0-9]+)$/i.exec(fileName)?.[1]?.toLowerCase() ?? '';
+  const types: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif', bmp: 'image/bmp' };
+  return types[ext] ?? '';
 }

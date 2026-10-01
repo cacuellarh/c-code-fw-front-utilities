@@ -84,6 +84,8 @@ export interface SiteFiles {
   /** The file's text, or null if it does not exist. */
   read(path: string): Promise<FileText | null>;
   exists(path: string): Promise<boolean>;
+  /** The file's bytes (images), or null if it does not exist. */
+  readBytes(path: string): Promise<Blob | null>;
   /** Writes the file, creating missing folders. */
   write(path: string, content: string | Blob): Promise<void>;
   /** Names of the files directly inside a folder; empty if it does not exist. */
@@ -143,6 +145,8 @@ export interface MediaItem {
   /** Tiny WebP (about 160 px) for the library grid, stored with the metadata. */
   preview: Uint8Array;
   createdAt: string;
+  /** Path the image had in the site before it was imported (`/assets/images/8.jpeg`), if any. */
+  source?: string;
 }
 
 export interface MediaUpload {

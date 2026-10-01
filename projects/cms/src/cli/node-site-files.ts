@@ -26,6 +26,15 @@ export class NodeSiteFiles implements SiteFiles {
     }
   }
 
+  async readBytes(path: string): Promise<Blob | null> {
+    try {
+      return new Blob([await readFile(this.full(path))]);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+      throw error;
+    }
+  }
+
   async exists(path: string): Promise<boolean> {
     return (await this.read(path)) !== null;
   }

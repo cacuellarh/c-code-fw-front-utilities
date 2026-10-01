@@ -20,6 +20,11 @@ export class MemorySiteFiles implements SiteFiles {
     return this.files.get(path)?.lastModified ?? null;
   }
 
+  async readBytes(path: string): Promise<Blob | null> {
+    const file = this.files.get(path);
+    return file ? (typeof file.content === 'string' ? new Blob([file.content]) : file.content) : null;
+  }
+
   async exists(path: string): Promise<boolean> {
     return this.files.has(path);
   }

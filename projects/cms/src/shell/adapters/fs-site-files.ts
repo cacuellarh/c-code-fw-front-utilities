@@ -22,6 +22,10 @@ export class FsSiteFiles implements SiteFiles {
     return (await this.file(path)) !== null;
   }
 
+  readBytes(path: string): Promise<Blob | null> {
+    return this.file(path);
+  }
+
   /** The file itself, for showing images. Null if it does not exist. */
   async file(path: string): Promise<File | null> {
     try {

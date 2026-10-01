@@ -96,6 +96,7 @@ export class FirestoreRestMediaStore implements MediaStore {
           variants: (f['variants'] as MediaVariant[]) ?? [],
           preview: (f['preview'] as Uint8Array) ?? new Uint8Array(),
           createdAt: String(f['createdAt'] ?? ''),
+          source: f['source'] as string | undefined,
         });
       }
       pageToken = (page?.['nextPageToken'] as string | undefined) ?? '';

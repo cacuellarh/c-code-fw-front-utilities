@@ -163,6 +163,11 @@ export class EditorService {
     await this.open(site.id);
   }
 
+  /** Replaces the content with a new snapshot computed by the domain (as unsaved changes). */
+  applyContent(next: SiteContent): void {
+    if (!this.saving()) this.content.set(next);
+  }
+
   /** Reads a site folder (JSON files, cms.json, theme) without changing anything. */
   readFolder(handle: FileSystemDirectoryHandle): Promise<Omit<NewSite, 'id'>> {
     return readSiteFolder(new FsSiteFiles(handle));
