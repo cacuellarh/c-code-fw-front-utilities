@@ -114,6 +114,25 @@ export class FirestoreContentRepository implements ContentRepository {
     await updateDoc(doc(this.db, 'sites', siteId), { publishedAt: at });
   }
 
+  async removeCollection(siteId: string, collectionId: string, author: string): Promise<void> {
+    const at = new Date().toISOString();
+    await runTransaction(this.db, async (tx) => {
+      const ref = doc(this.db, 'sites', siteId, 'collections', collectionId);
+      const current = await tx.get(ref);
+      // Keep the last content in the history before deleting it.
+      if (current.exists()) {
+        tx.set(doc(collection(this.db, 'sites', siteId, 'history')), {
+          at,
+          author,
+          removed: collectionId,
+          collections: { [collectionId]: (current.data() as CollectionDoc).items },
+        });
+        tx.delete(ref);
+      }
+      tx.update(doc(this.db, 'sites', siteId), { [`manifest.collections.${collectionId}`]: false, updatedAt: at });
+    });
+  }
+
   async hideCollection(siteId: string, collectionId: string): Promise<void> {
     await updateDoc(doc(this.db, 'sites', siteId), { [`manifest.collections.${collectionId}`]: false });
   }

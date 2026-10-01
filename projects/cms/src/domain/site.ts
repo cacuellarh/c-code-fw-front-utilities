@@ -253,3 +253,13 @@ export function replaceFromFolder(
     after: found.items.length,
   };
 }
+
+/**
+ * Removes an optional section from a site (for example one imported by mistake). Its last
+ * content goes to the history first, and the section is marked as not used, so the CMS does
+ * not offer it again. Required sections (plans…) cannot be removed.
+ */
+export async function removeCollection(repo: ContentRepository, siteId: string, def: CollectionDef, author: string): Promise<void> {
+  if (!def.optional) throw new Error(`«${def.label}» no se puede quitar: el sitio la necesita.`);
+  await repo.removeCollection(siteId, def.id, author);
+}

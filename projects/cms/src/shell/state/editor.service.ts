@@ -3,7 +3,7 @@ import * as content from '../../domain/content';
 import { SiteContent } from '../../domain/content';
 import { SiteSummary } from '../../domain/ports';
 import { Entry, ScopeDef } from '../../domain/schema';
-import { addEmptyCollection, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, publishSite, readSiteFolder, renameSite, replaceFromFolder, saveSite } from '../../domain/site';
+import { addEmptyCollection, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, publishSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite } from '../../domain/site';
 import { CollectionDef } from '../../domain/schema';
 import { NewSite } from '../../domain/ports';
 import { FsSiteFiles } from '../adapters/fs-site-files';
@@ -146,6 +146,13 @@ export class EditorService {
   async addSection(def: CollectionDef): Promise<void> {
     const site = this.requireSite();
     await addEmptyCollection(this.repo, site.id, def, this.auth.email());
+    await this.open(site.id);
+  }
+
+  /** Removes a section from the site (its content stays in the history) and reopens it. */
+  async removeSection(def: CollectionDef): Promise<void> {
+    const site = this.requireSite();
+    await removeCollection(this.repo, site.id, def, this.auth.email());
     await this.open(site.id);
   }
 

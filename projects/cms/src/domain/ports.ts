@@ -19,6 +19,11 @@ export interface ContentRepository {
   createSite(site: NewSite, author: string): Promise<void>;
   /** Records that the site was published. */
   markPublished(siteId: string, at: string): Promise<void>;
+  /**
+   * Deletes a collection from the site and marks it as not used. Its last content is kept in the
+   * site's history first.
+   */
+  removeCollection(siteId: string, collectionId: string, author: string): Promise<void>;
   /** Marks an optional collection as not used by the site, so the CMS stops offering it. */
   hideCollection(siteId: string, collectionId: string): Promise<void>;
   /** Adds collections to an existing site. Fails if one of them already exists. */

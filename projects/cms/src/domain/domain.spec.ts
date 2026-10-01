@@ -5,7 +5,7 @@ import { suggestManifest } from './manifest';
 import { diskPath } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
-import { addEmptyCollection, ConflictError, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, readSiteFolder, renameSite, replaceFromFolder, saveSite, siteIdFor, writeSiteFolder } from './site';
+import { addEmptyCollection, ConflictError, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite, siteIdFor, writeSiteFolder } from './site';
 import { galleryCollection } from './scopes/shared/gallery.collection';
 import { DEFAULT_PROMO, promoCollection } from './scopes/shared/promo.collection';
 import { MemoryContentRepository } from './testing/memory-content-repository';
@@ -405,6 +405,27 @@ describe('fixing an import from the wrong folder', () => {
     expect(content.findCollection(content.discardChanges(result.content), 'gallery')!.items[0]['caption']).toBe('De otro sitio');
     const withoutGallery = await readSiteFolder(spaFolder());
     expect(() => replaceFromFolder(site, 'gallery', withoutGallery)).toThrowError(/no tiene el archivo/);
+  });
+});
+
+describe('removing a section the site does not use', () => {
+  it('deletes it, keeps it in the history and stops offering it', async () => {
+    const repo = await importedRepo();
+    const folder = spaFolder();
+    await folder.write('src/assets/data/priceRanges.json', JSON.stringify([{ description: 'Menos de $100.000', min: 0, max: 100000 }]));
+    await importMissingCollections(repo, (await repo.loadSite('spa'))!, await readSiteFolder(folder), 'yo');
+    expect((await repo.loadSite('spa'))!.collections.map((c) => c.id)).toContain('priceRanges');
+
+    const ranges = SPA_SCOPE.collections.find((c) => c.id === 'priceRanges')!;
+    await removeCollection(repo, 'spa', ranges, 'yo');
+    const stored = (await repo.loadSite('spa'))!;
+    expect(stored.collections.map((c) => c.id)).not.toContain('priceRanges');
+    expect(missingCollections(SPA_SCOPE, stored).map((d) => d.id)).not.toContain('priceRanges');
+    expect(repo.history.at(-1)).toEqual({ siteId: 'spa', author: 'yo', collections: ['priceRanges'] });
+
+    const out = spaFolder();
+    expect(await writeSiteFolder(out, stored)).not.toContain('src/assets/data/priceRanges.json');
+    await expectAsync(removeCollection(repo, 'spa', SPA_SCOPE.collections[0], 'yo')).toBeRejectedWithError(/no se puede quitar/);
   });
 });
 

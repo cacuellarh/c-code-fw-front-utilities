@@ -214,3 +214,7 @@ h2 {
   color: var(--cms-warning);
   font-size: var(--cms-text-xs);
 }
+.reload.danger {
+  margin-left: 12px;
+  color: var(--cms-danger);
+}

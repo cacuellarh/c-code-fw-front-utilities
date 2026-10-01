@@ -9,6 +9,9 @@
           }
           @if (canPickFolders && !s.error) {
             <button type="button" class="reload" (click)="reloadFromFolder()">Reemplazar desde carpeta…</button>
+            @if (s.def.optional) {
+              <button type="button" class="reload danger" (click)="removeSection()">Quitar esta sección del sitio</button>
+            }
           }
           @if (notice()) {
             <p class="notice" role="status">{{ notice() }}</p>
@@ -31,6 +34,9 @@
         }
         @if (canPickFolders && !s.error) {
           <button type="button" class="reload" (click)="reloadFromFolder()">Reemplazar desde carpeta…</button>
+            @if (s.def.optional) {
+              <button type="button" class="reload danger" (click)="removeSection()">Quitar esta sección del sitio</button>
+            }
         }
         @if (notice()) {
           <p class="notice" role="status">{{ notice() }}</p>

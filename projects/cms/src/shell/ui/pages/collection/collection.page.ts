@@ -92,6 +92,24 @@ export class CollectionPage {
     }
   }
 
+  /** Removes this optional section from the site, after confirming. */
+  protected async removeSection(): Promise<void> {
+    const state = this.state();
+    if (!state) return;
+    const count = state.def.single ? 'su contenido' : state.items.length + ' ' + (state.items.length === 1 ? 'elemento' : 'elementos');
+    const question =
+      '¿Quitar «' + state.def.label + '» de este sitio? Se borra ' + count + ' (queda una copia en el historial) ' +
+      'y el CMS deja de ofrecer esta sección. Si el sitio la muestra, quedará vacía en la próxima publicación.';
+    if (!confirm(question)) return;
+    try {
+      await this.editor.removeSection(state.def);
+      const first = this.editor.collections()[0];
+      await this.router.navigate(first ? ['/sitio', this.editor.site()?.id, first.def.id] : ['/']);
+    } catch (e) {
+      this.notice.set((e as Error).message);
+    }
+  }
+
   protected select(index: number): void {
     this.router.navigate([], { queryParams: { i: index >= 0 ? index : null }, queryParamsHandling: 'merge' });
   }
