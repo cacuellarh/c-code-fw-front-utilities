@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, ou
 import { slugify } from '@c-code/c-code-fw/ui';
 import { ACCEPTED_TYPES, kb } from '../../../../domain/media';
 import { MediaItem, MediaKind } from '../../../../domain/ports';
+import { AuthService } from '../../../state/auth.service';
 import { DialogService } from '../../../state/dialog.service';
 import { MediaService } from '../../../state/media.service';
 import { ToastService } from '../../../state/toast.service';
@@ -21,6 +22,7 @@ import { IconComponent } from '../../icon/icon.component';
 })
 export class MediaLibraryComponent implements OnInit {
   protected media = inject(MediaService);
+  protected auth = inject(AuthService);
   private dialogs = inject(DialogService);
   private toast = inject(ToastService);
 
@@ -38,6 +40,8 @@ export class MediaLibraryComponent implements OnInit {
   protected readonly accept = ACCEPTED_TYPES.join(',');
   protected readonly kb = kb;
 
+  /** Images the site still uses from its own files (admins are told to import them). */
+  protected readonly legacy = computed(() => this.media.legacyCount());
   protected readonly activeKind = computed(() => this.kind() ?? this.tab());
   protected readonly visible = computed(() => {
     const q = slugify(this.query());

@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { deleteMedia, importSiteImages, ImportReport, legacyImages, mediaIdOf, uploadMedia } from '../../domain/media';
 import { FsSiteFiles } from '../adapters/fs-site-files';
+import { PublicSiteFiles } from '../adapters/public-site-files';
 import { MediaItem, MediaKind, MediaVariant } from '../../domain/ports';
 import { EditorService } from './editor.service';
 import { IMAGE_ENCODER, MEDIA_STORE } from './ports.tokens';
@@ -75,16 +76,17 @@ export class MediaService {
   }
 
   /**
-   * Brings the images the site uses from its folder into the library and points the entries
+   * Brings the images the site uses into the library, from its folder or (without one) from the
+   * published site, and points the entries
    * to them, as unsaved changes. Returns what happened.
    */
-  async importFromSite(handle: FileSystemDirectoryHandle): Promise<ImportReport> {
+  async importFromSite(handle?: FileSystemDirectoryHandle): Promise<ImportReport> {
     await this.ensureLoaded();
     const content = this.editor.content();
     if (!content) throw new Error('No hay un sitio abierto.');
     this.importing.set({ done: 0, total: 0, path: '' });
     try {
-      const result = await importSiteImages(new FsSiteFiles(handle), this.store, this.encoder, this.siteId(), content, this.items(), (done, total, path) =>
+      const result = await importSiteImages(handle ? new FsSiteFiles(handle) : new PublicSiteFiles(content.manifest), this.store, this.encoder, this.siteId(), content, this.items(), (done, total, path) =>
         this.importing.set({ done, total, path })
       );
       this.items.update((items) => [...result.added, ...items]);

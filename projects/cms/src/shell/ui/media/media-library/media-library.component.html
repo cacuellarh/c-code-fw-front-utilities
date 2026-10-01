@@ -64,7 +64,7 @@
   <cms-empty-state
     [icon]="activeKind() === 'photo' ? 'images' : 'sparkles'"
     [heading]="activeKind() === 'photo' ? 'Aún no hay fotos' : 'Aún no hay íconos'"
-    text="Súbelas arriba y podrás elegirlas en cada sección."
+    [text]="auth.isAdmin() && legacy() ? 'Este sitio tiene ' + legacy() + ' imágenes antiguas: impórtalas en Configuración › Importación.' : 'Súbelas arriba y podrás elegirlas en cada sección.'"
   />
 } @else {
   <ul class="grid" [class.icons]="activeKind() === 'icon'">

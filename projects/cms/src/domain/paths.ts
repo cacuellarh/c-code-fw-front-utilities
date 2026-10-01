@@ -29,3 +29,25 @@ export function diskPath(manifest: SiteManifest, sitePath: string): string {
   const prefix = '/' + url.replace(/^\/+/, '');
   return clean.startsWith(prefix) ? joinPath(dir, clean.slice(prefix.length)) : joinPath('public', clean);
 }
+
+/**
+ * Address on the public site of a file of the site folder, the inverse of `diskPath`:
+ * "src/assets/images/8.jpeg" -> "https://site.com/assets/images/8.jpeg"; "public/x.png" -> "/x.png".
+ */
+export function publicUrl(manifest: SiteManifest, path: string): string | null {
+  if (!manifest.siteUrl) return null;
+  const { url, dir } = assetsOf(manifest);
+  const clean = splitPath(path).join('/');
+  const assetsDir = splitPath(dir).join('/') + '/';
+  const sitePath = clean.startsWith(assetsDir)
+    ? joinPath('/' + url, clean.slice(assetsDir.length))
+    : clean.startsWith('public/')
+      ? '/' + clean.slice('public/'.length)
+      : null;
+  if (!sitePath) return null;
+  try {
+    return new URL(sitePath.replace(/^\/*/, '/'), manifest.siteUrl).href;
+  } catch {
+    return null;
+  }
+}

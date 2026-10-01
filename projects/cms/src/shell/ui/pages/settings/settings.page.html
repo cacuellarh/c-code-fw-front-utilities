@@ -118,9 +118,6 @@
 
 <section class="block" aria-labelledby="import-title">
   <h2 id="import-title">Importación</h2>
-  @if (!canPick) {
-    <p class="note">Abre el CMS en Chrome o Edge para importar desde una carpeta.</p>
-  } @else {
     <div class="import">
       <div class="info">
         <span class="name">Imágenes antiguas</span>
@@ -132,10 +129,24 @@
           }
         </span>
       </div>
-      <button type="button" class="btn small" (click)="importImages()" [disabled]="busy() || !legacy()">
-        <cms-icon name="folder-open" [size]="18" />
-        Importar…
-      </button>
+      <span class="inline">
+        @if (canPick) {
+          <button type="button" class="btn ghost small" (click)="importImages(true)" [disabled]="busy() || !legacy()">
+            <cms-icon name="folder-open" [size]="18" />
+            Desde carpeta…
+          </button>
+        }
+        <button
+          type="button"
+          class="btn primary small"
+          (click)="importImages(false)"
+          [disabled]="busy() || !legacy() || !editor.content()?.manifest?.siteUrl"
+          [title]="editor.content()?.manifest?.siteUrl ? 'Las descarga de ' + editor.content()?.manifest?.siteUrl : 'El sitio no tiene dirección pública'"
+        >
+          <cms-icon name="globe" [size]="18" />
+          Importar del sitio publicado
+        </button>
+      </span>
     </div>
 
     @if (media.importing(); as progress) {
@@ -165,6 +176,9 @@
       </div>
     }
 
+  @if (!canPick) {
+    <p class="note">Abre el CMS en Chrome o Edge para reemplazar secciones desde una carpeta.</p>
+  } @else {
     <div class="import">
       <div class="info">
         <label class="name" for="replace-target">Reemplazar sección desde carpeta</label>

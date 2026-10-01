@@ -2,7 +2,7 @@ import * as content from './content';
 import { applyImage, checkBeforePublish, deleteMedia, importSiteImages, legacyImages, MAX_VARIANT_BYTES, MediaError, mediaId, mediaIdOf, mediaPath, MediaSource, prepareMedia, uploadMedia, writeMediaFolder } from './media';
 import { detectJsonStyle, formatJson } from './json-format';
 import { suggestManifest } from './manifest';
-import { diskPath } from './paths';
+import { diskPath, publicUrl } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
 import { addEmptyCollection, ConflictError, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, offerCollection, openSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite, sectionStates, siteIdFor, writeSiteFolder } from './site';
@@ -249,6 +249,13 @@ describe('paths', () => {
     expect(diskPath(manifest, '/assets/images/8.jpeg')).toBe('src/assets/images/8.jpeg');
     expect(diskPath(manifest, 'assets/icons/a.png')).toBe('src/assets/icons/a.png');
     expect(diskPath(manifest, '/logo.png')).toBe('public/logo.png');
+  });
+
+  it('maps files of the site folder back to the public site', () => {
+    expect(publicUrl(manifest, 'src/assets/images/8.jpeg')).toBe('https://spa.test/assets/images/8.jpeg');
+    expect(publicUrl(manifest, 'public/logo.png')).toBe('https://spa.test/logo.png');
+    expect(publicUrl(manifest, 'src/app/x.ts')).toBeNull();
+    expect(publicUrl({ ...manifest, siteUrl: undefined }, 'src/assets/a.png')).toBeNull();
   });
 });
 

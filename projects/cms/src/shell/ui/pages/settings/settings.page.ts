@@ -147,15 +147,18 @@ export class SettingsPage implements OnInit {
 
   // Import
 
-  protected async importImages(): Promise<void> {
-    let handle: FileSystemDirectoryHandle;
-    try {
-      handle = await window.showDirectoryPicker({ id: 'cms-site', mode: 'read' });
-    } catch {
-      return; // The user closed the picker.
+  /** Imports the old images from the published site, or from the project folder. */
+  protected async importImages(fromFolder: boolean): Promise<void> {
+    let handle: FileSystemDirectoryHandle | undefined;
+    if (fromFolder) {
+      try {
+        handle = await window.showDirectoryPicker({ id: 'cms-site', mode: 'read' });
+      } catch {
+        return; // The user closed the picker.
+      }
+      const site = await this.editor.readFolder(handle).catch(() => null);
+      if (site && !(await this.sameSite(site))) return;
     }
-    const site = await this.editor.readFolder(handle).catch(() => null);
-    if (site && !(await this.sameSite(site))) return;
     this.report.set(null);
     await this.task(async () => this.report.set(await this.media.importFromSite(handle)));
   }
