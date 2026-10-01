@@ -10,6 +10,12 @@ Firestore (project `c-code-bf1fd`). Each site's build reads it with `c-code-cont
 npm run cms          # http://localhost:4300 (Chrome or Edge)
 ```
 
+Online it is deployed on Vercel from this repo (root `vercel.json`: builds only the CMS into
+`dist/cms/browser`). Its address must be listed in Firebase → Authentication → Dominios autorizados.
+
+```bash
+```
+
 Sign in with Google. What each person sees depends on their role:
 
 | | Client (editor) | C-Code (admin) |
