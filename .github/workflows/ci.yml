@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  architecture:
+    name: Architecture (domain/shell)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # The pure layers compile with no DOM and no @types/node (projects/cms/domain-platform.d.ts lists what they may use).
+      - name: Domain type-check
+        run: npm run lint:domain
+      - name: ESLint (boundaries, globals, declarations)
+        run: npm run lint:eslint
+      - name: Dependency graph (dependency-cruiser)
+        run: npm run lint:deps
+      - name: Component layout
+        run: npm run lint:ui && npm run lint:cms
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Library tests
+        run: npx ng test core --watch=false --browsers=ChromeHeadless
+      - name: CMS tests
+        run: npx ng test cms --watch=false --browsers=ChromeHeadless
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Library
+        run: npx ng build core
+      - name: CMS
+        run: npx ng build cms --configuration production
+      - name: Content build command
+        run: npm run build:content

@@ -5,7 +5,14 @@ paths:
 
 # CMS architecture: pure domain, shell for everything external
 
-The CMS (`projects/cms`) is split in two layers. `npm run lint:cms` enforces the rules below.
+The CMS (`projects/cms`) is split in two layers. `npm run lint` enforces the rules below, locally and in CI (`.github/workflows/ci.yml`):
+
+- `lint:domain`: `domain/` and `@cc/ui-domain` compile with no DOM and no `@types/node` (`tsconfig.domain.json`). The only platform APIs they may use are listed in `projects/cms/domain-platform.d.ts` (Blob, URL, URLSearchParams, structuredClone, atob/btoa); adding one is an architecture decision.
+- `lint:eslint`: what each layer may import (`eslint-plugin-boundaries`), plus no browser/Node globals and no `declare global/module`, `declare const`, `import()` or `/// <reference>` in the pure layers (`eslint.config.mjs`).
+- `lint:deps`: the whole dependency graph, including transitive imports and cycles (`.dependency-cruiser.cjs`).
+- `lint:cms`: component file layout in `shell/ui/`.
+
+A Claude Code hook (`.claude/settings.json`) runs ESLint, and `lint:domain` for pure files, after every edit. Fix the reported error; never silence it with `eslint-disable`, by moving code out of `domain/` to dodge a rule, or by editing these configs.
 
 ## `src/domain/`: framework-free TypeScript
 
