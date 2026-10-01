@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } 
 import { Router } from '@angular/router';
 import { findCollection } from '../../../../domain/content';
 import { countOf } from '../../../../domain/labels';
+import { DuplicateReport } from '../../../../domain/duplicates';
 import { ImportReport } from '../../../../domain/media';
 import { NewSite } from '../../../../domain/ports';
 import { CollectionDef } from '../../../../domain/schema';
@@ -50,6 +51,7 @@ export class SettingsPage implements OnInit {
   protected readonly report = signal<ImportReport | null>(null);
   protected readonly replaceTarget = signal('');
   protected readonly replaceNotice = signal('');
+  protected readonly duplicateReport = signal<DuplicateReport | null>(null);
   protected readonly legacy = computed(() => (this.editor.content() ? this.media.legacyCount() : 0));
 
   async ngOnInit(): Promise<void> {
@@ -143,6 +145,12 @@ export class SettingsPage implements OnInit {
       await this.loadSections();
       this.toast.show(`${def.label}: importada.`);
     });
+  }
+
+  // Repeated data
+
+  protected fixDuplicates(): void {
+    this.duplicateReport.set(this.editor.fixDuplicates());
   }
 
   // Import

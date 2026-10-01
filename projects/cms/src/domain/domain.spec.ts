@@ -6,6 +6,7 @@ import { diskPath, publicUrl } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
 import { addEmptyCollection, ConflictError, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, offerCollection, openSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite, sectionStates, siteIdFor, writeSiteFolder } from './site';
+import { countDuplicates, fixDuplicates } from './duplicates';
 import { countOf, emptyText, emptyTitle, newLabel, pickPrompt, pluralOf } from './labels';
 import { galleryCollection } from './scopes/shared/gallery.collection';
 import { DEFAULT_PROMO, describePromoSchedule, promoCollection } from './scopes/shared/promo.collection';
@@ -566,5 +567,33 @@ describe('importing the site images into the library', () => {
 describe('theme', () => {
   it('ignores comments and rules outside :root', () => {
     expect(extractTheme(':root{--a: 1px;} .x{--b: 2px}').style).toBe('--a: 1px');
+  });
+});
+
+describe('repeated entries', () => {
+  const svc = (id: number, name: string) => ({ id, name, iconPath: `/assets/icons/${id}.png` });
+
+  it('renumbers hidden copies and merges services with the same name, keeping what the site shows', async () => {
+    const { content: site } = await openSite(await importedRepo(), 'spa');
+    let c = content.setItems(site, 'additionals', [
+      svc(143, 'Coctel de 15 aceites'),
+      svc(144, 'Cañas de corozo'),
+      svc(143, 'Masaje terapeutico'), // hidden: the site shows the first 143
+      svc(154, 'Coctel de 15 aceites'),
+      svc(156, 'Cañas de corozo'),
+    ]);
+    c = content.setItems(c, 'plans', [plan(1, 'PLAN A', [143, 144]), plan(2, 'PLAN B', [154, 143]), plan(3, 'PLAN C', [144])]);
+    expect(countDuplicates(c)).toBe(3);
+
+    const { content: fixed, report } = fixDuplicates(c);
+    expect(report.renumbered).toEqual([{ collection: 'Servicios', title: 'Masaje terapeutico', from: 143, to: 157 }]);
+    expect(report.merged.map((m) => [m.title, m.removed, m.kept, m.moved])).toEqual([
+      ['Coctel de 15 aceites', 154, 143, ['PLAN B']],
+      ['Cañas de corozo', 156, 144, []],
+    ]);
+    expect(content.findCollection(fixed, 'additionals')!.items.map((s) => s['id'])).toEqual([143, 144, 157]);
+    expect(content.findCollection(fixed, 'plans')!.items.map((p) => p['additionalServicesId'])).toEqual([[143, 144], [143], [144]]);
+    expect(countDuplicates(fixed)).toBe(0);
+    expect(content.validateContent(fixed).filter((i) => i.code === 'duplicate-id' || /mismo nombre|este nombre/.test(i.message))).toEqual([]);
   });
 });

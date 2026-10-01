@@ -116,6 +116,42 @@
   </ul>
 </section>
 
+<section class="block" aria-labelledby="dups-title">
+  <h2 id="dups-title">Datos repetidos</h2>
+  <div class="import">
+    <div class="info">
+      <span class="name">Ids y nombres repetidos</span>
+      <span class="sub">
+        @if (editor.duplicates()) {
+          {{ editor.duplicates() }} por corregir. Se conserva lo que hoy muestra el sitio.
+        } @else {
+          No hay repetidos.
+        }
+      </span>
+    </div>
+    <button type="button" class="btn primary small" (click)="fixDuplicates()" [disabled]="busy() || !editor.duplicates()">Corregir repetidos</button>
+  </div>
+  @if (duplicateReport(); as d) {
+    <div class="progress done" role="status">
+      <strong>Corregido. Sin guardar: revisa y pulsa Guardar.</strong>
+      <ul class="failed">
+        @for (r of d.renumbered; track $index) {
+          <li>{{ r.title }} ({{ r.collection }}): id {{ r.from }} → {{ r.to }}</li>
+        }
+        @for (m of d.merged; track $index) {
+          <li>
+            {{ m.title }} ({{ m.collection }}): se quitó el repetido {{ m.removed }} y se usa el {{ m.kept }}
+            @if (m.moved.length) {
+              en {{ m.moved.join(', ') }}
+            }
+          </li>
+        }
+      </ul>
+      <button type="button" class="btn ghost small" (click)="duplicateReport.set(null)">Cerrar</button>
+    </div>
+  }
+</section>
+
 <section class="block" aria-labelledby="import-title">
   <h2 id="import-title">Importación</h2>
     <div class="import">

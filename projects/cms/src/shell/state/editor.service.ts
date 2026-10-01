@@ -9,6 +9,7 @@ import { NewSite } from '../../domain/ports';
 import { FsSiteFiles } from '../adapters/fs-site-files';
 import { EMPTY_THEME, SiteTheme } from '../../domain/theme';
 import { checkBeforePublish } from '../../domain/media';
+import { countDuplicates, DuplicateReport, fixDuplicates } from '../../domain/duplicates';
 import { loadFonts } from '../adapters/fonts';
 import { AuthService } from './auth.service';
 import { CONTENT_REPOSITORY, PUBLIC_SITE, PUBLISHER } from './ports.tokens';
@@ -82,6 +83,19 @@ export class EditorService {
 
   moveItem(collection: string, from: number, to: number): void {
     this.change((c) => content.moveItem(c, collection, from, to));
+  }
+
+  /** Repeated ids and names in the open site. */
+  readonly duplicates = computed(() => {
+    const current = this.content();
+    return current ? countDuplicates(current) : 0;
+  });
+
+  /** Fixes repeated ids and names as unsaved changes. Returns what changed. */
+  fixDuplicates(): DuplicateReport {
+    const result = fixDuplicates(this.requireContent());
+    this.applyContent(result.content);
+    return result.report;
   }
 
   giveNewId(collection: string, index: number): void {
