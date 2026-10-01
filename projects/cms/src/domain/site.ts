@@ -170,11 +170,11 @@ export function needsPublish(site: Pick<SiteSummary, 'updatedAt' | 'publishedAt'
   return !!site.updatedAt && (!site.publishedAt || site.updatedAt > site.publishedAt);
 }
 
-/** Rebuilds the public site and records when. */
-export async function publishSite(repo: ContentRepository, publisher: Publisher, siteId: string): Promise<string> {
+/** Rebuilds the public site and records when and by whom. */
+export async function publishSite(repo: ContentRepository, publisher: Publisher, siteId: string, author: string): Promise<string> {
   await publisher.publish(siteId);
   const at = new Date().toISOString();
-  await repo.markPublished(siteId, at);
+  await repo.markPublished(siteId, at, author);
   return at;
 }
 

@@ -44,14 +44,20 @@ export class SitesPage implements OnInit {
     }
   }
 
-  protected status(site: SiteSummary): { label: string; tone: 'success' | 'warning' | '' } {
-    if (needsPublish(site)) return { label: 'Sin publicar', tone: 'warning' };
-    if (site.publishedAt) return { label: 'Publicado', tone: 'success' };
-    return { label: 'Aún sin publicar', tone: '' };
+  /** "Publicado hace 2 h"; with unsaved-to-site changes, "Sin publicar" and, on hover, the last time. */
+  protected status(site: SiteSummary): { label: string; tone: 'success' | 'warning' | ''; title: string } {
+    const last = site.publishedAt ? `Última publicación: ${fullDate(site.publishedAt)}` : 'Nunca se ha publicado';
+    if (needsPublish(site)) return { label: 'Sin publicar', tone: 'warning', title: last };
+    if (site.publishedAt) return { label: `Publicado ${relativeDate(site.publishedAt)}`, tone: 'success', title: last };
+    return { label: 'Aún sin publicar', tone: '', title: last };
   }
 
   protected saved(site: SiteSummary): string {
     return site.updatedAt ? `Guardado ${relativeDate(site.updatedAt)}` : '';
+  }
+
+  protected ago(iso: string): string {
+    return relativeDate(iso);
   }
 
   protected exact(iso?: string): string {

@@ -50,7 +50,18 @@ export class MemoryContentRepository implements ContentRepository {
     });
   }
 
-  async markPublished(siteId: string, at: string): Promise<void> {
+  readonly publications: { siteId: string; at: string; author: string }[] = [];
+
+  async listPublications(siteId: string, limit: number): Promise<{ at: string; author: string }[]> {
+    return this.publications
+      .filter((p) => p.siteId === siteId)
+      .map(({ at, author }) => ({ at, author }))
+      .sort((a, b) => b.at.localeCompare(a.at))
+      .slice(0, limit);
+  }
+
+  async markPublished(siteId: string, at: string, author = ''): Promise<void> {
+    this.publications.push({ siteId, at, author });
     const site = this.sites.get(siteId);
     if (site) site.publishedAt = at;
   }

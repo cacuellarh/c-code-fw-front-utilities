@@ -196,6 +196,38 @@ h2 {
   text-decoration: underline;
   cursor: pointer;
 }
+.block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--cms-space-3);
+}
+.block-head h2 {
+  margin: 0;
+}
+.log {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--cms-text-sm);
+}
+.log th {
+  padding: 0 0 var(--cms-space-2);
+  color: var(--cms-muted);
+  font-size: var(--cms-text-xs);
+  font-weight: 600;
+  text-align: left;
+}
+.log td {
+  padding: var(--cms-space-2) var(--cms-space-3) var(--cms-space-2) 0;
+  border-top: 1px solid var(--cms-border);
+  vertical-align: top;
+}
+.log .ago {
+  color: var(--cms-muted);
+}
+.log .who {
+  overflow-wrap: anywhere;
+}
 @media (max-width: 720px) {
   :host {
     padding: var(--cms-space-4) var(--cms-space-4) 96px;

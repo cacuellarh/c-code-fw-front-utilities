@@ -1,10 +1,14 @@
 import {
+  addDoc,
   collection,
   deleteField,
   doc,
   Firestore,
   getDoc,
   getDocs,
+  limit,
+  orderBy,
+  query,
   runTransaction,
   setDoc,
   updateDoc,
@@ -13,6 +17,7 @@ import {
   CollectionChange,
   ContentRepository,
   NewSite,
+  Publication,
   SavedCollection,
   SiteSummary,
   StoredCollection,
@@ -27,6 +32,7 @@ import { SiteTheme } from '../../domain/theme';
  *   sites/{siteId}                    name, scope, manifest, theme, updatedAt, publishedAt
  *   sites/{siteId}/collections/{id}   items, version, updatedAt
  *   sites/{siteId}/history/{auto}     at, author, collections: { [id]: items }
+ *   sites/{siteId}/publications/{auto} at, author                 (only editors can read it)
  *   sites/{siteId}/private/access     editors: [emails]   (only editors can read it)
  *   sites/{siteId}/private/config     deployHookUrl       (only editors can read it)
  */
@@ -111,8 +117,17 @@ export class FirestoreContentRepository implements ContentRepository {
     });
   }
 
-  async markPublished(siteId: string, at: string): Promise<void> {
+  async markPublished(siteId: string, at: string, author: string): Promise<void> {
     await updateDoc(doc(this.db, 'sites', siteId), { publishedAt: at });
+    // The log must never stop a publication (for example, rules without the publications block yet).
+    await addDoc(collection(this.db, 'sites', siteId, 'publications'), { at, author } satisfies Publication).catch((e) =>
+      console.warn('CMS: no se pudo guardar la publicación en el historial', e)
+    );
+  }
+
+  async listPublications(siteId: string, max: number): Promise<Publication[]> {
+    const snapshot = await getDocs(query(collection(this.db, 'sites', siteId, 'publications'), orderBy('at', 'desc'), limit(max)));
+    return snapshot.docs.map((d) => d.data() as Publication);
   }
 
   async removeCollection(siteId: string, collectionId: string, author: string): Promise<void> {

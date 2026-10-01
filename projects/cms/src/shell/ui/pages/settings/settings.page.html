@@ -69,6 +69,40 @@
   </details>
 </section>
 
+<section class="block" aria-labelledby="log-title">
+  <div class="block-head">
+    <h2 id="log-title">Publicaciones</h2>
+    <button type="button" class="btn ghost small" (click)="loadPublications()">Actualizar</button>
+  </div>
+  @if (publicationsError()) {
+    <p class="note">No se pudo leer el historial: {{ publicationsError() }}</p>
+  } @else if (publications() === null) {
+    <p class="note">Cargando…</p>
+  } @else if (!publications()!.length) {
+    <p class="note">Todavía no hay publicaciones registradas. Se anotan desde esta versión del CMS.</p>
+  } @else {
+    <table class="log">
+      <thead>
+        <tr>
+          <th scope="col">Fecha y hora</th>
+          <th scope="col">Quién</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of publications(); track p.at + p.author) {
+          <tr>
+            <td>
+              {{ fullDate(p.at) }}
+              <span class="ago">· {{ relativeDate(p.at) }}</span>
+            </td>
+            <td class="who">{{ p.author }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
+
 <section class="block" aria-labelledby="sections-title">
   <h2 id="sections-title">Secciones</h2>
   <ul class="sections">

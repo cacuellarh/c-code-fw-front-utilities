@@ -55,12 +55,15 @@
                   <span class="name">{{ site.name }}</span>
                   <span class="meta">
                     <span [title]="exact(site.updatedAt)">{{ saved(site) }}</span>
+                    @if (s.tone === 'warning' && site.publishedAt) {
+                      <span [title]="s.title">Publicado {{ ago(site.publishedAt) }}</span>
+                    }
                     @if (auth.isAdmin()) {
                       <span class="mono">{{ site.id }}</span>
                     }
                   </span>
                 </span>
-                <span class="pill" [class]="s.tone" [title]="exact(site.publishedAt)">{{ s.label }}</span>
+                <span class="pill" [class]="s.tone" [title]="s.title">{{ s.label }}</span>
                 <cms-icon class="go" name="arrow-left" />
               </a>
             </li>

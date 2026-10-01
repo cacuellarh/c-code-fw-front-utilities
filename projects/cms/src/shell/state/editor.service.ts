@@ -5,7 +5,7 @@ import { SiteSummary } from '../../domain/ports';
 import { Entry, ScopeDef } from '../../domain/schema';
 import { addEmptyCollection, folderMismatch, hideCollection, importMissingCollections, needsPublish, offerCollection, openSite, publishSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite, sectionStates } from '../../domain/site';
 import { CollectionDef } from '../../domain/schema';
-import { NewSite } from '../../domain/ports';
+import { NewSite, Publication } from '../../domain/ports';
 import { FsSiteFiles } from '../adapters/fs-site-files';
 import { EMPTY_THEME, SiteTheme } from '../../domain/theme';
 import { checkBeforePublish } from '../../domain/media';
@@ -139,11 +139,16 @@ export class EditorService {
     const site = this.requireSite();
     this.publishing.set(true);
     try {
-      const publishedAt = await publishSite(this.repo, this.publisher, site.id);
+      const publishedAt = await publishSite(this.repo, this.publisher, site.id, this.auth.email());
       this.site.set({ ...site, publishedAt });
     } finally {
       this.publishing.set(false);
     }
+  }
+
+  /** Who published the open site and when, newest first. */
+  publications(max = 30): Promise<Publication[]> {
+    return this.repo.listPublications(this.requireSite().id, max);
   }
 
   async rename(name: string): Promise<void> {

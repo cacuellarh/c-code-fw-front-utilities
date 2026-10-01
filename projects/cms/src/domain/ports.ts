@@ -17,8 +17,10 @@ export interface ContentRepository {
   saveCollections(siteId: string, changes: CollectionChange[], author: string): Promise<SavedCollection[]>;
   /** Creates a site with its content; `author` becomes its first editor. Fails if the id is taken. */
   createSite(site: NewSite, author: string): Promise<void>;
-  /** Records that the site was published. */
-  markPublished(siteId: string, at: string): Promise<void>;
+  /** Records that the site was published, and by whom (it goes to the site's publication log). */
+  markPublished(siteId: string, at: string, author: string): Promise<void>;
+  /** The latest publications of the site, newest first. */
+  listPublications(siteId: string, limit: number): Promise<Publication[]>;
   /**
    * Deletes a collection from the site and marks it as not used. Its last content is kept in the
    * site's history first.
@@ -54,6 +56,14 @@ export interface StoredCollection {
   /** Increases on every save; used to detect concurrent edits. */
   version: number;
   updatedAt?: string;
+}
+
+/** One entry of a site's publication log. */
+export interface Publication {
+  /** ISO date and time. */
+  at: string;
+  /** Email of who published. */
+  author: string;
 }
 
 export interface CollectionChange {

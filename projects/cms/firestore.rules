@@ -65,6 +65,12 @@ service cloud.firestore {
         allow read, create: if isEditor(site);
       }
 
+      // Publication log: who published and when. Entries are only added, never changed.
+      match /publications/{entry} {
+        allow read: if isEditor(site);
+        allow create: if isEditor(site) && request.resource.data.author == signedInEmail();
+      }
+
       match /private/{doc} {
         // Editors read the Deploy Hook to publish, and their own access to know they can edit.
         allow read: if isEditor(site);

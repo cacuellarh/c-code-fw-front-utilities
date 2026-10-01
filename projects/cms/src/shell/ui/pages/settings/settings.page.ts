@@ -4,7 +4,7 @@ import { findCollection } from '../../../../domain/content';
 import { countOf } from '../../../../domain/labels';
 import { DuplicateReport } from '../../../../domain/duplicates';
 import { ImportReport } from '../../../../domain/media';
-import { NewSite } from '../../../../domain/ports';
+import { NewSite, Publication } from '../../../../domain/ports';
 import { CollectionDef } from '../../../../domain/schema';
 import { canPickFolders } from '../../../adapters/fs-site-files';
 import { DialogService } from '../../../state/dialog.service';
@@ -12,7 +12,7 @@ import { EditorService } from '../../../state/editor.service';
 import { MediaService } from '../../../state/media.service';
 import { ToastService } from '../../../state/toast.service';
 import { IconComponent } from '../../icon/icon.component';
-import { errorMessage } from '../../messages';
+import { errorMessage, fullDate, relativeDate } from '../../messages';
 
 type SectionState = 'active' | 'hidden' | 'available';
 
@@ -52,6 +52,11 @@ export class SettingsPage implements OnInit {
   protected readonly replaceTarget = signal('');
   protected readonly replaceNotice = signal('');
   protected readonly duplicateReport = signal<DuplicateReport | null>(null);
+  /** Publication log, newest first; null while loading. */
+  protected readonly publications = signal<Publication[] | null>(null);
+  protected readonly publicationsError = signal('');
+  protected readonly fullDate = fullDate;
+  protected readonly relativeDate = relativeDate;
   protected readonly legacy = computed(() => (this.editor.content() ? this.media.legacyCount() : 0));
 
   async ngOnInit(): Promise<void> {
@@ -64,6 +69,17 @@ export class SettingsPage implements OnInit {
       await this.loadSections();
     } catch (e) {
       this.error.set(errorMessage(e, true));
+    }
+    await this.loadPublications();
+  }
+
+  protected async loadPublications(): Promise<void> {
+    this.publicationsError.set('');
+    try {
+      this.publications.set(await this.editor.publications());
+    } catch (e) {
+      this.publications.set([]);
+      this.publicationsError.set(errorMessage(e, true));
     }
   }
 

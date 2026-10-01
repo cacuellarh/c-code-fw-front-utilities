@@ -5,7 +5,7 @@ import { suggestManifest } from './manifest';
 import { diskPath, publicUrl } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
-import { addEmptyCollection, ConflictError, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, offerCollection, openSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite, sectionStates, siteIdFor, writeSiteFolder } from './site';
+import { addEmptyCollection, ConflictError, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, offerCollection, openSite, publishSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite, sectionStates, siteIdFor, writeSiteFolder } from './site';
 import { countDuplicates, fixDuplicates } from './duplicates';
 import { countOf, emptyText, emptyTitle, newLabel, pickPrompt, pluralOf } from './labels';
 import { galleryCollection } from './scopes/shared/gallery.collection';
@@ -595,5 +595,22 @@ describe('repeated entries', () => {
     expect(content.findCollection(fixed, 'plans')!.items.map((p) => p['additionalServicesId'])).toEqual([[143, 144], [143], [144]]);
     expect(countDuplicates(fixed)).toBe(0);
     expect(content.validateContent(fixed).filter((i) => i.code === 'duplicate-id' || /mismo nombre|este nombre/.test(i.message))).toEqual([]);
+  });
+});
+
+describe('publication log', () => {
+  it('records who published and when, newest first', async () => {
+    const repo = await importedRepo();
+    const published: string[] = [];
+    const publisher = { publish: async (id: string) => void published.push(id) };
+    const first = await publishSite(repo, publisher, 'spa', 'ana@spa.test');
+    const second = await publishSite(repo, publisher, 'spa', 'admin@c-code.test');
+    expect(published).toEqual(['spa', 'spa']);
+    const log = await repo.listPublications('spa', 10);
+    expect(log.map((p) => p.author).sort()).toEqual(['admin@c-code.test', 'ana@spa.test']);
+    expect(log[0].at >= log[1].at).toBeTrue();
+    expect(log.map((p) => p.at).sort()).toEqual([first, second].sort());
+    expect(await repo.listPublications('spa', 1)).toHaveSize(1);
+    expect((await repo.listSites())[0].publishedAt).toBe(second);
   });
 });

@@ -35,6 +35,8 @@ plus a thumbnail and a JPEG for link previews), icons to WebP (256 px).
 - **Admins** are the documents `admins/{email}` in Firestore (created in the Firebase console;
   the document can be empty).
 - **Editors** of a site are listed in `sites/{id}/private/access` → `editors: [emails]`.
+- Every publication is logged in `sites/{id}/publications` (date and email), shown in
+  Configuración › Publicaciones.
 - `firestore.rules` enforces it: editors can only save existing sections, upload images and
   publish. Renaming, sections, Deploy Hook and access are for admins. Publish the rules in Firebase
   console → Firestore Database → Rules.
