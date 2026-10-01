@@ -16,8 +16,12 @@ export class FirestoreAccess implements Access {
     const email = this.auth.currentUser?.email;
     if (!email) return false;
     try {
-      return (await getDoc(doc(this.db, 'admins', email))).exists();
-    } catch {
+      const admin = (await getDoc(doc(this.db, 'admins', email))).exists();
+      // Shown in the browser console, to tell a missing document from rules that refuse the read.
+      if (!admin) console.warn(`CMS: no existe el documento admins/${email}.`);
+      return admin;
+    } catch (e) {
+      console.warn(`CMS: Firestore no deja leer admins/${email} (${(e as { code?: string }).code ?? e}). Revisa que las reglas publicadas tengan el bloque match /admins/{email}.`);
       return false;
     }
   }
