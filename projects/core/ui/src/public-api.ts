@@ -20,6 +20,7 @@ export * from './lib/services/seo.service';
 export * from './lib/components/button/button.component';
 export * from './lib/components/section-heading/section-heading.component';
 export * from './lib/components/notice/notice.component';
+export * from './lib/components/loader/loader.component';
 export * from './lib/components/faq-item/faq-item.component';
 export * from './lib/components/whatsapp-button/whatsapp-button.component';
 export * from './lib/components/promo-modal/promo-modal.component';

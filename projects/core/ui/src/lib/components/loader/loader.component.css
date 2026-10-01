@@ -1,0 +1,66 @@
+:host {
+  --_loader-size: var(--cc-loader-size, 2.5rem);
+  --_loader-thickness: var(--cc-loader-thickness, calc(var(--_loader-size) * 0.16));
+  /* The accent as text is the one with enough contrast on the canvas (≥3:1 needed here). */
+  --_loader-color: var(--cc-loader-color, var(--_accent-text));
+  --_loader-speed: var(--cc-loader-speed, 1s);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--_space-2);
+  color: var(--_text-muted);
+  font-size: var(--_text-sm);
+  vertical-align: middle;
+  /* Stays invisible during `delay`, then fades in. */
+  animation: cc-loader-in var(--_duration) var(--_ease) var(--_loader-delay, 0ms) both;
+}
+:host(.cc-loader--sm) {
+  --_loader-size: var(--cc-loader-size, 1.25rem);
+}
+:host(.cc-loader--lg) {
+  --_loader-size: var(--cc-loader-size, 3.5rem);
+}
+:host(.cc-loader--inverse) {
+  --_loader-color: var(--cc-loader-color, var(--_inverse));
+}
+:host(.cc-loader--current) {
+  --_loader-color: var(--cc-loader-color, currentColor);
+  color: inherit;
+}
+:host(.cc-loader--block) {
+  display: flex;
+  justify-content: center;
+  padding: var(--_space-12) var(--_space-4);
+}
+:host(.cc-loader--overlay) {
+  position: absolute;
+  inset: 0;
+  z-index: var(--_z-float);
+  display: flex;
+  justify-content: center;
+  background: var(--cc-loader-overlay, color-mix(in srgb, var(--_canvas) 72%, transparent));
+}
+
+.cc-loader__ring {
+  flex: none;
+  width: var(--_loader-size);
+  aspect-ratio: 1;
+  border: var(--_loader-thickness) solid;
+  border-color: var(--_loader-color) transparent;
+  border-radius: 50%;
+  animation: cc-loader-spin var(--_loader-speed) infinite;
+}
+.cc-loader__label {
+  line-height: var(--_leading-snug);
+}
+
+@keyframes cc-loader-spin {
+  to {
+    transform: rotate(0.5turn);
+  }
+}
+@keyframes cc-loader-in {
+  from {
+    opacity: 0;
+  }
+}

@@ -5,7 +5,9 @@ import {
   FaqComponent,
   findPlanBySlug,
   GalleryComponent,
+  ButtonComponent,
   InfoItemComponent,
+  LoaderComponent,
   numberedImages,
   PlanCatalogComponent,
   PlanCatalogService,
@@ -85,10 +87,52 @@ class GalleryPage {
 })
 class PoliciesPage {}
 
+@Component({
+  imports: [LoaderComponent, ButtonComponent],
+  template: `
+    <div style="display:grid;gap:2.5rem">
+      <section>
+        <h2>Tamaños</h2>
+        <div style="display:flex;gap:2rem;align-items:center">
+          <cc-loader size="sm" /><cc-loader /><cc-loader size="lg" />
+        </div>
+      </section>
+      <section>
+        <h2>Tonos y texto visible</h2>
+        <div style="display:flex;gap:2rem;align-items:center;flex-wrap:wrap">
+          <cc-loader showLabel />
+          <cc-loader tone="inverse" showLabel label="Buscando planes…" />
+          <span style="padding:1rem 1.5rem;background:#1c1917;color:#fff">
+            <cc-loader tone="current" showLabel label="Sobre fondo oscuro" />
+          </span>
+        </div>
+      </section>
+      <section>
+        <h2>Dentro de un botón</h2>
+        <button ccButton type="button" disabled><cc-loader size="sm" tone="current" label="Guardando" /> Guardando…</button>
+      </section>
+      <section>
+        <h2>Bloque</h2>
+        <cc-loader layout="block" showLabel label="Cargando la galería…" />
+      </section>
+      <section>
+        <h2>Superpuesto (aparece a los 300 ms)</h2>
+        <div style="position:relative;max-width:28rem;padding:1.5rem;border:1px solid #d6d3d1">
+          <p>Contenido de la tarjeta que se está actualizando. El loader lo cubre con un velo translúcido.</p>
+          <p>Segunda línea de contenido.</p>
+          <cc-loader layout="overlay" [delay]="300" />
+        </div>
+      </section>
+    </div>
+  `,
+})
+class LoaderPage {}
+
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'planes' },
   { path: 'planes', component: CatalogPage },
   { path: 'planes/:slug', component: DetailsPage },
   { path: 'galeria', component: GalleryPage },
   { path: 'politicas', component: PoliciesPage },
+  { path: 'loader', component: LoaderPage },
 ];

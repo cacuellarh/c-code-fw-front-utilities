@@ -17,6 +17,7 @@ export const WHATSAPP = whatsappUrl('573104948884', 'Hola, necesito más informa
           <a routerLink="/planes/plan-gardenia" routerLinkActive="on">Detalle</a>
           <a routerLink="/galeria" routerLinkActive="on">Galería</a>
           <a routerLink="/politicas" routerLinkActive="on">Políticas / FAQ</a>
+          <a routerLink="/loader" routerLinkActive="on">Loader</a>
         </nav>
         <cc-social-links
           [links]="[

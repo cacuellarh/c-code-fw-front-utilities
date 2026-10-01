@@ -8,6 +8,7 @@ import { FaqItemComponent } from './faq-item/faq-item.component';
 import { FaqComponent } from './faq/faq.component';
 import { GalleryComponent, numberedImages } from './gallery/gallery.component';
 import { LightboxComponent } from './lightbox/lightbox.component';
+import { LoaderComponent } from './loader/loader.component';
 import { NoticeComponent } from './notice/notice.component';
 import { PlanCardComponent } from './plan-card/plan-card.component';
 import { defaultPlanMeta, PlanCardTemplateDirective, PlanCatalogComponent } from './plan-catalog/plan-catalog.component';
@@ -421,5 +422,36 @@ describe('SectionHeadingComponent and NoticeComponent', () => {
     expect(fixture.nativeElement.getAttribute('role')).toBe('note');
     expect(fixture.nativeElement.classList).toContain('cc-notice--warning');
     expect(text(fixture, '.cc-notice__title')).toEqual(['Importante']);
+  });
+});
+
+describe('LoaderComponent', () => {
+  it('announces its label to screen readers and hides it by default', () => {
+    const fixture = TestBed.createComponent(LoaderComponent);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.getAttribute('role')).toBe('status');
+    expect(host.getAttribute('aria-live')).toBe('polite');
+    expect(text(fixture, '.cc-loader__label')).toEqual(['Cargando…']);
+    expect(host.querySelector('.cc-loader__label')!.classList).toContain('cc-sr-only');
+    expect(host.querySelector('.cc-loader__ring')!.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('maps size, tone, layout, visible label and delay to the host', () => {
+    const fixture = TestBed.createComponent(LoaderComponent);
+    fixture.componentRef.setInput('size', 'lg');
+    fixture.componentRef.setInput('tone', 'current');
+    fixture.componentRef.setInput('layout', 'overlay');
+    fixture.componentRef.setInput('label', 'Buscando planes…');
+    fixture.componentRef.setInput('showLabel', '');
+    fixture.componentRef.setInput('delay', '300');
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.classList).toContain('cc-loader--lg');
+    expect(host.classList).toContain('cc-loader--current');
+    expect(host.classList).toContain('cc-loader--overlay');
+    expect(host.style.getPropertyValue('--_loader-delay')).toBe('300ms');
+    expect(host.querySelector('.cc-loader__label')!.classList).not.toContain('cc-sr-only');
+    expect(text(fixture, '.cc-loader__label')).toEqual(['Buscando planes…']);
   });
 });

@@ -279,6 +279,7 @@ All text has Spanish defaults, and every label is an input.
 | `<cc-lightbox>` | `images`*, `[(index)]` | Arrows, swipe and Escape. Focus is trapped while open and restored on close. |
 | `<cc-info-item>` | `title`*, `text`, `tone`, `size`, `headingLevel`, `headingId` | Projects extra content. |
 | `<cc-notice>` | `tone` (`info`, `warning`, `success`), `title` | Highlighted note; content is projected. |
+| `<cc-loader>` | `size` (`sm`, `md`, `lg`), `tone` (`accent`, `inverse`, `current`), `layout` (`inline`, `block`, `overlay`), `label`, `showLabel`, `delay` (ms) | Spinning ring with `role="status"`; screen readers hear `label`. `overlay` covers the nearest `position: relative` ancestor; `delay` avoids a flash on fast loads. Tokens: `--cc-loader-color`, `-size`, `-thickness`, `-speed`, `-overlay`. |
 | `<cc-faq>` + `<cc-faq-item>` | `items` or projected `<cc-faq-item question="…">` | Native `<details>`, so answers are prerendered. Items can contain links. |
 | `<cc-whatsapp-button>` | `href`*, `variant` (`icon`, `extended`), `label`, `size`, `position`, `iconSrc` | Floating button. |
 | `<cc-promo-modal>` | `[(open)]`, `autoOpen`, `delayMs`, `rememberKey`, `rememberDays`, `imageSrc`, `imageAlt`, `link`, `ctaLabel`, `ctaHref` | It opens by itself in the browser and remembers the dismissal. |
