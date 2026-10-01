@@ -3,8 +3,9 @@ import * as content from '../../domain/content';
 import { SiteContent } from '../../domain/content';
 import { SiteSummary } from '../../domain/ports';
 import { Entry, ScopeDef } from '../../domain/schema';
-import { addEmptyCollection, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, publishSite, readSiteFolder, renameSite, saveSite } from '../../domain/site';
+import { addEmptyCollection, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, publishSite, readSiteFolder, renameSite, replaceFromFolder, saveSite } from '../../domain/site';
 import { CollectionDef } from '../../domain/schema';
+import { NewSite } from '../../domain/ports';
 import { FsSiteFiles } from '../adapters/fs-site-files';
 import { EMPTY_THEME, SiteTheme } from '../../domain/theme';
 import { checkBeforePublish } from '../../domain/media';
@@ -155,12 +156,29 @@ export class EditorService {
     await this.open(site.id);
   }
 
+  /** Reads a site folder (JSON files, cms.json, theme) without changing anything. */
+  readFolder(handle: FileSystemDirectoryHandle): Promise<Omit<NewSite, 'id'>> {
+    return readSiteFolder(new FsSiteFiles(handle));
+  }
+
+  /** Warning when the folder seems to be another site's, or null. */
+  folderWarning(folder: Omit<NewSite, 'id'>): string | null {
+    return folderMismatch(this.requireContent().manifest, folder);
+  }
+
+  /** Puts a collection's entries from the folder as unsaved changes, to review and save. */
+  replaceFromFolder(collectionId: string, folder: Omit<NewSite, 'id'>): { before: number; after: number } {
+    const result = replaceFromFolder(this.requireContent(), collectionId, folder);
+    this.content.set(result.content);
+    return { before: result.before, after: result.after };
+  }
+
   /** Imports, from the site's folder, the sections it does not have yet. Returns their labels. */
-  async importSections(handle: FileSystemDirectoryHandle): Promise<string[]> {
+  async importSections(folder: Omit<NewSite, 'id'>): Promise<string[]> {
     const site = this.requireSite();
     const stored = await this.repo.loadSite(site.id);
     if (!stored) throw new Error('El sitio no existe.');
-    const imported = await importMissingCollections(this.repo, stored, await readSiteFolder(new FsSiteFiles(handle)), this.auth.email());
+    const imported = await importMissingCollections(this.repo, stored, folder, this.auth.email());
     if (imported.length) await this.open(site.id);
     return imported;
   }

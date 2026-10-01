@@ -5,7 +5,7 @@ import { suggestManifest } from './manifest';
 import { diskPath } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
-import { addEmptyCollection, ConflictError, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, readSiteFolder, renameSite, saveSite, siteIdFor, writeSiteFolder } from './site';
+import { addEmptyCollection, ConflictError, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, readSiteFolder, renameSite, replaceFromFolder, saveSite, siteIdFor, writeSiteFolder } from './site';
 import { galleryCollection } from './scopes/shared/gallery.collection';
 import { DEFAULT_PROMO, promoCollection } from './scopes/shared/promo.collection';
 import { MemoryContentRepository } from './testing/memory-content-repository';
@@ -375,6 +375,36 @@ describe('gallery and popup (shared blocks)', () => {
     const { item } = await prepareMedia(new FakeImageEncoder(), { name: 'sauna.jpg', type: 'image/jpeg', data: new Blob(['x']) }, 'photo', []);
     const field = galleryCollection().fields[0] as ImageField;
     expect(applyImage(field, { caption: 'Sauna' }, item)).toEqual({ caption: 'Sauna', src: '/assets/cms/sauna.webp', thumb: '/assets/cms/sauna-thumb.webp' });
+  });
+});
+
+describe('fixing an import from the wrong folder', () => {
+  const GALLERY = 'src/assets/data/gallery.json';
+
+  it('warns when the folder belongs to another site', async () => {
+    const other = spaFolder();
+    await other.write(MANIFEST_FILE, JSON.stringify({ ...manifest, siteUrl: 'https://www.laurelspamedellin.com' }));
+    const otherSite = await readSiteFolder(other);
+    expect(folderMismatch({ ...manifest, siteUrl: 'https://ixoraspabucaramanga.com' }, otherSite)).toContain('laurelspamedellin.com');
+    expect(folderMismatch({ ...manifest, siteUrl: 'https://spa.test' }, await readSiteFolder(spaFolder()))).toBeNull();
+    expect(folderMismatch({ ...manifest, siteUrl: 'https://www.spa.test' }, await readSiteFolder(spaFolder()))).toBeNull();
+  });
+
+  it('replaces a collection with the folder as unsaved changes, so it can be discarded', async () => {
+    const repo = await importedRepo();
+    const wrong = spaFolder();
+    await wrong.write(GALLERY, JSON.stringify([{ src: '/a.jpeg', thumb: '/a.jpeg', caption: 'De otro sitio' }]));
+    await importMissingCollections(repo, (await repo.loadSite('spa'))!, await readSiteFolder(wrong), 'yo');
+
+    const right = spaFolder();
+    await right.write(GALLERY, JSON.stringify([{ src: '/b.webp', thumb: '/b.webp', caption: 'Uno' }, { src: '/c.webp', thumb: '/c.webp', caption: 'Dos' }]));
+    const { content: site } = await openSite(repo, 'spa');
+    const result = replaceFromFolder(site, 'gallery', await readSiteFolder(right));
+    expect([result.before, result.after]).toEqual([1, 2]);
+    expect(content.dirtyCollections(result.content).map((c) => c.def.id)).toEqual(['gallery']);
+    expect(content.findCollection(content.discardChanges(result.content), 'gallery')!.items[0]['caption']).toBe('De otro sitio');
+    const withoutGallery = await readSiteFolder(spaFolder());
+    expect(() => replaceFromFolder(site, 'gallery', withoutGallery)).toThrowError(/no tiene el archivo/);
   });
 });
 

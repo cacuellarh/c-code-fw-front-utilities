@@ -7,6 +7,12 @@
           @if (s.def.description) {
             <p class="desc">{{ s.def.description }}</p>
           }
+          @if (canPickFolders && !s.error) {
+            <button type="button" class="reload" (click)="reloadFromFolder()">Reemplazar desde carpeta…</button>
+          }
+          @if (notice()) {
+            <p class="notice" role="status">{{ notice() }}</p>
+          }
         </div>
       </header>
       @if (s.error) {
@@ -22,6 +28,12 @@
         <h2 [id]="'title-' + s.def.id">{{ s.def.label }}</h2>
         @if (s.def.description) {
           <p class="desc">{{ s.def.description }}</p>
+        }
+        @if (canPickFolders && !s.error) {
+          <button type="button" class="reload" (click)="reloadFromFolder()">Reemplazar desde carpeta…</button>
+        }
+        @if (notice()) {
+          <p class="notice" role="status">{{ notice() }}</p>
         }
       </div>
       @if (!s.error) {

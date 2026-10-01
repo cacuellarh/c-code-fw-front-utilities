@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, numberAttr
 import { Router } from '@angular/router';
 import { slugify } from '@c-code/c-code-fw/ui';
 import { titleOf } from '../../../../domain/content';
+import { canPickFolders } from '../../../adapters/fs-site-files';
 import { EditorService } from '../../../state/editor.service';
 import { MediaService } from '../../../state/media.service';
 import { EntryEditorComponent } from '../../entry-editor/entry-editor.component';
@@ -24,6 +25,8 @@ export class CollectionPage {
   readonly i = input(-1, { transform: (v: unknown) => (v === undefined || v === '' ? -1 : numberAttribute(v, -1)) });
 
   protected readonly query = signal('');
+  protected readonly canPickFolders = canPickFolders();
+  protected readonly notice = signal('');
   protected readonly state = computed(() => this.editor.collection(this.collection()));
   protected readonly selected = computed(() => {
     const items = this.state()?.items ?? [];
@@ -62,6 +65,32 @@ export class CollectionPage {
       return new Map(request.map((path, i) => [path, urls[i]]));
     },
   });
+
+  /** Loads this section from a site folder as unsaved changes, to fix a wrong import. */
+  protected async reloadFromFolder(): Promise<void> {
+    const state = this.state();
+    if (!state) return;
+    let handle: FileSystemDirectoryHandle;
+    try {
+      handle = await window.showDirectoryPicker({ id: 'cms-site', mode: 'read' });
+    } catch {
+      return; // The user closed the picker.
+    }
+    this.notice.set('');
+    try {
+      const folder = await this.editor.readFolder(handle);
+      const warning = this.editor.folderWarning(folder);
+      if (warning && !confirm(`${warning}\n\n¿Usar esta carpeta de todas formas?`)) return;
+      const { before, after } = this.editor.replaceFromFolder(state.def.id, folder);
+      this.select(-1);
+      this.notice.set(
+        `Cargado de «${handle.name}»: ${after} en lugar de ${before}. Todavía no está guardado: ` +
+          'revísalo y pulsa Guardar, o Descartar para volver atrás.'
+      );
+    } catch (e) {
+      this.notice.set((e as Error).message);
+    }
+  }
 
   protected select(index: number): void {
     this.router.navigate([], { queryParams: { i: index >= 0 ? index : null }, queryParamsHandling: 'merge' });

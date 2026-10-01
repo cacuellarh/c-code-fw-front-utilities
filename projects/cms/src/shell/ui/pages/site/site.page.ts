@@ -134,7 +134,10 @@ export class SitePage implements OnInit {
       return; // The user closed the picker.
     }
     await this.sectionTask(async () => {
-      const imported = await this.editor.importSections(handle);
+      const folder = await this.editor.readFolder(handle);
+      const warning = this.editor.folderWarning(folder);
+      if (warning && !confirm(`${warning}\n\n¿Importar de todas formas?`)) return;
+      const imported = await this.editor.importSections(folder);
       if (!imported.length) this.error.set(`La carpeta «${handle.name}» no tiene archivos de las secciones que faltan.`);
       else alert(`Importado: ${imported.join(', ')}.`);
     });

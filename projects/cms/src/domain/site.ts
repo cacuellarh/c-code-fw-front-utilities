@@ -214,3 +214,42 @@ export async function hideCollection(repo: ContentRepository, siteId: string, de
   if (!def.optional) throw new Error(`«${def.label}» no se puede ocultar: el sitio la necesita.`);
   await repo.hideCollection(siteId, def.id);
 }
+
+/**
+ * Warning when a folder seems to belong to another site: its public address (from its
+ * `cms.json` or sitemap) differs from the site's. Null when they match or cannot be compared.
+ */
+export function folderMismatch(site: SiteManifest, folder: Omit<NewSite, 'id'>): string | null {
+  const host = (url?: string) => {
+    try {
+      return url ? new URL(url).hostname.replace(/^www\./, '') : '';
+    } catch {
+      return '';
+    }
+  };
+  const mine = host(site.siteUrl);
+  const theirs = host(folder.manifest.siteUrl);
+  return mine && theirs && mine !== theirs
+    ? `La carpeta parece ser de otro sitio (${theirs}), no de ${mine}.`
+    : null;
+}
+
+/**
+ * Replaces the entries of one collection with the ones in the site's folder, as unsaved
+ * changes: the user reviews them and saves, or discards. For fixing a wrong import.
+ */
+export function replaceFromFolder(
+  content: SiteContent,
+  collectionId: string,
+  folder: Omit<NewSite, 'id'>
+): { content: SiteContent; before: number; after: number } {
+  const current = content.collections.find((c) => c.def.id === collectionId);
+  if (!current) throw new Error(`Colección desconocida: ${collectionId}`);
+  const found = folder.collections.find((c) => c.id === collectionId);
+  if (!found) throw new Error(`La carpeta no tiene el archivo de «${current.def.label}» (${current.path}).`);
+  return {
+    content: { ...content, collections: content.collections.map((c) => (c === current ? { ...c, items: structuredClone(found.items) } : c)) },
+    before: current.items.length,
+    after: found.items.length,
+  };
+}
