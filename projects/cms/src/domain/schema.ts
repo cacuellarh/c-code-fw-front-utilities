@@ -22,7 +22,14 @@ export interface CollectionDef {
   label: string;
   /** Singular, for buttons: "plan". */
   singular: string;
+  /** The singular is feminine ("una foto"), for "Nueva foto" and "Elige una foto". */
+  feminine?: boolean;
+  /** Plural when it is not the regular one (singular + s / es). */
+  plural?: string;
+  /** What the section holds, shown only where sections are configured. */
   description?: string;
+  /** Name of the icon of the section in the menu ("images"). The shell draws it. */
+  icon?: string;
   /** Path of the JSON file from the site root. `cms.json` can override it. */
   file: string;
   /** When the file does not exist in a site, the collection is hidden instead of failing. */
@@ -43,18 +50,28 @@ export interface CollectionDef {
   fields: FieldDef[];
   /** Values of a new entry. */
   create: (ctx: ScopeContext) => Entry;
-  /** Problems of one entry. `all` is the whole collection, for uniqueness checks. */
-  validate?: (item: Entry, all: Entry[], ctx: ScopeContext) => string[];
+  /**
+   * Problems of one entry. `all` is the whole collection, for uniqueness checks. A problem
+   * about one field names it (`{ field, message }`) so the CMS shows it next to that field.
+   */
+  validate?: (item: Entry, all: Entry[], ctx: ScopeContext) => (string | FieldProblem)[];
   /** Key of a live preview next to the form ("spa.plan"). The shell draws it; the domain only names it. */
   preview?: string;
 }
 
 export type Entry = Record<string, unknown>;
 
+export interface FieldProblem {
+  field: string;
+  message: string;
+}
+
 interface BaseField {
   key: string;
   label: string;
   help?: string;
+  /** Shown instead of `help` only when the value differs from the saved one ("the address will change"). */
+  changedHelp?: string;
   required?: boolean;
   /** `half` puts two fields in one row on wide screens. */
   width?: 'full' | 'half';
@@ -71,6 +88,7 @@ export interface TextField extends BaseField {
 export interface TextareaField extends BaseField {
   type: 'textarea';
   rows?: number;
+  placeholder?: string;
   maxLength?: number;
 }
 
@@ -112,13 +130,17 @@ export interface ImageField extends BaseField {
 /** Yes/no switch. */
 export interface BooleanField extends BaseField {
   type: 'boolean';
-  /** Text next to the switch when it is on: "Mostrar el popup". */
+  /** State next to the switch when it is on. Default: "Encendido". */
   onLabel?: string;
+  /** State next to the switch when it is off. Default: "Apagado". */
+  offLabel?: string;
 }
 
 /** A day, stored as YYYY-MM-DD. Empty when the field is optional and not set. */
 export interface DateField extends BaseField {
   type: 'date';
+  /** What an empty date means, shown next to the empty input: "Desde hoy". */
+  emptyLabel?: string;
 }
 
 export type FieldDef =

@@ -26,6 +26,8 @@ export interface ContentRepository {
   removeCollection(siteId: string, collectionId: string, author: string): Promise<void>;
   /** Marks an optional collection as not used by the site, so the CMS stops offering it. */
   hideCollection(siteId: string, collectionId: string): Promise<void>;
+  /** Undoes `hideCollection`: the CMS offers the collection again. */
+  showCollection(siteId: string, collectionId: string): Promise<void>;
   /** Adds collections to an existing site. Fails if one of them already exists. */
   addCollections(siteId: string, collections: { id: string; items: Entry[] }[], author: string): Promise<void>;
   /** Changes the name shown in the CMS (and the manifest's name). The id stays the same. */
@@ -71,6 +73,16 @@ export interface NewSite {
   manifest: SiteManifest;
   theme?: SiteTheme;
   collections: { id: string; items: Entry[] }[];
+}
+
+/**
+ * Who the signed-in person is for the CMS. Admins create sites and configure them; editors
+ * (the clients) edit the content of their sites. The rules of the repository enforce it.
+ */
+export interface Access {
+  isAdmin(): Promise<boolean>;
+  /** Whether the person can edit this site. */
+  canEdit(siteId: string): Promise<boolean>;
 }
 
 /** Rebuilds and deploys the public site after the content changed. */

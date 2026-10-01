@@ -1,5 +1,5 @@
 import { formatPrice, PlanCategory, planSlug } from '@cc/ui-domain';
-import { Entry, ScopeContext, ScopeDef } from '../../schema';
+import { Entry, FieldProblem, ScopeContext, ScopeDef } from '../../schema';
 import { galleryCollection } from '../shared/gallery.collection';
 import { promoCollection } from '../shared/promo.collection';
 import { generateRoutes, generateSitemap, planRoute } from './spa.generators';
@@ -28,7 +28,8 @@ export const SPA_SCOPE: ScopeDef = {
       id: 'plans',
       label: 'Planes',
       singular: 'plan',
-      description: 'Cada plan tiene su página en el sitio. La dirección sale del nombre.',
+      icon: 'layout-list',
+      description: 'Planes con precio, duración y servicios incluidos. Cada uno tiene su página.',
       file: 'src/assets/data/plans.json',
       idKey: 'id',
       titleKey: 'name',
@@ -45,7 +46,7 @@ export const SPA_SCOPE: ScopeDef = {
           required: true,
           uppercase: true,
           placeholder: 'PLAN GARDENIA',
-          help: 'Si lo cambias, cambia la dirección de la página del plan y los enlaces viejos dejan de funcionar.',
+          changedHelp: 'La dirección de la página cambiará: los enlaces que ya compartiste dejarán de funcionar.',
         },
         { key: 'category', label: 'Categoría', type: 'select', options: CATEGORY_OPTIONS, width: 'half' },
         { key: 'cuantity', label: 'Personas', type: 'number', min: 1, step: 1, required: true, width: 'half' },
@@ -64,7 +65,7 @@ export const SPA_SCOPE: ScopeDef = {
           type: 'image',
           kind: 'photo',
           required: true,
-          help: 'Horizontal o cuadrada. Se guarda en WebP de máximo 1600 px, con una copia JPEG para las vistas previas de WhatsApp.',
+          help: 'Horizontal o cuadrada.',
         },
         { key: 'description', label: 'Descripción', type: 'textarea', rows: 5, required: true },
         { key: 'additionalServicesId', label: 'Servicios incluidos', type: 'relation', collection: 'additionals' },
@@ -81,14 +82,16 @@ export const SPA_SCOPE: ScopeDef = {
         additionalServicesId: [],
       }),
       validate: (plan, all, ctx) => {
-        const issues: string[] = [];
+        const issues: FieldProblem[] = [];
         const slug = planSlug(String(plan['name'] ?? ''));
-        if (!/^plan\b/i.test(String(plan['name'] ?? '').trim())) issues.push('El nombre debería empezar por "PLAN".');
+        if (!/^plan\b/i.test(String(plan['name'] ?? '').trim())) issues.push({ field: 'name', message: 'Debería empezar por «PLAN».' });
         if (slug && all.some((other) => other !== plan && planSlug(String(other['name'] ?? '')) === slug)) {
-          issues.push(`Otro plan ya usa la dirección ${planRoute(ctx)}${slug}.`);
+          issues.push({ field: 'name', message: `Ya hay un plan con este nombre (${planRoute(ctx)}${slug}).` });
         }
-        if (Number(plan['price']) <= 0) issues.push('El precio debe ser mayor que cero.');
-        if (!(plan['additionalServicesId'] as unknown[] | undefined)?.length) issues.push('No tiene servicios incluidos.');
+        if (Number(plan['price']) <= 0) issues.push({ field: 'price', message: 'Debe ser mayor que cero.' });
+        if (!(plan['additionalServicesId'] as unknown[] | undefined)?.length) {
+          issues.push({ field: 'additionalServicesId', message: 'Elige al menos un servicio.' });
+        }
         return issues;
       },
       preview: 'spa.plan',
@@ -97,7 +100,8 @@ export const SPA_SCOPE: ScopeDef = {
       id: 'additionals',
       label: 'Servicios',
       singular: 'servicio',
-      description: 'Lo que incluyen los planes: masajes, jacuzzi, bebidas… Se eligen en cada plan.',
+      icon: 'sparkles',
+      description: 'Lo que incluyen los planes: masajes, jacuzzi, bebidas…',
       file: 'src/assets/data/additionals.json',
       idKey: 'id',
       titleKey: 'name',
@@ -110,13 +114,14 @@ export const SPA_SCOPE: ScopeDef = {
       create: () => ({ id: 0, iconPath: '', name: '' }),
       validate: (service, all) =>
         all.some((other) => other !== service && norm(other['name']) === norm(service['name']))
-          ? ['Hay otro servicio con el mismo nombre.']
+          ? [{ field: 'name', message: 'Ya hay un servicio con este nombre.' }]
           : [],
     },
     {
       id: 'priceRanges',
       label: 'Rangos de precio',
       singular: 'rango',
+      icon: 'sliders-horizontal',
       description: 'Opciones del filtro por precio en la lista de planes.',
       file: 'src/assets/data/priceRanges.json',
       optional: true,
@@ -128,12 +133,13 @@ export const SPA_SCOPE: ScopeDef = {
         { key: 'max', label: 'Hasta', type: 'number', min: 0, step: 1000, format: 'price', width: 'half' },
       ],
       create: () => ({ description: '', min: 0, max: 0 }),
-      validate: (range) => (Number(range['min']) > Number(range['max']) ? ['"Desde" es mayor que "Hasta".'] : []),
+      validate: (range) => (Number(range['min']) > Number(range['max']) ? [{ field: 'max', message: 'Es menor que «Desde».' }] : []),
     },
     {
       id: 'services',
       label: 'Destacados del inicio',
       singular: 'destacado',
+      icon: 'star',
       description: 'Íconos de servicios que se muestran en la página de inicio.',
       file: 'src/assets/data/services.json',
       optional: true,

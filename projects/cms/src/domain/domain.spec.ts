@@ -5,9 +5,10 @@ import { suggestManifest } from './manifest';
 import { diskPath } from './paths';
 import { ImageField, MANIFEST_FILE, SiteManifest } from './schema';
 import { SPA_SCOPE } from './scopes/spa/spa.scope';
-import { addEmptyCollection, ConflictError, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, openSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite, siteIdFor, writeSiteFolder } from './site';
+import { addEmptyCollection, ConflictError, folderMismatch, hideCollection, importMissingCollections, missingCollections, needsPublish, offerCollection, openSite, readSiteFolder, removeCollection, renameSite, replaceFromFolder, saveSite, sectionStates, siteIdFor, writeSiteFolder } from './site';
+import { countOf, emptyTitle, newLabel, pickPrompt, pluralOf } from './labels';
 import { galleryCollection } from './scopes/shared/gallery.collection';
-import { DEFAULT_PROMO, promoCollection } from './scopes/shared/promo.collection';
+import { DEFAULT_PROMO, describePromoSchedule, promoCollection } from './scopes/shared/promo.collection';
 import { MemoryContentRepository } from './testing/memory-content-repository';
 import { FakeImageEncoder, MemoryMediaStore } from './testing/memory-media';
 import { MemorySiteFiles } from './testing/memory-site-files';
@@ -130,7 +131,7 @@ describe('open and save in the repository', () => {
     const theirs = await openSite(repo, 'spa');
     await saveSite(repo, 'spa', content.updateItem(theirs.content, 'plans', 0, { ...plan(1, 'PLAN A') }), 'otro');
     const edit = content.updateItem(mine.content, 'plans', 0, { ...plan(1, 'PLAN B') });
-    await expectAsync(saveSite(repo, 'spa', edit, 'yo')).toBeRejectedWithError(ConflictError);
+    await expectAsync(saveSite(repo, 'spa', edit, 'yo')).toBeRejectedWithError(ConflictError, 'Alguien más guardó cambios en Planes mientras editabas.');
   });
 });
 
@@ -192,11 +193,21 @@ describe('content rules', () => {
   it('reports required fields, missing references and the spa rules', async () => {
     const { content: site } = await openSite(await importedRepo(), 'spa');
     const broken = content.updateItem(site, 'plans', 1, { ...plan(2, 'PLAN ROSA', [999]), duration: '' });
-    const messages = content.validateContent(broken).map((i) => i.message);
-    expect(messages).toContain('Falta "Duración".');
-    expect(messages).toContain('"Servicios incluidos" tiene ids que no existen: 999.');
-    expect(messages).toContain('Otro plan ya usa la dirección /planes/plan-rosa.');
+    const issues = content.validateContent(broken).map((i) => [i.field, i.message]);
+    expect(issues).toContain(['duration', 'Falta «Duración».']);
+    expect(issues).toContain(['additionalServicesId', 'Uno ya no existe: quítalos o vuelve a elegirlos.']);
+    expect(issues).toContain(['name', 'Ya hay un plan con este nombre (/planes/plan-rosa).']);
     expect(content.validateContent(content.discardChanges(broken))).toEqual([]);
+  });
+
+  it('finds the saved version of an entry, to tell what changed', async () => {
+    const { content: site } = await openSite(await importedRepo(), 'spa');
+    const renamed = content.updateItem(site, 'plans', 0, { ...plan(1, 'PLAN NUEVO') });
+    const moved = content.moveItem(renamed, 'plans', 0, 1);
+    const plans = content.findCollection(moved, 'plans')!;
+    expect(content.savedEntry(plans, 1)!['name']).toBe('PLAN ROSA');
+    const added = content.addItem(moved, 'plans');
+    expect(content.savedEntry(content.findCollection(added.content, 'plans')!, added.index)).toBeUndefined();
   });
 
   it('knows the spa scope collections', () => {
@@ -363,12 +374,12 @@ describe('gallery and popup (shared blocks)', () => {
 
     const def = promoCollection();
     const bad = { ...promoFile, startDate: '2026-02-14', endDate: '2026-02-01' };
-    expect(def.validate!(bad, [bad], {} as never)).toContain('«Hasta» es anterior a «Desde».');
+    expect(def.validate!(bad, [bad], {} as never)).toContain({ field: 'endDate', message: 'Es anterior a «Desde».' });
     const repo = await importedRepo();
     await addEmptyCollection(repo, 'spa', def, 'yo');
     const { content: site } = await openSite(repo, 'spa');
     const withBadDate = content.updateItem(site, 'promo', 0, { ...DEFAULT_PROMO, startDate: '14/02/2026' });
-    expect(content.validateContent(withBadDate).map((i) => i.message)).toContain('"Desde" no es una fecha válida.');
+    expect(content.validateContent(withBadDate).map((i) => [i.field, i.message])).toContain(['startDate', 'No es una fecha válida.']);
   });
 
   it('fills the gallery thumbnail when a photo is chosen', async () => {
@@ -426,6 +437,40 @@ describe('removing a section the site does not use', () => {
     const out = spaFolder();
     expect(await writeSiteFolder(out, stored)).not.toContain('src/assets/data/priceRanges.json');
     await expectAsync(removeCollection(repo, 'spa', SPA_SCOPE.collections[0], 'yo')).toBeRejectedWithError(/no se puede quitar/);
+  });
+
+  it('lists every section with its state and can offer a hidden one again', async () => {
+    const repo = await importedRepo();
+    const ranges = SPA_SCOPE.collections.find((c) => c.id === 'priceRanges')!;
+    await hideCollection(repo, 'spa', ranges);
+    const states = () => repo.loadSite('spa').then((s) => Object.fromEntries(sectionStates(SPA_SCOPE, s!).map((x) => [x.def.id, x.state])));
+    expect(await states()).toEqual(jasmine.objectContaining({ plans: 'active', additionals: 'active', priceRanges: 'hidden', gallery: 'available' }));
+    await offerCollection(repo, 'spa', ranges);
+    expect((await states())['priceRanges']).toBe('available');
+  });
+});
+
+describe('labels', () => {
+  const gallery = galleryCollection();
+  const plans = SPA_SCOPE.collections[0];
+  const promo = promoCollection();
+
+  it('agree in gender and number with the section', () => {
+    expect(newLabel(plans)).toBe('Nuevo plan');
+    expect(newLabel(gallery)).toBe('Nueva foto');
+    expect(pickPrompt(gallery)).toBe('Elige una foto para editarla.');
+    expect(pickPrompt(plans)).toBe('Elige un plan para editarlo.');
+    expect(emptyTitle(plans)).toBe('Aún no hay planes');
+    expect(pluralOf(promo)).toBe('popups');
+    expect(countOf(gallery, 1)).toBe('1 foto');
+    expect(countOf(gallery, 12)).toBe('12 fotos');
+  });
+
+  it('describe when the popup shows in a short line', () => {
+    expect(describePromoSchedule({ ...DEFAULT_PROMO })).toBe('A los 6 s · sin fecha de fin · se repite cada 7 días');
+    expect(describePromoSchedule({ ...DEFAULT_PROMO, delaySeconds: 0, repeatDays: 0, startDate: '2026-02-01', endDate: '2026-02-14' })).toBe(
+      'Al entrar · del 1 de febrero al 14 de febrero · en cada visita'
+    );
   });
 });
 

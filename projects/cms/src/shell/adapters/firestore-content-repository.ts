@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteField,
   doc,
   Firestore,
   getDoc,
@@ -135,6 +136,10 @@ export class FirestoreContentRepository implements ContentRepository {
 
   async hideCollection(siteId: string, collectionId: string): Promise<void> {
     await updateDoc(doc(this.db, 'sites', siteId), { [`manifest.collections.${collectionId}`]: false });
+  }
+
+  async showCollection(siteId: string, collectionId: string): Promise<void> {
+    await updateDoc(doc(this.db, 'sites', siteId), { [`manifest.collections.${collectionId}`]: deleteField() });
   }
 
   async addCollections(siteId: string, collections: { id: string; items: Entry[] }[], author: string): Promise<void> {

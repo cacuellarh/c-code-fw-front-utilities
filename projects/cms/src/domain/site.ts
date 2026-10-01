@@ -16,9 +16,21 @@ export interface OpenedSite {
 
 /** Someone else saved these collections after they were opened. */
 export class ConflictError extends Error {
-  constructor(readonly collections: string[]) {
-    super(`Otra persona guardó cambios en: ${collections.join(', ')}`);
+  /** `collections` are ids; `labels`, the names to show ("Planes"). */
+  constructor(
+    readonly collections: string[],
+    labels: string[] = collections
+  ) {
+    super(`Alguien más guardó cambios en ${labels.join(', ')} mientras editabas.`);
     this.name = 'ConflictError';
+  }
+}
+
+/** The site has no way to publish yet (for example, no Deploy Hook). */
+export class PublishNotConfiguredError extends Error {
+  constructor(detail: string) {
+    super(detail);
+    this.name = 'PublishNotConfiguredError';
   }
 }
 
@@ -68,11 +80,17 @@ export interface SaveResult {
 export async function saveSite(repo: ContentRepository, siteId: string, content: SiteContent, author: string): Promise<SaveResult> {
   const changed = dirtyCollections(content);
   if (changed.length === 0) return { content, saved: [] };
-  const result = await repo.saveCollections(
-    siteId,
-    changed.map((c) => ({ id: c.def.id, items: c.items, expectedVersion: c.version })),
-    author
-  );
+  const result = await repo
+    .saveCollections(
+      siteId,
+      changed.map((c) => ({ id: c.def.id, items: c.items, expectedVersion: c.version })),
+      author
+    )
+    .catch((e: unknown) => {
+      if (!(e instanceof ConflictError)) throw e;
+      const label = (id: string) => content.collections.find((c) => c.def.id === id)?.def.label ?? id;
+      throw new ConflictError(e.collections, e.collections.map(label));
+    });
   const versions = new Map(result.map((r) => [r.id, r]));
   return {
     saved: changed.map((c) => c.def.label),
@@ -207,6 +225,23 @@ export async function importMissingCollections(
   const found = folder.collections.filter((c) => missing.has(c.id));
   if (found.length) await repo.addCollections(stored.id, found, author);
   return found.map((c) => missing.get(c.id)!.label);
+}
+
+/** Offers again an optional section that was marked as not used. */
+export async function offerCollection(repo: ContentRepository, siteId: string, def: CollectionDef): Promise<void> {
+  await repo.showCollection(siteId, def.id);
+}
+
+/**
+ * State of every collection of the scope in a site, for configuring its sections: `active`
+ * (the site has it), `hidden` (marked as not used) or `available` (optional, not added yet).
+ */
+export function sectionStates(scope: ScopeDef, stored: StoredSite): { def: CollectionDef; state: 'active' | 'hidden' | 'available' }[] {
+  const have = new Set(stored.collections.map((c) => c.id));
+  return scope.collections.map((def) => ({
+    def,
+    state: have.has(def.id) || !def.optional ? 'active' : stored.manifest.collections?.[def.id] === false ? 'hidden' : 'available',
+  }));
 }
 
 /** Stops offering an optional section the site does not use (for example price ranges). */

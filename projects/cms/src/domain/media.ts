@@ -95,7 +95,7 @@ async function encodeWithin(
     result = await encoder.encode(data, { format, maxSize: profile.maxSize, quality });
     if (result.data.byteLength <= MAX_VARIANT_BYTES) return result;
   }
-  throw new MediaError(`«${name}» sigue pesando demasiado después de comprimirla (${kb(result!.data.byteLength)}).`);
+  throw new MediaError(`«${name}» es demasiado pesada (${kb(result!.data.byteLength)}). Prueba con una imagen más pequeña.`);
 }
 
 /** Id for a new image, from its file name and unique in the library: "foto-spa", "foto-spa-2"… */
@@ -179,7 +179,7 @@ export async function deleteMedia(store: MediaStore, siteId: string, content: Si
   const uses = mediaUsages(content, item.id);
   if (uses.length) {
     const list = uses.slice(0, 5).map((u) => `${u.title} (${u.collection})`).join(', ');
-    throw new MediaError(`«${item.name}» se usa en ${list}${uses.length > 5 ? '…' : ''}. Cámbiala ahí antes de borrarla.`);
+    throw new MediaError(`Esta imagen está en ${list}${uses.length > 5 ? '…' : ''}. Cámbiala ahí antes de borrarla.`);
   }
   await store.remove(siteId, item);
 }

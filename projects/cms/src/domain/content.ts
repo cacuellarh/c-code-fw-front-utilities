@@ -26,6 +26,8 @@ export interface EntryIssue {
   index: number;
   title: string;
   message: string;
+  /** Key of the field the problem is about, to show it next to that field. */
+  field?: string;
 }
 
 export function findCollection(content: SiteContent, id: string): CollectionData | undefined {
@@ -60,24 +62,41 @@ export function validateContent(content: SiteContent): EntryIssue[] {
   for (const collection of content.collections) {
     if (collection.error) continue;
     collection.items.forEach((item, index) => {
-      const add = (message: string) =>
-        issues.push({ collection: collection.def.id, index, title: titleOf(collection, item), message });
+      const add = (message: string, field?: string) =>
+        issues.push({ collection: collection.def.id, index, title: titleOf(collection, item), message, ...(field ? { field } : {}) });
       for (const field of collection.def.fields) {
         const value = item[field.key];
-        if (field.required && (value === '' || value === null || value === undefined)) add(`Falta "${field.label}".`);
-        if (field.type === 'date' && value && !isIsoDate(String(value))) add(`"${field.label}" no es una fecha válida.`);
+        if (field.required && (value === '' || value === null || value === undefined)) add(`Falta «${field.label}».`, field.key);
+        if (field.type === 'date' && value && !isIsoDate(String(value))) add('No es una fecha válida.', field.key);
         if (field.type === 'relation') {
           const target = findCollection(content, field.collection);
           if (!target) continue;
           const ids = new Set(target.items.map((e) => e[target.def.idKey ?? 'id']));
-          const missing = asArray(value).filter((id) => !ids.has(id));
-          if (missing.length) add(`"${field.label}" tiene ids que no existen: ${missing.join(', ')}.`);
+          const missing = asArray(value).filter((id) => !ids.has(id)).length;
+          if (missing) add(`${missing === 1 ? 'Uno ya no existe' : `${missing} ya no existen`}: quítalos o vuelve a elegirlos.`, field.key);
         }
       }
-      collection.def.validate?.(item, collection.items, ctx).forEach(add);
+      for (const problem of collection.def.validate?.(item, collection.items, ctx) ?? []) {
+        if (typeof problem === 'string') add(problem);
+        else add(problem.message, problem.field);
+      }
     });
   }
   return issues;
+}
+
+/**
+ * The saved version of an entry, to compare a field with what is stored: by id when the
+ * collection has ids, the only entry of a single collection, or undefined for a new entry.
+ */
+export function savedEntry(collection: CollectionData, index: number): Entry | undefined {
+  if (collection.error) return undefined;
+  const saved = JSON.parse(collection.baseline) as Entry[];
+  if (collection.def.single) return saved[0];
+  const { idKey } = collection.def;
+  if (!idKey) return undefined;
+  const id = collection.items[index]?.[idKey];
+  return saved.find((e) => e[idKey] === id);
 }
 
 /** Replaces the items of one collection. */

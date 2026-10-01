@@ -10,6 +10,8 @@ export function galleryCollection(options: { file?: string; label?: string; desc
     id: 'gallery',
     label: options.label ?? 'Galería',
     singular: 'foto',
+    feminine: true,
+    icon: 'images',
     description: options.description ?? 'Fotos de la página de galería, en el orden en que se muestran.',
     file: options.file ?? 'src/assets/data/gallery.json',
     optional: true,
@@ -24,15 +26,15 @@ export function galleryCollection(options: { file?: string; label?: string; desc
         required: true,
         maxLength: 120,
         placeholder: 'Jacuzzi con espuma para parejas',
-        help: 'Se muestra debajo de la foto al abrirla y describe la imagen para buscadores.',
+        help: 'Se muestra al abrir la foto.',
       },
     ],
     create: () => ({ src: '', thumb: '', caption: '' }),
     validate: (photo, all) => {
-      const issues: string[] = [];
       const src = String(photo['src'] ?? '');
-      if (src && all.some((other) => other !== photo && other['src'] === src)) issues.push('Esta foto ya está en la galería.');
-      return issues;
+      return src && all.some((other) => other !== photo && other['src'] === src)
+        ? [{ field: 'src', message: 'Esta foto ya está en la galería.' }]
+        : [];
     },
   };
 }
