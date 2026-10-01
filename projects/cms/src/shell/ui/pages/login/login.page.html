@@ -3,6 +3,9 @@
   <h1>Entra a tu sitio</h1>
   <p class="lead">Edita los planes, fotos y promociones de tu sitio web.</p>
   <button type="button" class="btn primary" (click)="signIn()" [disabled]="busy()">
+    @if (busy()) {
+      <cc-loader size="sm" tone="current" label="Entrando" />
+    }
     {{ busy() ? 'Entrando…' : 'Entrar con Google' }}
   </button>
   @if (error()) {

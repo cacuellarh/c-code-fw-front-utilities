@@ -13,7 +13,7 @@
         <span class="missing">Imagen no disponible</span>
       }
     } @else if (preview.isLoading()) {
-      <span class="empty">Cargando…</span>
+      <cc-loader size="sm" label="Cargando imagen" />
     } @else {
       <span class="empty">
         <cms-icon name="image" [size]="24" />

@@ -77,7 +77,7 @@
   @if (publicationsError()) {
     <p class="note">No se pudo leer el historial: {{ publicationsError() }}</p>
   } @else if (publications() === null) {
-    <p class="note">Cargando…</p>
+    <cc-loader size="sm" showLabel label="Cargando el historial…" />
   } @else if (!publications()!.length) {
     <p class="note">Todavía no hay publicaciones registradas. Se anotan desde esta versión del CMS.</p>
   } @else {
@@ -145,7 +145,7 @@
         </div>
       </li>
     } @empty {
-      <li class="meta">Cargando…</li>
+      <li class="meta"><cc-loader size="sm" showLabel label="Cargando secciones…" /></li>
     }
   </ul>
 </section>

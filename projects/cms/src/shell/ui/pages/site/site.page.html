@@ -96,7 +96,11 @@
         (click)="publish()"
         [disabled]="editor.publishing() || editor.saving()"
       >
-        <cms-icon name="cloud-upload" [size]="18" />
+        @if (editor.publishing() || editor.saving()) {
+          <cc-loader size="sm" tone="current" [label]="editor.saving() ? 'Guardando' : 'Publicando'" />
+        } @else {
+          <cms-icon name="cloud-upload" [size]="18" />
+        }
         {{ editor.publishing() ? 'Publicando…' : editor.dirty().length ? 'Guardar y publicar' : 'Publicar' }}
       </button>
     </header>
@@ -132,7 +136,11 @@
             Descartar
           </button>
           <button type="button" class="btn primary" (click)="save()" [disabled]="editor.saving()">
-            <cms-icon name="save" [size]="18" />
+            @if (editor.saving()) {
+              <cc-loader size="sm" tone="current" label="Guardando" />
+            } @else {
+              <cms-icon name="save" [size]="18" />
+            }
             {{ editor.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
         } @else {
@@ -147,7 +155,7 @@
       <p class="alert" role="alert">{{ error() }}</p>
       <button type="button" class="btn" (click)="leave()">Volver</button>
     } @else {
-      <p aria-live="polite">Abriendo…</p>
+      <cc-loader layout="block" size="lg" showLabel label="Abriendo el sitio…" [delay]="150" />
     }
   </div>
 }

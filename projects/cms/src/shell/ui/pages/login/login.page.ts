@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { LoaderComponent } from '@c-code/c-code-fw/ui';
 import { AuthService } from '../../../state/auth.service';
 import { LogoComponent } from '../../logo/logo.component';
 
 /** Sign in with Google. Firestore rules decide afterwards which sites the user can edit. */
 @Component({
   selector: 'cms-login-page',
-  imports: [LogoComponent],
+  imports: [LogoComponent, LoaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.page.html',
   styleUrl: './login.page.css',

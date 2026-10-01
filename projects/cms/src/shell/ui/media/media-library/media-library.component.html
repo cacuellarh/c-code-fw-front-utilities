@@ -59,7 +59,7 @@
 }
 
 @if (media.loading()) {
-  <p class="note">Cargando imágenes…</p>
+  <cc-loader layout="block" showLabel label="Cargando imágenes…" [delay]="150" />
 } @else if (!visible().length && !query()) {
   <cms-empty-state
     [icon]="activeKind() === 'photo' ? 'images' : 'sparkles'"

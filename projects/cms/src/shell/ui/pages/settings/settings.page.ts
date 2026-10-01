@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { LoaderComponent } from '@c-code/c-code-fw/ui';
 import { findCollection } from '../../../../domain/content';
 import { countOf } from '../../../../domain/labels';
 import { DuplicateReport } from '../../../../domain/duplicates';
@@ -28,7 +29,7 @@ const STATE_LABELS: Record<SectionState, { label: string; tone: string }> = {
  */
 @Component({
   selector: 'cms-settings-page',
-  imports: [IconComponent],
+  imports: [IconComponent, LoaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings.page.html',
   styleUrl: './settings.page.css',

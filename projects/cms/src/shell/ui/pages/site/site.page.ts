@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, OnInit, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { LoaderComponent } from '@c-code/c-code-fw/ui';
 import { isDirty } from '../../../../domain/content';
 import { ConflictError, PublishNotConfiguredError } from '../../../../domain/site';
 import { AuthService } from '../../../state/auth.service';
@@ -14,7 +15,7 @@ import { errorMessage, fullDate, relativeDate } from '../../messages';
 /** Layout of an open site: sections menu, the top bar with its state and Publicar, and the save bar. */
 @Component({
   selector: 'cms-site-page',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, IconComponent, LogoComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, IconComponent, LogoComponent, LoaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.menu-open]': 'menuOpen()' },
   templateUrl: './site.page.html',

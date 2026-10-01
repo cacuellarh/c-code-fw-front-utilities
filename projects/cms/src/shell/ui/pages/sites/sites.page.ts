@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { LoaderComponent } from '@c-code/c-code-fw/ui';
 import { SiteSummary } from '../../../../domain/ports';
 import { SCOPES } from '../../../../domain/scopes';
 import { needsPublish } from '../../../../domain/site';
@@ -13,7 +14,7 @@ import { errorMessage, fullDate, relativeDate } from '../../messages';
 /** Home: the sites the person can edit. Admins see them grouped by kind, and can add new ones. */
 @Component({
   selector: 'cms-sites-page',
-  imports: [RouterLink, LogoComponent, IconComponent, EmptyStateComponent],
+  imports: [RouterLink, LogoComponent, IconComponent, EmptyStateComponent, LoaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sites.page.html',
   styleUrl: './sites.page.css',

@@ -179,6 +179,16 @@ code {
   padding: 0 var(--cms-space-3);
 }
 
+/*
+ * Library components used by the CMS (cc-loader) get the CMS's colors through their own
+ * tokens, set on the element: the site's --cc-* roles stay inside .site-theme only.
+ */
+cc-loader {
+  --cc-loader-color: var(--cms-accent);
+  --cc-loader-overlay: rgb(245 246 248 / 0.75);
+  color: var(--cms-muted);
+}
+
 /* Text inputs share one look. */
 .input {
   width: 100%;

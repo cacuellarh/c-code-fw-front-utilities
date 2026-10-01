@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, output, signal } from '@angular/core';
+import { LoaderComponent } from '@c-code/c-code-fw/ui';
 import { slugify } from '@c-code/c-code-fw/ui';
 import { ACCEPTED_TYPES, kb } from '../../../../domain/media';
 import { MediaItem, MediaKind } from '../../../../domain/ports';
@@ -15,7 +16,7 @@ import { IconComponent } from '../../icon/icon.component';
  */
 @Component({
   selector: 'cms-media-library',
-  imports: [IconComponent, EmptyStateComponent],
+  imports: [IconComponent, EmptyStateComponent, LoaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './media-library.component.html',
   styleUrl: './media-library.component.css',

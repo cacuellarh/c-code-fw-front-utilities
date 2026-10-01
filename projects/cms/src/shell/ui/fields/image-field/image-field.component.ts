@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, resource, signal } from '@angular/core';
+import { LoaderComponent } from '@c-code/c-code-fw/ui';
 import { mediaIdOf } from '../../../../domain/media';
 import { ImageField } from '../../../../domain/schema';
 import { MediaItem } from '../../../../domain/ports';
@@ -13,7 +14,7 @@ import { MediaPickerComponent } from '../../media/media-picker/media-picker.comp
  */
 @Component({
   selector: 'cms-image-field',
-  imports: [MediaPickerComponent, IconComponent],
+  imports: [MediaPickerComponent, IconComponent, LoaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './image-field.component.html',
   styleUrl: './image-field.component.css',
