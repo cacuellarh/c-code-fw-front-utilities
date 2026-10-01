@@ -24,14 +24,20 @@ export class LoginPage implements OnInit {
   constructor() {
     effect(() => {
       const code = this.auth.redirectError();
-      if (code) this.error.set(loginError(code, code));
+      if (code) {
+        this.error.set(loginError(code, code));
+        this.busy.set(false);
+      }
+    });
+    // The session can arrive after the page opened (slow return from Google).
+    effect(() => {
+      if (this.auth.user()) this.router.navigateByUrl(this.volver() || '/');
     });
   }
 
   async ngOnInit(): Promise<void> {
     await this.auth.ready;
-    if (this.auth.user()) await this.router.navigateByUrl(this.volver() || '/');
-    else this.busy.set(false);
+    if (!this.auth.user()) this.busy.set(false);
   }
 
   protected async signIn(): Promise<void> {

@@ -2,6 +2,8 @@ import { inject, Injectable, signal } from '@angular/core';
 import { getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut, User } from 'firebase/auth';
 import { ACCESS, FIREBASE } from './ports.tokens';
 
+const READY_TIMEOUT_MS = 5000;
+
 /**
  * The signed-in user (Google) and whether they are an admin. Admins see the configuration of
  * the sites; Firestore rules enforce what each user can change.
@@ -20,13 +22,16 @@ export class AuthService {
 
   constructor() {
     getRedirectResult(this.auth).catch((e: { code?: string }) => this.redirectError.set(e.code ?? 'unknown'));
-    this.ready = new Promise((resolve) =>
+    const known = new Promise<void>((resolve) =>
       onAuthStateChanged(this.auth, async (user) => {
         this.isAdmin.set(user ? await this.access.isAdmin() : false);
         this.user.set(user);
         resolve();
       })
     );
+    // Some mobile browsers keep Firebase waiting (for example, after an unfinished sign-in): do not
+    // block the CMS. If the session shows up later, `user` changes and the login page moves on.
+    this.ready = Promise.race([known, new Promise<void>((resolve) => setTimeout(resolve, READY_TIMEOUT_MS))]);
   }
 
   /** Online it leaves the page for Google and comes back signed in; locally it opens a popup. */
