@@ -1,0 +1,12 @@
+{
+  "//": "Only for dependency-cruiser (.dependency-cruiser.cjs): the path aliases it needs to resolve imports.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@c-code/c-code-fw/ui": ["./projects/core/ui/src/public-api.ts"],
+      "@cc/ui-domain": ["./projects/core/ui/src/domain.ts"]
+    }
+  },
+  "include": ["projects/cms/src/**/*.ts", "projects/core/**/*.ts"]
+}

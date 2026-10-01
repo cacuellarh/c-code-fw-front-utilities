@@ -49,6 +49,6 @@ The rules are in `.claude/rules/cms-architecture.md`, and adding a kind of site 
 `src/domain/scopes/README.md`.
 
 ```bash
-npm run lint:cms                                   # architecture rules
+npm run lint                                       # architecture rules (domain types, ESLint, dependency graph, layout)
 npx ng test cms --watch=false --browsers=ChromeHeadless
 ```

@@ -1,21 +1,12 @@
-// Checks the architecture of the CMS (see .claude/rules/cms-architecture.md).
+// Checks the file layout of the CMS components (see .claude/rules/cms-architecture.md).
+// What each layer may import or use is checked by npm run lint:domain, lint:eslint and lint:deps.
 // Usage: npm run lint:cms
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const src = join(root, 'projects/cms/src');
-const domain = join(src, 'domain');
-const shellUi = join(src, 'shell/ui');
-const cli = join(src, 'cli');
-const shell = join(src, 'shell');
-
-/** Packages the domain may import: only the framework-free part of the component library. */
-const DOMAIN_PACKAGES = ['@cc/ui-domain'];
-/** Browser and framework globals that belong in the shell. */
-const BROWSER_GLOBALS =
-  /\b(window|document|indexedDB|localStorage|sessionStorage|navigator|HTMLElement|FileSystem\w*Handle|showDirectoryPicker|createObjectURL|OffscreenCanvas|createImageBitmap)\b/;
+const shellUi = join(root, 'projects/cms/src/shell/ui');
 
 const errors = [];
 const rel = (file) => relative(root, file).replace(/\\/g, '/');
@@ -24,37 +15,6 @@ const walk = (dir) =>
     const path = join(dir, name);
     return statSync(path).isDirectory() ? walk(path) : [path];
   });
-const importsOf = (source) =>
-  [...source.matchAll(/(?:import|export)\s[^'"]*?from\s+['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1] ?? m[2]);
-const stripComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
-
-for (const file of walk(domain).filter((f) => f.endsWith('.ts'))) {
-  const source = readFileSync(file, 'utf8');
-  const isSpec = file.endsWith('.spec.ts');
-  for (const spec of importsOf(source)) {
-    if (spec.startsWith('.')) {
-      const target = resolve(dirname(file), spec);
-      if (!target.startsWith(domain)) errors.push(`${rel(file)}: the domain must not import "${spec}" (outside domain/).`);
-    } else if (!DOMAIN_PACKAGES.includes(spec) && !(isSpec && spec.startsWith('@angular/'))) {
-      errors.push(`${rel(file)}: the domain must not import "${spec}". Only ${DOMAIN_PACKAGES.join(', ')} is allowed.`);
-    }
-  }
-  if (!isSpec) {
-    const code = stripComments(source);
-    const match = BROWSER_GLOBALS.exec(code);
-    if (match) errors.push(`${rel(file)}: the domain must not use "${match[1]}"; put it behind a port (domain/ports.ts).`);
-  }
-}
-
-// The build command (cli/) is a second shell, for Node: it may use the domain and Node's
-// built-ins, but not the browser shell or Angular.
-for (const file of walk(cli).filter((f) => f.endsWith('.ts'))) {
-  for (const spec of importsOf(readFileSync(file, 'utf8'))) {
-    if (spec.startsWith('.') ? resolve(dirname(file), spec).startsWith(shell) : !spec.startsWith('node:')) {
-      errors.push(`${rel(file)}: the build command must not import "${spec}"; only domain/ and node: built-ins.`);
-    }
-  }
-}
 
 for (const file of walk(shellUi).filter((f) => /\.(component|page)\.ts$/.test(f))) {
   const source = readFileSync(file, 'utf8');

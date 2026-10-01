@@ -1,0 +1,14 @@
+# Architecture guards: changes to these files need the owner's review, so an agent (or anyone)
+# cannot loosen the domain/shell rules in the same PR that breaks them.
+# Takes effect with branch protection "Require review from Code Owners" on master.
+/eslint.config.mjs                  @cacuellarh
+/.dependency-cruiser.cjs            @cacuellarh
+/tsconfig.depcruise.json            @cacuellarh
+/projects/cms/tsconfig.domain.json  @cacuellarh
+/projects/cms/domain-platform.d.ts  @cacuellarh
+/scripts/lint-cms.mjs               @cacuellarh
+/scripts/lint-ui.mjs                @cacuellarh
+/scripts/claude-arch-hook.mjs       @cacuellarh
+/.claude/settings.json              @cacuellarh
+/.claude/rules/                     @cacuellarh
+/.github/                           @cacuellarh

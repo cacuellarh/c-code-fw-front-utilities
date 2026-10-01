@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2022"],
+    "types": [],
+    "baseUrl": "../..",
+    "paths": {
+      "@cc/ui-domain": ["./projects/core/ui/src/domain.ts"]
+    }
+  },
+  "files": ["domain-platform.d.ts", "../core/ui/src/domain.ts"],
+  "include": ["src/domain/**/*.ts"],
+  "exclude": ["src/domain/**/*.spec.ts"]
+}
