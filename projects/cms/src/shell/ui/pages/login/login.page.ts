@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../state/auth.service';
 import { LogoComponent } from '../../logo/logo.component';
@@ -11,26 +11,40 @@ import { LogoComponent } from '../../logo/logo.component';
   templateUrl: './login.page.html',
   styleUrl: './login.page.css',
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
   /** Page to return to after signing in. */
   readonly volver = input<string>('/');
 
-  protected readonly busy = signal(false);
+  /** True until Firebase says whether the person is already signed in (for example, back from Google). */
+  protected readonly busy = signal(true);
   protected readonly error = signal('');
+
+  constructor() {
+    effect(() => {
+      const code = this.auth.redirectError();
+      if (code) this.error.set(loginError(code, code));
+    });
+  }
+
+  async ngOnInit(): Promise<void> {
+    await this.auth.ready;
+    if (this.auth.user()) await this.router.navigateByUrl(this.volver() || '/');
+    else this.busy.set(false);
+  }
 
   protected async signIn(): Promise<void> {
     this.busy.set(true);
     this.error.set('');
     try {
+      // Online this leaves the page; the person comes back here already signed in.
       await this.auth.signIn();
-      await this.router.navigateByUrl(this.volver() || '/');
+      if (this.auth.user()) await this.router.navigateByUrl(this.volver() || '/');
     } catch (e) {
       const code = (e as { code?: string }).code ?? '';
-      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return this.busy.set(false);
       this.error.set(loginError(code, (e as Error).message));
-    } finally {
       this.busy.set(false);
     }
   }
